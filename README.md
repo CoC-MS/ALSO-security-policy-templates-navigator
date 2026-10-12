@@ -4,7 +4,7 @@ An interactive guide that combines a customer's Microsoft 365 licenses to identi
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
-## Live template counts
+## Live template counts  
 
 The home page and Overview show an animated counter dashboard of the linked
 repositories' default branches, refreshed every day. The last sync date and time
