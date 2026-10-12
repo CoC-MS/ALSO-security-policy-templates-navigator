@@ -37,6 +37,9 @@ describe("policy counter dashboard", () => {
     expect(html).toContain("12 Oct 2026, 13:20:40 CEST");
     expect(html).toContain('dateTime="2026-10-12T11:20:40.450Z"');
     expect(html).toContain("updated every day");
+    expect(html).toContain("Total policy templates");
+    expect(html).toContain("Total unique policy templates");
+    expect(html).not.toContain("Unique policy JSON files + Purview");
     for (const detail of [
       "Unique access policies", "Unique scripts", "Unique assignment filters", "Unique applications",
     ]) expect(html).toContain(detail);

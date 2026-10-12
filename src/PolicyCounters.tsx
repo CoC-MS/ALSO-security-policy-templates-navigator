@@ -107,11 +107,11 @@ export function PolicyCounters({
         <div className="policy-count-card policy-count-featured">
           <dt>
             <span className="policy-count-icon" aria-hidden="true">ALL</span>
-            <span>Policy templates</span>
+            <span>Total policy templates</span>
           </dt>
           <dd>
             {status === "ready" && total !== undefined ? <AnimatedCount value={total} /> : <span aria-label="Count unavailable">--</span>}
-            <span className="policy-count-detail">Unique policy JSON files + Purview</span>
+            <span className="policy-count-detail">Total unique policy templates</span>
           </dd>
         </div>
         {metrics.map(({ key, label, detail, icon }) => (
