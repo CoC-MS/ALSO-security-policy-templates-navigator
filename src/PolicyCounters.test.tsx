@@ -37,6 +37,14 @@ describe("policy counter dashboard", () => {
     expect(html).toContain("12 Oct 2026, 13:20:40 CEST");
     expect(html).toContain('dateTime="2026-10-12T11:20:40.450Z"');
     expect(html).toContain("updated every day");
+    for (const detail of [
+      "Unique access policies", "Unique scripts", "Unique assignment filters", "Unique applications",
+    ]) expect(html).toContain(detail);
+    expect(html).not.toContain("+ 5 from Purview");
+    expect(html).not.toContain("Identical file contents");
+    expect(html).not.toContain("Unique access policy JSON files");
+    expect(html).not.toContain("Unique assignment filter JSON files");
+    expect(html).not.toContain("Unique application JSON files");
   });
 
   it("keeps the dashboard visible while loading without showing fabricated zero counts", () => {

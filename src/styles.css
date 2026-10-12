@@ -365,13 +365,6 @@ h1 {
   color: #fff;
 }
 
-.policy-counts-footnote {
-  margin: 1rem 0 0;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  line-height: 1.5;
-}
-
 .policy-counts-unavailable {
   margin: 0 0 1rem;
   color: #b42318;
