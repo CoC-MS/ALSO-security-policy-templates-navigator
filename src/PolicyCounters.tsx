@@ -9,16 +9,15 @@ import {
 const metrics: Array<{
   key: keyof RepositoryCategoryCounts;
   label: string;
-  detail: string;
   icon: string;
 }> = [
-  { key: "conditionalAccess", label: "Conditional Access policies", detail: "Unique access policies", icon: "CA" },
-  { key: "devicePolicies", label: "Device policies", detail: "Configuration, settings & updates", icon: "DP" },
-  { key: "compliance", label: "Compliance policies", detail: "Policies & compliance scripts", icon: "CP" },
-  { key: "scripts", label: "Scripts", detail: "Unique scripts", icon: "PS" },
-  { key: "filters", label: "Filter settings", detail: "Unique assignment filters", icon: "FS" },
-  { key: "applications", label: "Applications", detail: "Unique applications", icon: "AP" },
-  { key: "purviewPolicies", label: "Purview policies", detail: "24 pre-configured policies", icon: "PV" },
+  { key: "conditionalAccess", label: "Conditional Access policies", icon: "CA" },
+  { key: "devicePolicies", label: "Device policies", icon: "DP" },
+  { key: "compliance", label: "Compliance policies", icon: "CP" },
+  { key: "scripts", label: "Scripts", icon: "PS" },
+  { key: "filters", label: "Filter settings", icon: "FS" },
+  { key: "applications", label: "Applications", icon: "AP" },
+  { key: "purviewPolicies", label: "Purview policies", icon: "PV" },
 ];
 
 export function formatSyncTime(timestamp: string): string {
@@ -114,7 +113,7 @@ export function PolicyCounters({
             <span className="policy-count-detail">Total unique policy templates</span>
           </dd>
         </div>
-        {metrics.map(({ key, label, detail, icon }) => (
+        {metrics.map(({ key, label, icon }) => (
           <div className="policy-count-card" key={key}>
             <dt>
               <span className="policy-count-icon" aria-hidden="true">{icon}</span>
@@ -122,7 +121,6 @@ export function PolicyCounters({
             </dt>
             <dd>
               {validCounts ? <AnimatedCount value={counts[key]} /> : <span aria-label={status === "loading" ? "Loading count" : "Count unavailable"}>--</span>}
-              <span className="policy-count-detail">{detail}</span>
             </dd>
           </div>
         ))}
