@@ -14,7 +14,37 @@ export interface RepositoryMetadata {
 
 export interface RepositoryMetadataIndex {
   generatedAt: string;
+  categoryCounts?: RepositoryCategoryCounts;
   repositories: RepositoryMetadata[];
+}
+
+export interface RepositoryCategoryCounts {
+  conditionalAccess: number;
+  devicePolicies: number;
+  compliance: number;
+  scripts: number;
+  filters: number;
+  applications: number;
+  purviewPolicies: number;
+}
+
+export function isValidCategoryCounts(
+  counts: unknown,
+): counts is RepositoryCategoryCounts {
+  if (!counts || typeof counts !== "object") return false;
+  const requiredKeys: Array<keyof RepositoryCategoryCounts> = [
+    "conditionalAccess",
+    "devicePolicies",
+    "compliance",
+    "scripts",
+    "filters",
+    "applications",
+    "purviewPolicies",
+  ];
+  return requiredKeys.every((key) => {
+    const count = (counts as Record<string, unknown>)[key];
+    return typeof count === "number" && Number.isSafeInteger(count) && count >= 0;
+  });
 }
 
 export function getTotalTemplateCount(

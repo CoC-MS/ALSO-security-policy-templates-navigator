@@ -1,0 +1,68 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { formatSyncTime, PolicyCounters } from "./PolicyCounters";
+import type { RepositoryMetadataIndex } from "./repositoryMetadata";
+
+const metadata: RepositoryMetadataIndex = {
+  generatedAt: "2026-10-12T11:20:40.450Z",
+  categoryCounts: {
+    conditionalAccess: 43,
+    devicePolicies: 130,
+    compliance: 34,
+    scripts: 30,
+    filters: 17,
+    applications: 9,
+    purviewPolicies: 24,
+  },
+  repositories: [{
+    name: "Windows",
+    url: "https://github.com/CoC-MS/ALSO-Microsoft-Security-Windows",
+    description: null,
+    topics: [],
+    templateCount: 293,
+  }],
+};
+
+describe("policy counter dashboard", () => {
+  it("renders all seven categories and the total with an explicit CEST sync time", () => {
+    const html = renderToStaticMarkup(<PolicyCounters metadata={metadata} status="ready" />);
+    expect(html.match(/class="policy-count-card/g)).toHaveLength(8);
+    for (const label of [
+      "Conditional Access policies", "Device policies", "Compliance policies",
+      "Scripts", "Filter settings", "Applications", "Purview policies",
+    ]) expect(html).toContain(label);
+    for (const count of [293, 43, 130, 34, 30, 17, 9, 24]) {
+      expect(html).toContain(`class="visually-hidden">${count}</span>`);
+    }
+    expect(html).toContain("12 Oct 2026, 13:20:40 CEST");
+    expect(html).toContain('dateTime="2026-10-12T11:20:40.450Z"');
+    expect(html).toContain("updated every day");
+  });
+
+  it("keeps the dashboard visible while loading without showing fabricated zero counts", () => {
+    const html = renderToStaticMarkup(<PolicyCounters metadata={{ generatedAt: "", repositories: [] }} status="loading" />);
+    expect(html).toContain('aria-busy="true"');
+    expect(html.match(/class="policy-count-card/g)).toHaveLength(8);
+    expect(html).toContain("Loading sync information");
+    expect(html).not.toContain('class="visually-hidden">0');
+  });
+
+  it("shows an explicit load error and unavailable counts", () => {
+    const html = renderToStaticMarkup(<PolicyCounters metadata={{ generatedAt: "", repositories: [] }} status="error" />);
+    expect(html).toContain('role="alert"');
+    expect(html).toContain("Repository counts could not be loaded");
+    expect(html).toContain("Sync information unavailable");
+  });
+
+  it("shows an unavailable message for incomplete category data or invalid sync dates", () => {
+    const html = renderToStaticMarkup(<PolicyCounters metadata={{ ...metadata, categoryCounts: undefined, generatedAt: "invalid" }} status="ready" />);
+    expect(html).toContain("Category totals are temporarily unavailable");
+    expect(html).toContain("Sync information unavailable");
+    expect(html).not.toContain("Invalid Date");
+  });
+
+  it("uses Central European daylight saving rules regardless of the visitor's time zone", () => {
+    expect(formatSyncTime("2026-10-12T11:20:40Z")).toBe("12 Oct 2026, 13:20:40 CEST");
+    expect(formatSyncTime("2026-12-12T11:20:40Z")).toBe("12 Dec 2026, 12:20:40 CET");
+  });
+});

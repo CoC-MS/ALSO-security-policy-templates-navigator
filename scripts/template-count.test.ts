@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { countPolicyJsonFiles, countRepositoryTemplates, getPolicyJsonHashes, deduplicateRepositoryCounts } from "./template-count.mjs";
+import {
+  countPolicyJsonFiles,
+  countRepositoryTemplates,
+  deduplicateRepositoryCounts,
+  getPolicyJsonHashes,
+  getRepositoryCategoryHashes,
+  getUniqueCategoryCounts,
+} from "./template-count.mjs";
 
 describe("policy JSON file count", () => {
   it("deduplicates identical JSON content within a repository", () => {
@@ -81,5 +88,70 @@ describe("policy JSON file count", () => {
     expect(() => countPolicyJsonFiles({ truncated: true, tree: [] })).toThrow(
       "truncated",
     );
+  });
+
+  it("collects unique category file hashes from the configured folders", () => {
+    const hashes = getRepositoryCategoryHashes({
+      tree: [
+        { type: "blob", path: "ConditionalAccess/Policy.json", sha: "ca" },
+        { type: "blob", path: "Settings Catalog/Device.JSON", sha: "device" },
+        { type: "blob", path: "AdministrativeTemplates/copy.json", sha: "device" },
+        { type: "blob", path: "CompliancePolicies/compliance.json", sha: "compliance" },
+        { type: "blob", path: "ComplianceScripts/compliance.ps1", sha: "compliance-script" },
+        { type: "blob", path: "PowerShell Scripts/setup.PS1", sha: "script" },
+        { type: "blob", path: "DeviceHealthScripts/health.ps1", sha: "script" },
+        { type: "blob", path: "DeviceHealthScripts/health.json", sha: "not-a-script" },
+        { type: "blob", path: "AssignmentFilters/filter.json", sha: "filter" },
+        { type: "blob", path: "Applications/app.json", sha: "application" },
+        { type: "blob", path: "Other/policy.json", sha: "other" },
+      ],
+    });
+
+    expect(hashes).toEqual({
+      conditionalAccess: ["ca"],
+      devicePolicies: ["device"],
+      compliance: ["compliance", "compliance-script"],
+      scripts: ["script"],
+      filters: ["filter"],
+      applications: ["application"],
+    });
+  });
+
+  it("deduplicates category hashes across repositories and adds fixed Purview counts", () => {
+    const categoryHashes = {
+      conditionalAccess: ["ca", "shared"],
+      devicePolicies: ["device"],
+      compliance: ["compliance"],
+      scripts: ["script"],
+      filters: ["filter"],
+      applications: ["application"],
+    };
+    const result = getUniqueCategoryCounts([
+      { name: "Windows", categoryHashes },
+      {
+        name: "macOS",
+        categoryHashes: {
+          conditionalAccess: ["shared"],
+          devicePolicies: ["device", "other-device"],
+          compliance: ["compliance"],
+          scripts: ["another-script"],
+          filters: [],
+          applications: ["application"],
+        },
+      },
+    ]);
+
+    expect(result).toEqual({
+      conditionalAccess: 2,
+      devicePolicies: 2,
+      compliance: 1,
+      scripts: 7,
+      filters: 1,
+      applications: 1,
+      purviewPolicies: 24,
+    });
+    expect(() =>
+      getUniqueCategoryCounts([{ name: "stale cached repository" }]),
+    ).toThrow("Missing conditionalAccess hashes");
   });
 });

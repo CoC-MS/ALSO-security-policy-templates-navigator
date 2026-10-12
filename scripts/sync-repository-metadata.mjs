@@ -1,7 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { countRepositoryTemplates, getPolicyJsonHashes, deduplicateRepositoryCounts } from "./template-count.mjs";
+import {
+  countRepositoryTemplates,
+  deduplicateRepositoryCounts,
+  getPolicyJsonHashes,
+  getRepositoryCategoryHashes,
+  getUniqueCategoryCounts,
+} from "./template-count.mjs";
 
 const owner = "CoC-MS";
 const repositoryNames = [
@@ -66,15 +72,29 @@ const repositories = deduplicateRepositoryCounts(repositoryNames.map((name) => {
     topics: [...metadata.topics].sort(),
     templateCount,
     templateHashes: name === "ALSO-Microsoft-Security-Purview" ? [] : getPolicyJsonHashes(tree),
+    categoryHashes: getRepositoryCategoryHashes(tree),
     templateCountUpdatedAt: new Date().toISOString(),
   };
 }));
+
+const hasCategoryHashes = repositories.every((repository) =>
+  repository.categoryHashes &&
+  ["conditionalAccess", "devicePolicies", "compliance", "scripts", "filters", "applications"]
+    .every((category) => Array.isArray(repository.categoryHashes[category])),
+);
+const categoryCounts = hasCategoryHashes
+  ? getUniqueCategoryCounts(repositories)
+  : undefined;
+if (!categoryCounts) {
+  console.warn("Category counts are unavailable because cached repository hashes are incomplete.");
+}
 
 await mkdir(join(process.cwd(), "public"), { recursive: true });
 await writeFile(
   outputPath,
   `${JSON.stringify({
     generatedAt: new Date().toISOString(),
+    ...(categoryCounts ? { categoryCounts } : {}),
     repositories,
   })}\n`,
 );

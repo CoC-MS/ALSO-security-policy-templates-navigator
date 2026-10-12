@@ -4,6 +4,7 @@ import {
   filterPlatformsByTopics,
   getRepositoryMetadata,
   getTotalTemplateCount,
+  isValidCategoryCounts,
   type RepositoryMetadata,
 } from "./repositoryMetadata";
 
@@ -33,6 +34,33 @@ describe("repository topic metadata", () => {
     const first = { ...repositories[0], templateCount: 10 };
     const second = { ...repositories[1], templateCount: 5 };
     expect(getTotalTemplateCount([first, first, second])).toBe(15);
+  });
+
+  describe("dashboard category counts", () => {
+    it("accepts complete non-negative integer counts", () => {
+      expect(isValidCategoryCounts({
+        conditionalAccess: 43,
+        devicePolicies: 130,
+        compliance: 34,
+        scripts: 30,
+        filters: 17,
+        applications: 9,
+        purviewPolicies: 24,
+      })).toBe(true);
+    });
+
+    it("rejects missing or invalid counts instead of rendering misleading totals", () => {
+      expect(isValidCategoryCounts({ conditionalAccess: 1 })).toBe(false);
+      expect(isValidCategoryCounts({
+        conditionalAccess: 1,
+        devicePolicies: -1,
+        compliance: 0,
+        scripts: 0,
+        filters: 0,
+        applications: 0,
+        purviewPolicies: 24,
+      })).toBe(false);
+    });
   });
 
   it("does not display a partial or invalid template total", () => {

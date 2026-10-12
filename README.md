@@ -4,20 +4,43 @@ An interactive guide that combines a customer's Microsoft 365 licenses to identi
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
-## Template count
+## Live template counts
 
-The home-page template total counts `.json` files on the default branch of each
-unique linked repository, excluding files under Applications, Authentication
-Context (including AuthenticationContext), Groups, and NamedLocations folders. Counts
-refresh with the daily metadata sync; inaccessible repositories retain their
-last verified counts. No repository file contents are downloaded or published.
-Identical JSON files are counted only once across all repositories using Git
-content hashes. Formatting differences or different exported IDs produce distinct
-hashes; this is exact-content deduplication, not semantic policy comparison.
-The free-template message does not imply that Microsoft licenses are free.
+The home page and Overview show an animated counter dashboard of the linked
+repositories' default branches, refreshed every day. The last sync date and time
+use Central European time (`Europe/Brussels`): CEST during daylight saving time
+and CET in winter, regardless of the visitor's local time zone. Counters remain
+visible during loading, and errors display an explicit unavailable message
+instead of fabricated zero counts. Count-up animation respects reduced-motion
+preferences. Category
+totals count unique Git blob contents across repositories:
 
-Purview contributes a fixed, user-confirmed count of 24 policy templates rather
-than a JSON-file count, since its templates are deployed through PowerShell.
+- Conditional Access policies: JSON files in `ConditionalAccess` folders.
+- Device policies: JSON files in `SettingsCatalog`, `AdministrativeTemplates`,
+  `ADMXFiles`, `Autopilot`, `DeviceConfiguration`, `DriveUpdateProfiles`,
+  `QualityUpdatePolicies`, and `UpdatePolicies`.
+- Compliance policies and scripts: JSON files in `CompliancePolicies` and JSON
+  or script files in `ComplianceScripts`.
+- Scripts: PowerShell, shell, Python, and command scripts in `PowerShellScripts`,
+  `DeviceHealthScripts`, and `RemediationScripts`, plus five Purview scripts.
+- Filter settings and applications: JSON files in filter and `Applications`
+  folders respectively.
+- Purview contributes a fixed, user-confirmed count of 24 policies.
+
+The overall template total counts `.json` files in each unique linked repository,
+excluding files under Applications, Authentication Context (including
+AuthenticationContext), Groups, and NamedLocations folders. Purview's overall
+count is fixed at 24 because its policies are deployed through PowerShell.
+Formatting differences or different exported IDs produce distinct hashes; this
+is exact-content deduplication, not semantic policy comparison. No repository
+file contents are downloaded or published. The free-template message does not
+imply that Microsoft licenses are free.
+
+The active `Deploy GitHub Pages` workflow runs daily at **03:17 UTC**
+(05:17 CEST / 04:17 CET), and on pushes to `main`. Each run executes
+`npm run sync:metadata` before testing, building, and deploying the refreshed
+site. GitHub scheduled runs can be delayed. Inaccessible repositories retain
+their cached metadata and emit a warning in the workflow logs.
 
 ## Reporting issues and requesting improvements
 

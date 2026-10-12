@@ -1,0 +1,133 @@
+import { useEffect, useState } from "react";
+import {
+  getTotalTemplateCount,
+  isValidCategoryCounts,
+  type RepositoryCategoryCounts,
+  type RepositoryMetadataIndex,
+} from "./repositoryMetadata";
+
+const metrics: Array<{
+  key: keyof RepositoryCategoryCounts;
+  label: string;
+  detail: string;
+  icon: string;
+}> = [
+  { key: "conditionalAccess", label: "Conditional Access policies", detail: "Unique access policy JSON files", icon: "CA" },
+  { key: "devicePolicies", label: "Device policies", detail: "Configuration, settings & updates", icon: "DP" },
+  { key: "compliance", label: "Compliance policies", detail: "Policies & compliance scripts", icon: "CP" },
+  { key: "scripts", label: "Scripts", detail: "Unique scripts + 5 from Purview", icon: "PS" },
+  { key: "filters", label: "Filter settings", detail: "Unique assignment filter JSON files", icon: "FS" },
+  { key: "applications", label: "Applications", detail: "Unique application JSON files", icon: "AP" },
+  { key: "purviewPolicies", label: "Purview policies", detail: "24 pre-configured policies", icon: "PV" },
+];
+
+export function formatSyncTime(timestamp: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Brussels",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+    timeZoneName: "short",
+  }).format(new Date(timestamp));
+}
+
+function AnimatedCount({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDisplayValue(value);
+      return;
+    }
+
+    let frame: number;
+    let start: number | undefined;
+    setDisplayValue(0);
+    function animate(timestamp: number) {
+      start ??= timestamp;
+      const progress = Math.min((timestamp - start) / 900, 1);
+      setDisplayValue(Math.round(value * (1 - Math.pow(1 - progress, 3))));
+      if (progress < 1) frame = requestAnimationFrame(animate);
+    }
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+
+  return (
+    <>
+      <span className="visually-hidden">{value.toLocaleString("en-GB")}</span>
+      <span aria-hidden="true">{displayValue.toLocaleString("en-GB")}</span>
+    </>
+  );
+}
+
+export function PolicyCounters({
+  metadata,
+  status,
+}: {
+  metadata: RepositoryMetadataIndex;
+  status: "loading" | "ready" | "error";
+}) {
+  const counts = metadata.categoryCounts;
+  const total = getTotalTemplateCount(metadata.repositories);
+  const validCounts = status === "ready" && isValidCategoryCounts(counts);
+  const validSyncTime = metadata.generatedAt &&
+    Number.isFinite(new Date(metadata.generatedAt).getTime());
+
+  return (
+    <section className="policy-counts" aria-labelledby="policy-counts-heading" aria-busy={status === "loading"}>
+      <div className="policy-counts-header">
+        <div>
+          <div className="catalog-live-badge"><span aria-hidden="true" />Daily repository sync</div>
+          <h2 id="policy-counts-heading">Security templates. Countless possibilities.</h2>
+          <p>Expert-built policies and scripts at zero cost. Live repository data, updated every day.</p>
+        </div>
+        <div className="policy-counts-updated">
+          <span>Last sync</span>
+          {status === "ready" && validSyncTime ? (
+            <time dateTime={metadata.generatedAt}>{formatSyncTime(metadata.generatedAt)}</time>
+          ) : (
+            <span>{status === "loading" ? "Loading sync information..." : "Sync information unavailable"}</span>
+          )}
+        </div>
+      </div>
+      {status === "error" && (
+        <p className="policy-counts-unavailable" role="alert">
+          Repository counts could not be loaded. Please reload the page to try again.
+        </p>
+      )}
+      {status === "ready" && !validCounts && (
+        <p className="policy-counts-unavailable" role="status">Category totals are temporarily unavailable.</p>
+      )}
+      <dl className="policy-count-grid">
+        <div className="policy-count-card policy-count-featured">
+          <dt>
+            <span className="policy-count-icon" aria-hidden="true">ALL</span>
+            <span>Policy templates</span>
+          </dt>
+          <dd>
+            {status === "ready" && total !== undefined ? <AnimatedCount value={total} /> : <span aria-label="Count unavailable">--</span>}
+            <span className="policy-count-detail">Unique policy JSON files + Purview</span>
+          </dd>
+        </div>
+        {metrics.map(({ key, label, detail, icon }) => (
+          <div className="policy-count-card" key={key}>
+            <dt>
+              <span className="policy-count-icon" aria-hidden="true">{icon}</span>
+              <span>{label}</span>
+            </dt>
+            <dd>
+              {validCounts ? <AnimatedCount value={counts[key]} /> : <span aria-label={status === "loading" ? "Loading count" : "Count unavailable"}>--</span>}
+              <span className="policy-count-detail">{detail}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="policy-counts-footnote">Identical file contents are counted once across repositories. Category counts include scripts and applications not included in the policy-template total.</p>
+    </section>
+  );
+}

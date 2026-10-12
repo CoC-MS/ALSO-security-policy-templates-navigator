@@ -17,10 +17,10 @@ import {
 import {
   filterPlatformsByTopics,
   getRepositoryMetadata,
-  getTotalTemplateCount,
   type RepositoryMetadata,
   type RepositoryMetadataIndex,
 } from "./repositoryMetadata";
+import { PolicyCounters } from "./PolicyCounters";
 
 type Step = "license" | "platform" | "blocked" | "result" | "overview";
 
@@ -140,7 +140,6 @@ function App() {
   >("loading");
   const eligibleLicenses = selectedLicenses.filter((license) => license.eligible);
   const eligibleLicenseIds = eligibleLicenses.map((license) => license.id);
-  const totalTemplateCount = getTotalTemplateCount(repositoryMetadata.repositories);
   const overviewPlatforms = filterPlatformsByTopics(
     platforms,
     repositoryMetadata.repositories,
@@ -172,7 +171,7 @@ function App() {
           setMetadataStatus("ready");
         }
       } catch (error) {
-        console.error("Unable to load repository topics.", error);
+        console.error("Unable to load repository metadata.", error);
         if (!cancelled) setMetadataStatus("error");
       }
     }
@@ -255,6 +254,9 @@ function App() {
       <main>
         <div className="content">
           {step !== "blocked" && step !== "overview" && <StepIndicator step={step} />}
+          {(step === "license" || step === "overview") && (
+            <PolicyCounters metadata={repositoryMetadata} status={metadataStatus} />
+          )}
 
           {step === "overview" && (
             <section className="result-wrap" aria-labelledby="main-title">
@@ -361,15 +363,6 @@ function App() {
 
           {step === "license" && (
             <section aria-labelledby="main-title">
-              {metadataStatus === "ready" && totalTemplateCount !== undefined && (
-                <aside className="template-highlight" aria-label="Free security policy templates">
-                  <strong>{totalTemplateCount.toLocaleString()}+</strong>
-                  <div>
-                    <span>Pre-configured security policy templates. Ready to use.</span>
-                    <p>Strengthen your Microsoft environments with expert-built templates at <b>zero cost.</b></p>
-                  </div>
-                </aside>
-              )}
               <div className="eyebrow">Find your security policy templates</div>
               <h1 id="main-title" tabIndex={-1}>Which Microsoft 365 licenses do you have today?</h1>
               <p className="intro">Select all your current licenses to see which ALSO security policy templates are available to your organization.</p>

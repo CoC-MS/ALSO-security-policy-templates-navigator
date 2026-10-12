@@ -199,34 +199,183 @@ h1 {
   text-align: center;
 }
 
-.template-highlight {
-  display: flex;
-  max-width: 850px;
-  margin: 0 auto 2.5rem;
-  padding: clamp(1.25rem, 4vw, 2rem);
-  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
-  border-radius: 0.5rem;
-  background: linear-gradient(120deg, var(--primary-soft), var(--surface));
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.policy-counts {
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--primary-soft), var(--surface) 65%);
   box-shadow: var(--shadow);
-  gap: 1.5rem;
+}
+
+.policy-counts-header {
+  display: flex;
+  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.policy-counts-header h2,
+.policy-counts-header p {
+  margin: 0;
+}
+
+.policy-counts-header h2 {
+  margin-top: 0.65rem;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  letter-spacing: -0.025em;
+}
+
+.policy-counts-header > div > p {
+  max-width: 36rem;
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.catalog-live-badge {
+  display: inline-flex;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  gap: 0.45rem;
   align-items: center;
 }
 
-.template-highlight > strong {
+.catalog-live-badge > span {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #16804a;
+  box-shadow: 0 0 0 3px rgb(22 128 74 / 10%);
+}
+
+.policy-counts-updated {
+  display: grid;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.policy-counts-updated time {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.policy-count-grid {
+  display: grid;
+  margin: 0;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.policy-count-card {
+  display: flex;
+  min-width: 0;
+  min-height: 10rem;
+  padding: 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
+  flex-direction: column;
+  gap: 1.1rem;
+  justify-content: space-between;
+}
+
+.policy-count-card dt {
+  display: flex;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 650;
+  gap: 0.6rem;
+  align-items: center;
+  line-height: 1.35;
+}
+
+.policy-count-icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  background: var(--primary-soft);
   color: var(--primary);
-  font-size: clamp(2.5rem, 7vw, 4rem);
+  font-size: 0.65rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  place-items: center;
+}
+
+.policy-count-card dd {
+  margin: 0;
+  color: var(--primary);
+  font-size: 2.6rem;
+  font-weight: 750;
   letter-spacing: -0.04em;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.template-highlight span {
-  font-size: 1.1rem;
-  font-weight: 750;
+.policy-count-detail {
+  display: block;
+  margin-top: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.4;
 }
 
-.template-highlight p {
-  margin: 0.5rem 0;
+.policy-count-featured {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.policy-count-featured dt,
+.policy-count-featured dd {
+  color: #fff;
+}
+
+.policy-count-featured .policy-count-detail {
+  color: rgb(255 255 255 / 85%);
+}
+
+.policy-count-featured .policy-count-icon {
+  background: rgb(255 255 255 / 15%);
+  color: #fff;
+}
+
+.policy-counts-footnote {
+  margin: 1rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
   line-height: 1.5;
+}
+
+.policy-counts-unavailable {
+  margin: 0 0 1rem;
+  color: #b42318;
+  font-size: 0.9rem;
 }
 
 .card-grid {
@@ -723,17 +872,31 @@ footer p {
   .license-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .policy-count-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 600px) {
-  .template-highlight {
+  .policy-counts-header {
+    align-items: flex-start;
     flex-direction: column;
-    text-align: center;
+  }
+
+  .policy-counts-updated {
+    text-align: left;
   }
 
   .header-inner {
     height: 4rem;
     padding: 0 0.5rem;
+  }
+
+  @media (max-width: 380px) {
+    .policy-count-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   .brand-logo {
