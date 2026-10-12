@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Navigator documentation
+    url: https://github.com/CoC-MS/ALSO-security-policy-templates-navigator/blob/main/README.md
+    about: Read about the guide and how repository metadata and template counts are calculated.
+  - name: Open the Navigator
+    url: https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
+    about: Find policy repositories for your license and platform combination. For policy deployment questions, use the guidance and support resources in the linked repository.
