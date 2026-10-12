@@ -1,0 +1,121 @@
+name: Bug report
+description: Report a reproducible problem with the Navigator UI, filtering, mappings, or repository metadata.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve ALSO Microsoft Security Policy Templates Navigator.
+
+        Use this form for Navigator problems. Report problems deploying a policy in the linked policy repository instead.
+        Do not disclose security vulnerabilities in public issues. Do not include credentials, customer information, tenant IDs, tokens, certificates, confidential licensing agreements, non-public pricing, or unredacted logs or screenshots.
+  - type: dropdown
+    id: component-type
+    attributes:
+      label: Affected component
+      description: Select the area where the problem occurs.
+      options:
+        - License selection
+        - Platform or solution selection
+        - License-to-platform mapping
+        - Template results or repository links
+        - Repository overview or topic filtering
+        - Repository metadata or template counts
+        - Layout or accessibility
+        - GitHub Pages or workflow
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Navigator URL or version
+      description: Provide the public page URL and date observed, or the commit or package version for a local build. Remove private URL parameters.
+      placeholder: "Example: Live Navigator, observed 2026-10-12, or commit abc1234"
+    validations:
+      required: true
+  - type: input
+    id: browser-environment
+    attributes:
+      label: Browser, operating system, and device
+      description: Include browser and operating system versions, device type, and any relevant zoom level or assistive technology.
+      placeholder: "Example: Edge 140, Windows 11, desktop, 100% zoom"
+    validations:
+      required: true
+  - type: input
+    id: license-level
+    attributes:
+      label: Selected Microsoft licenses
+      description: List all selected licenses and add-ons exactly as shown, or "None selected".
+      placeholder: "Example: Microsoft 365 E3 + Defender Suite and Microsoft 365 F3"
+    validations:
+      required: true
+  - type: input
+    id: target-platform
+    attributes:
+      label: Selected or affected platforms and solutions
+      description: List selected platforms or solutions and any option you expected to see, or "Not applicable".
+      placeholder: "Example: Windows 11 and Conditional Access"
+    validations:
+      required: true
+  - type: input
+    id: topic-filter
+    attributes:
+      label: Topic search or filter
+      description: Enter the exact search text used in the repository overview, or "Not applicable". Use only generic, non-sensitive text.
+      placeholder: "Example: intune"
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Describe what you expected the Navigator to display or do.
+      placeholder: "Example: The selected license combination should make the Windows 11 templates available."
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: Describe what happened instead and how it affected use of the guide.
+      placeholder: "Example: The platform is unavailable even though the selected licenses meet its prerequisites."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction steps
+      description: List the minimum sanitized steps another contributor can use to reproduce the problem.
+      placeholder: |
+        1. Open the Navigator and start with no selections.
+        2. Select the specified licenses and continue to platforms.
+        3. Select the affected platform and view the template results.
+        4. Observe the unexpected result.
+    validations:
+      required: true
+  - type: textarea
+    id: sanitized-error-output
+    attributes:
+      label: Sanitized browser errors or screenshots
+      description: Include relevant browser console errors or screenshots only after removing private URLs, user names, tenant IDs, tokens, and other sensitive data.
+  - type: textarea
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting already performed
+      description: List relevant checks, retries, or workarounds you tried.
+      placeholder: "Example: Reloaded the page, reset selections, and reproduced in another browser."
+  - type: checkboxes
+    id: sensitive-data-confirmation
+    attributes:
+      label: Sensitive data confirmation
+      options:
+        - label: I removed all credentials, secrets, customer information, tenant identifiers, access tokens, certificates, sensitive logs or screenshots, confidential licensing agreements, and non-public pricing information.
+          required: true
+  - type: checkboxes
+    id: existing-issues-confirmation
+    attributes:
+      label: Existing issues confirmation
+      options:
+        - label: I reviewed existing issues and did not find a matching report.
+          required: true

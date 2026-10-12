@@ -1,0 +1,101 @@
+name: Documentation or licensing correction
+description: Report inaccurate, missing, outdated, or unclear documentation, licensing guidance, or platform mappings.
+title: "[Docs/License]: "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping keep ALSO Microsoft Security Policy Templates Navigator accurate.
+
+        Use this form for corrections to the guide or its license and platform mappings. For a reproducible UI or filtering malfunction, use the bug report.
+        Do not include confidential licensing agreements, non-public pricing, customer information, tenant IDs, credentials, tokens, certificates, or sensitive logs or screenshots.
+  - type: dropdown
+    id: correction-category
+    attributes:
+      label: Correction category
+      description: Select the type of correction needed.
+      options:
+        - Incorrect documentation
+        - Missing documentation
+        - Outdated Microsoft product information
+        - Licensing clarification
+        - License-to-platform mapping
+        - Repository description or template count
+        - Broken repository or documentation link
+        - Typographical or formatting problem
+        - Translation or terminology
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: affected-location
+    attributes:
+      label: Affected page, file, or section
+      description: Provide the public page URL, repository path, heading, or card name. Remove private URL parameters.
+      placeholder: "Example: src/catalog.ts, Windows Servers license notes, or README.md, Template count"
+    validations:
+      required: true
+  - type: input
+    id: microsoft-product
+    attributes:
+      label: Affected Microsoft product, platform, or solution
+      description: Enter the affected product or platform, or "Not applicable" for general documentation.
+      placeholder: "Example: Windows Servers, Conditional Access, or Microsoft Purview"
+    validations:
+      required: true
+  - type: textarea
+    id: current-guidance
+    attributes:
+      label: Current wording or mapping
+      description: Quote a short excerpt or summarize the existing guidance, including any selected licenses and platforms.
+      placeholder: "Example: The Navigator shows a platform as available for this license combination."
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-correction
+    attributes:
+      label: Proposed correction
+      description: Provide corrected wording, a link update, or a clear description of the mapping change.
+      placeholder: "Example: Update the platform prerequisites and link to the relevant Microsoft Learn documentation."
+    validations:
+      required: true
+  - type: input
+    id: authoritative-reference
+    attributes:
+      label: Authoritative reference or Microsoft Learn source
+      description: Provide a public Microsoft Learn or other authoritative source, if available.
+      placeholder: "Example: https://learn.microsoft.com/... or Not available"
+    validations:
+      required: true
+  - type: input
+    id: license-subscription
+    attributes:
+      label: Microsoft licenses, subscriptions, or add-ons involved
+      description: List all relevant public license and add-on names, or "Not applicable".
+      placeholder: "Example: Microsoft 365 E3 + Defender Suite"
+    validations:
+      required: true
+  - type: textarea
+    id: correction-impact
+    attributes:
+      label: Why the correction matters
+      description: Explain how the current content could affect license selection, platform eligibility, or understanding.
+      placeholder: "Example: The current mapping could lead users to choose templates whose prerequisites are not met."
+    validations:
+      required: true
+  - type: checkboxes
+    id: sensitive-data-confirmation
+    attributes:
+      label: Sensitive data confirmation
+      options:
+        - label: This report contains no credentials, secrets, customer information, tenant identifiers, access tokens, certificates, sensitive logs or screenshots, confidential licensing agreements, or non-public pricing information.
+          required: true
+  - type: checkboxes
+    id: existing-issues-confirmation
+    attributes:
+      label: Existing issues confirmation
+      options:
+        - label: I reviewed existing issues and did not find a matching correction.
+          required: true

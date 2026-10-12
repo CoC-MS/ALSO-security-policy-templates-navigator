@@ -18,3 +18,17 @@ The free-template message does not imply that Microsoft licenses are free.
 
 Purview contributes a fixed, user-confirmed count of 24 policy templates rather
 than a JSON-file count, since its templates are deployed through PowerShell.
+
+## Reporting issues and requesting improvements
+
+Use the [issue forms](https://github.com/CoC-MS/ALSO-security-policy-templates-navigator/issues/new/choose)
+for Navigator bugs, feature or repository-listing requests, and documentation or
+licensing corrections. For bugs, include your browser, all selected licenses and
+platforms, any topic filter, and reproduction steps. For licensing or mapping
+corrections, include a public authoritative reference where available.
+
+Policy deployment questions, policy bugs, and requests for new deployable
+policies belong in the relevant repository linked by the Navigator. Keep reports
+free of customer data, tenant identifiers, secrets, confidential licensing
+agreements, non-public pricing, and sensitive logs or screenshots. Do not
+disclose security vulnerabilities in public issues.
