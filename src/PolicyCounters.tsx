@@ -72,7 +72,7 @@ export function PolicyCounters({
   status: "loading" | "ready" | "error";
 }) {
   const counts = metadata.categoryCounts;
-  const total = getTotalTemplateCount(metadata.repositories);
+  const total = getTotalTemplateCount(counts);
   const validCounts = status === "ready" && isValidCategoryCounts(counts);
   const validSyncTime = metadata.generatedAt &&
     Number.isFinite(new Date(metadata.generatedAt).getTime());

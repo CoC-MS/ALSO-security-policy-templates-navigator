@@ -31,12 +31,13 @@ describe("policy counter dashboard", () => {
       "Conditional Access policies", "Device policies", "Compliance policies",
       "Scripts", "Filter settings", "Applications", "Purview policies",
     ]) expect(html).toContain(label);
-    for (const count of [293, 43, 130, 34, 30, 17, 9, 24]) {
+    for (const count of [287, 43, 130, 34, 30, 17, 9, 24]) {
       expect(html).toContain(`class="visually-hidden">${count}</span>`);
     }
     expect(html).toContain("12 Oct 2026, 13:20:40 CEST");
     expect(html).toContain('dateTime="2026-10-12T11:20:40.450Z"');
     expect(html).toContain("updated every day");
+    expect(html).not.toContain('class="visually-hidden">293</span>');
     expect(html).toContain("Total policy templates");
     expect(html).toContain("Total unique policy templates");
     expect(html).not.toContain("Unique policy JSON files + Purview");
@@ -70,6 +71,7 @@ describe("policy counter dashboard", () => {
   it("shows an unavailable message for incomplete category data or invalid sync dates", () => {
     const html = renderToStaticMarkup(<PolicyCounters metadata={{ ...metadata, categoryCounts: undefined, generatedAt: "invalid" }} status="ready" />);
     expect(html).toContain("Category totals are temporarily unavailable");
+    expect(html).not.toContain('class="visually-hidden">293</span>');
     expect(html).toContain("Sync information unavailable");
     expect(html).not.toContain("Invalid Date");
   });

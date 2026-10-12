@@ -27,10 +27,11 @@ totals count unique Git blob contents across repositories:
   folders respectively.
 - Purview contributes a fixed, user-confirmed count of 24 policies.
 
-The overall template total counts `.json` files in each unique linked repository,
-excluding files under Applications, Authentication Context (including
-AuthenticationContext), Groups, and NamedLocations folders. Purview's overall
-count is fixed at 24 because its policies are deployed through PowerShell.
+The overall template total is the sum of the seven displayed category counters,
+including scripts, applications, and the fixed Purview contributions. It is
+calculated from the same refreshed category data, so it always reconciles with
+the category boxes. No additional uncategorized JSON files contribute to this
+dashboard total.
 Formatting differences or different exported IDs produce distinct hashes; this
 is exact-content deduplication, not semantic policy comparison. No repository
 file contents are downloaded or published. The free-template message does not

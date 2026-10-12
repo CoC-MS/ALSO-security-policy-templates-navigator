@@ -48,25 +48,13 @@ export function isValidCategoryCounts(
 }
 
 export function getTotalTemplateCount(
-  repositories: readonly RepositoryMetadata[],
+  counts: unknown,
 ): number | undefined {
-  const uniqueRepositories = new Map(
-    repositories.map((repository) => [repository.url, repository]),
-  );
-  if (uniqueRepositories.size === 0) return undefined;
-
-  let total = 0;
-  for (const repository of uniqueRepositories.values()) {
-    if (
-      repository.templateCount === undefined ||
-      !Number.isSafeInteger(repository.templateCount) ||
-      repository.templateCount < 0
-    ) {
-      return undefined;
-    }
-    total += repository.templateCount;
-  }
-  return total;
+  if (!isValidCategoryCounts(counts)) return undefined;
+  const total = counts.conditionalAccess + counts.devicePolicies +
+    counts.compliance + counts.scripts + counts.filters +
+    counts.applications + counts.purviewPolicies;
+  return Number.isSafeInteger(total) ? total : undefined;
 }
 
 function normalize(value: string): string {
