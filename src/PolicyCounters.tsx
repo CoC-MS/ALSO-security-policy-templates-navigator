@@ -83,7 +83,7 @@ export function PolicyCounters({
         <div>
           <div className="catalog-live-badge"><span aria-hidden="true" />Daily repository sync</div>
           <h2 id="policy-counts-heading">Security policy templates. Zero trust at zero cost.</h2>
-          <p>Expert-built security policy templates and scripts to scale Microsoft security configurations at zero cost. Repository data updated every day.</p>
+          <p>Free Microsoft Security policy templates, deployment guides, and automation designed to accelerate secure-by-default deployments in Microsoft cloud environments.</p>
         </div>
         <div className="policy-counts-updated">
           <span>Last sync</span>

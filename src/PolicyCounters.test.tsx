@@ -36,7 +36,7 @@ describe("policy counter dashboard", () => {
     }
     expect(html).toContain("12 Oct 2026, 13:20:40 CEST");
     expect(html).toContain('dateTime="2026-10-12T11:20:40.450Z"');
-    expect(html).toContain("Expert-built security policy templates and scripts to scale Microsoft security configurations at zero cost. Repository data updated every day.");
+    expect(html).toContain("Free Microsoft Security policy templates, deployment guides, and automation designed to accelerate secure-by-default deployments in Microsoft cloud environments.");
     expect(html).toContain("Security policy templates. Zero trust at zero cost.");
     expect(html).not.toContain('class="visually-hidden">293</span>');
     expect(html).toContain("<span>Total</span>");
