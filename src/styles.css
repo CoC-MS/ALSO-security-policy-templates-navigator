@@ -336,16 +336,6 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.policy-count-detail {
-  display: block;
-  margin-top: 0.6rem;
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  font-weight: 400;
-  letter-spacing: normal;
-  line-height: 1.4;
-}
-
 .policy-count-featured {
   border-color: var(--primary);
   background: var(--primary);
@@ -354,10 +344,6 @@ h1 {
 .policy-count-featured dt,
 .policy-count-featured dd {
   color: #fff;
-}
-
-.policy-count-featured .policy-count-detail {
-  color: rgb(255 255 255 / 85%);
 }
 
 .policy-count-featured .policy-count-icon {

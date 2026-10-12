@@ -38,14 +38,15 @@ describe("policy counter dashboard", () => {
     expect(html).toContain('dateTime="2026-10-12T11:20:40.450Z"');
     expect(html).toContain("Expert-built security policy templates and scripts to scale Microsoft security configurations at zero cost. Repository data updated every day.");
     expect(html).not.toContain('class="visually-hidden">293</span>');
-    expect(html).toContain("Total policy templates");
-    expect(html).toContain("Total unique policy templates");
+    expect(html).toContain("<span>Total</span>");
+    expect(html).not.toContain("Total policy templates");
+    expect(html).not.toContain("Total unique policy templates");
     expect(html).not.toContain("Unique policy JSON files + Purview");
     for (const detail of [
       "Unique access policies", "Configuration, settings", "Policies &amp; compliance scripts",
       "Unique scripts", "Unique assignment filters", "Unique applications", "24 pre-configured policies",
     ]) expect(html).not.toContain(detail);
-    expect(html.match(/class="policy-count-detail"/g)).toHaveLength(1);
+    expect(html).not.toContain('class="policy-count-detail"');
     expect(html).not.toContain("+ 5 from Purview");
     expect(html).not.toContain("Identical file contents");
     expect(html).not.toContain("Unique access policy JSON files");
