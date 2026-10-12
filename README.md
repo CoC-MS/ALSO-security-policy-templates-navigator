@@ -19,7 +19,7 @@ totals count unique Git blob contents across repositories:
 - Endpoint policies: JSON files in `SettingsCatalog`, `AdministrativeTemplates`,
   `ADMXFiles`, `Autopilot`, `DeviceConfiguration`, `DriveUpdateProfiles`,
   `QualityUpdatePolicies`, and `UpdatePolicies`.
-- Compliance policies and scripts: JSON files in `CompliancePolicies` and JSON
+- Endpoint compliance policies and scripts: JSON files in `CompliancePolicies` and JSON
   or script files in `ComplianceScripts`.
 - Scripts: PowerShell, shell, Python, and command scripts in `PowerShellScripts`,
   `DeviceHealthScripts`, and `RemediationScripts`, plus five Purview scripts.

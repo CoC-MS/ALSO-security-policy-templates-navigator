@@ -13,7 +13,7 @@ const metrics: Array<{
 }> = [
   { key: "conditionalAccess", label: "Conditional Access policies", icon: "CA" },
   { key: "devicePolicies", label: "Endpoint policies", icon: "EP" },
-  { key: "compliance", label: "Compliance policies", icon: "CP" },
+  { key: "compliance", label: "Endpoint compliance policies", icon: "CP" },
   { key: "scripts", label: "Scripts", icon: "PS" },
   { key: "filters", label: "Filter settings", icon: "FS" },
   { key: "applications", label: "Applications", icon: "AP" },
@@ -83,7 +83,7 @@ export function PolicyCounters({
         <div>
           <div className="catalog-live-badge"><span aria-hidden="true" />Daily repository sync</div>
           <h2 id="policy-counts-heading">Security templates. Countless possibilities.</h2>
-          <p>Expert-built policies and scripts at zero cost. Live repository data, updated every day.</p>
+          <p>Expert-built security policy templates and scripts to scale Microsoft security configurations at zero cost. Repository data updated every day.</p>
         </div>
         <div className="policy-counts-updated">
           <span>Last sync</span>

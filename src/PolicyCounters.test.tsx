@@ -28,7 +28,7 @@ describe("policy counter dashboard", () => {
     const html = renderToStaticMarkup(<PolicyCounters metadata={metadata} status="ready" />);
     expect(html.match(/class="policy-count-card/g)).toHaveLength(8);
     for (const label of [
-      "Conditional Access policies", "Endpoint policies", "Compliance policies",
+      "Conditional Access policies", "Endpoint policies", "Endpoint compliance policies",
       "Scripts", "Filter settings", "Applications", "Purview policies",
     ]) expect(html).toContain(label);
     for (const count of [287, 43, 130, 34, 30, 17, 9, 24]) {
@@ -36,7 +36,7 @@ describe("policy counter dashboard", () => {
     }
     expect(html).toContain("12 Oct 2026, 13:20:40 CEST");
     expect(html).toContain('dateTime="2026-10-12T11:20:40.450Z"');
-    expect(html).toContain("updated every day");
+    expect(html).toContain("Expert-built security policy templates and scripts to scale Microsoft security configurations at zero cost. Repository data updated every day.");
     expect(html).not.toContain('class="visually-hidden">293</span>');
     expect(html).toContain("Total policy templates");
     expect(html).toContain("Total unique policy templates");
