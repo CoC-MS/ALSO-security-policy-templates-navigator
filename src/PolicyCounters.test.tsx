@@ -28,7 +28,7 @@ describe("policy counter dashboard", () => {
     const html = renderToStaticMarkup(<PolicyCounters metadata={metadata} status="ready" />);
     expect(html.match(/class="policy-count-card/g)).toHaveLength(8);
     for (const label of [
-      "Conditional Access policies", "Device policies", "Compliance policies",
+      "Conditional Access policies", "Endpoint policies", "Compliance policies",
       "Scripts", "Filter settings", "Applications", "Purview policies",
     ]) expect(html).toContain(label);
     for (const count of [287, 43, 130, 34, 30, 17, 9, 24]) {

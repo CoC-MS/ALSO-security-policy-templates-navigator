@@ -16,7 +16,7 @@ preferences. Category
 totals count unique Git blob contents across repositories:
 
 - Conditional Access policies: JSON files in `ConditionalAccess` folders.
-- Device policies: JSON files in `SettingsCatalog`, `AdministrativeTemplates`,
+- Endpoint policies: JSON files in `SettingsCatalog`, `AdministrativeTemplates`,
   `ADMXFiles`, `Autopilot`, `DeviceConfiguration`, `DriveUpdateProfiles`,
   `QualityUpdatePolicies`, and `UpdatePolicies`.
 - Compliance policies and scripts: JSON files in `CompliancePolicies` and JSON

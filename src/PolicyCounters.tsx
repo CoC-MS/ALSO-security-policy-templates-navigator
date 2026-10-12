@@ -12,7 +12,7 @@ const metrics: Array<{
   icon: string;
 }> = [
   { key: "conditionalAccess", label: "Conditional Access policies", icon: "CA" },
-  { key: "devicePolicies", label: "Device policies", icon: "DP" },
+  { key: "devicePolicies", label: "Endpoint policies", icon: "EP" },
   { key: "compliance", label: "Compliance policies", icon: "CP" },
   { key: "scripts", label: "Scripts", icon: "PS" },
   { key: "filters", label: "Filter settings", icon: "FS" },
