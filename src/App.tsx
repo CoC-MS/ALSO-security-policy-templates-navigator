@@ -21,8 +21,9 @@ import {
   type RepositoryMetadataIndex,
 } from "./repositoryMetadata";
 import { PolicyCounters } from "./PolicyCounters";
+import { Faq } from "./Faq";
 
-type Step = "license" | "platform" | "blocked" | "result" | "overview";
+type Step = "license" | "platform" | "blocked" | "result" | "overview" | "faq";
 
 function ArrowIcon() {
   return (
@@ -128,6 +129,7 @@ function RepositoryDetails({
 function App() {
   const [step, setStep] = useState<Step>("license");
   const [overviewReturnStep, setOverviewReturnStep] = useState<Step>("license");
+  const [faqReturnStep, setFaqReturnStep] = useState<Step>("license");
   const [selectedLicenses, setSelectedLicenses] = useState<License[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [searchInput, setSearchInput] = useState("");
@@ -217,6 +219,11 @@ function App() {
     setStep("overview");
   }
 
+  function showFaq() {
+    setFaqReturnStep(step === "faq" ? faqReturnStep : step);
+    setStep("faq");
+  }
+
   function submitRepositorySearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSearchQuery(searchInput.trim());
@@ -239,6 +246,13 @@ function App() {
             >
               Overview
             </button>
+            <button
+              className="button secondary issue-link"
+              type="button"
+              onClick={showFaq}
+            >
+              FAQ
+            </button>
             <a
               className="button secondary issue-link"
               href="https://github.com/CoC-MS/ALSO-security-policy-templates-navigator/issues/new/choose"
@@ -253,9 +267,23 @@ function App() {
 
       <main>
         <div className="content">
-          {step !== "blocked" && step !== "overview" && <StepIndicator step={step} />}
+          {step !== "blocked" && step !== "overview" && step !== "faq" && <StepIndicator step={step} />}
           {(step === "license" || step === "overview") && (
             <PolicyCounters metadata={repositoryMetadata} status={metadataStatus} />
+          )}
+          {step === "faq" && (
+            <>
+              <Faq />
+              <div className="actions centered">
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => setStep(faqReturnStep)}
+                >
+                  &larr; Back
+                </button>
+              </div>
+            </>
           )}
 
           {step === "overview" && (

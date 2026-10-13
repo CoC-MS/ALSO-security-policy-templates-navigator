@@ -599,6 +599,83 @@ h1 {
   line-height: 1.7;
 }
 
+.faq-page {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.faq-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.faq-item {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
+}
+
+.faq-item[open] {
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
+}
+
+.faq-item summary {
+  display: grid;
+  min-height: 4.25rem;
+  padding: 0.9rem 1.1rem;
+  cursor: pointer;
+  gap: 0.8rem;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  font-weight: 700;
+  line-height: 1.45;
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
+  outline-offset: -3px;
+}
+
+.faq-number {
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.faq-chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 160ms ease;
+}
+
+.faq-item[open] .faq-chevron {
+  transform: rotate(225deg) translate(-2px, -1px);
+}
+
+.faq-answer {
+  padding: 0 1.1rem 1rem 2.9rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.faq-answer p {
+  margin: 0 0 0.85rem;
+}
+
+.faq-answer p:last-child {
+  margin-bottom: 0;
+}
+
 .repository-search {
   max-width: 700px;
   margin: 0 auto 1rem;
@@ -872,12 +949,6 @@ footer p {
     padding: 0 0.5rem;
   }
 
-  @media (max-width: 380px) {
-    .policy-count-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
   .brand-logo {
     width: 5.5rem;
   }
@@ -955,6 +1026,25 @@ footer p {
     flex-direction: column;
   }
 
+}
+
+@media (max-width: 380px) {
+  .policy-count-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-logo {
+    width: 4.5rem;
+  }
+
+  .header-actions {
+    gap: 0.2rem;
+  }
+
+  .issue-link {
+    padding: 0.45rem 0.35rem;
+    font-size: 0.68rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
