@@ -43,6 +43,15 @@ The active `Deploy GitHub Pages` workflow runs daily at **03:17 UTC**
 site. GitHub scheduled runs can be delayed. Inaccessible repositories retain
 their cached metadata and emit a warning in the workflow logs.
 
+## Windows Server licensing
+
+Windows Server recommendations exclude Microsoft 365 F1/F3 base plans and
+F1/F3 with only Purview Suite. F-series plans with Defender Suite (including
+Defender + Purview combinations) have a limited Windows Server experience:
+purchase Microsoft Defender for Servers Plan 1/2 or Microsoft Defender for
+Endpoint Server licenses separately before deploying server policies.
+Other license families and Linux Server eligibility are unchanged.
+
 ## Reporting issues and requesting improvements
 
 Use the [issue forms](https://github.com/CoC-MS/ALSO-security-policy-templates-navigator/issues/new/choose)

@@ -481,7 +481,7 @@ function App() {
                   const windowsServerNotes =
                     platform.id === "windows-servers" ||
                     platform.id === "linux-server"
-                      ? getWindowsServerLicenseNotes(eligibleLicenseIds)
+                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, platform.id)
                       : [];
                   return (
                     <article className="recommendation-card" key={platform.id}>

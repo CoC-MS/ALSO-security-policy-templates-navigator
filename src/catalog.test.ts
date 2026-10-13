@@ -187,6 +187,42 @@ describe("Business Premium-only results", () => {
     ]);
   });
 
+  describe("F-series Windows Server eligibility", () => {
+    it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
+      "excludes %s from Windows Server policies",
+      (licenseId) => {
+        expect(isPlatformAvailableForLicense(licenseId, "windows-servers")).toBe(false);
+        expect(getWindowsServerLicenseNotes([licenseId], "windows-servers")).toEqual([]);
+        expect(isPlatformAvailableForLicense(licenseId, "linux-server")).toBe(true);
+      },
+    );
+
+    it.each(["f1-defender", "f3-defender", "f1-defender-purview", "f3-defender-purview"] as const)(
+      "offers %s limited Windows Server experience with separate server licensing",
+      (licenseId) => {
+        expect(isPlatformAvailableForLicense(licenseId, "windows-servers")).toBe(true);
+        expect(getPlatformExperienceForLicenses([licenseId], "windows-servers")).toBe("limited");
+        const notes = getWindowsServerLicenseNotes([licenseId], "windows-servers");
+        expect(notes).toHaveLength(1);
+        expect(notes[0]).toContain("Purchase either Microsoft Defender for Servers Plan 1 or Plan 2");
+        expect(notes[0]).toContain("Microsoft Defender for Endpoint Server license for each server");
+      },
+    );
+
+    it("does not unlock Windows Servers by combining base F-series and Purview-only plans", () => {
+      expect(isPlatformAvailableForLicenses(["f1", "f3", "f1-purview", "f3-purview"], "windows-servers")).toBe(false);
+    });
+
+    it("unions valid entitlements without adding prerequisites from excluded F-series plans", () => {
+      expect(isPlatformAvailableForLicenses(["f1", "f3-purview", "f3-defender"], "windows-servers")).toBe(true);
+      expect(getWindowsServerLicenseNotes(["f1", "f3-purview", "f3-defender"], "windows-servers"))
+        .toEqual(getWindowsServerLicenseNotes(["f3-defender"], "windows-servers"));
+      expect(isPlatformAvailableForLicenses(["f1", "e5"], "windows-servers")).toBe(true);
+      expect(getWindowsServerLicenseNotes(["f1", "e5"], "windows-servers"))
+        .toEqual(getWindowsServerLicenseNotes(["e5"], "windows-servers"));
+    });
+  });
+
   it("names Entra ID P2 and the Defender Suite alternative for Conditional Access", () => {
     const message = getLimitedExperienceNoteForLicenses(
       licenseIds,
@@ -328,7 +364,7 @@ describe("full-capability suite tier", () => {
     describe("Microsoft 365 F1-only results", () => {
       const licenseIds = ["f1"] as const;
 
-      it("mirrors Business Premium availability and excludes Linux Desktop", () => {
+      it("excludes Windows Servers and Linux Desktop", () => {
         expect(
           platforms
             .filter((platform) =>
@@ -337,7 +373,6 @@ describe("full-capability suite tier", () => {
             .map((platform) => platform.id),
         ).toEqual([
           "windows-11",
-          "windows-servers",
           "ai-security",
           "conditional-access",
           "linux-server",
@@ -351,8 +386,12 @@ describe("full-capability suite tier", () => {
       describe("Microsoft 365 E3-only results", () => {
         const licenseIds = ["e3"] as const;
 
-        it("mirrors F1 availability and excludes Linux Desktop", () => {
+        it("mirrors F1 availability except for Windows Servers", () => {
           for (const platform of platforms) {
+            if (platform.id === "windows-servers") {
+              expect(isPlatformAvailableForLicenses(licenseIds, platform.id)).toBe(true);
+              continue;
+            }
             expect(
               isPlatformAvailableForLicenses(licenseIds, platform.id),
             ).toBe(isPlatformAvailableForLicenses(["f1"], platform.id));
@@ -378,7 +417,7 @@ describe("full-capability suite tier", () => {
                   .map((platform) => platform.id),
               ).toEqual([
                 "windows-11",
-                "windows-servers",
+                ...(!licenseId.startsWith("f") ? ["windows-servers"] : []),
                 "ai-security",
                 "conditional-access",
                 "linux-server",

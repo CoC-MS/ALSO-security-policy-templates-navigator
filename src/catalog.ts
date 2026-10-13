@@ -268,6 +268,12 @@ const serverBaseLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
+const windowsServerLicenseIds = new Set<License["id"]>(
+  [...serverBaseLicenseIds].filter((licenseId) =>
+    !["f1", "f3", "f1-purview", "f3-purview"].includes(licenseId),
+  ),
+);
+
 export function isPlatformAvailableForLicense(
   licenseId: License["id"],
   platformId: Platform["id"],
@@ -316,7 +322,7 @@ export function isPlatformAvailableForLicenses(
 
   if (platformId === "windows-servers") {
     return eligibleLicenseIds.some((licenseId) =>
-      serverBaseLicenseIds.has(licenseId),
+      windowsServerLicenseIds.has(licenseId),
     );
   }
 
@@ -511,10 +517,25 @@ export function getWindowsServerLicenseNote(
 
 export function getWindowsServerLicenseNotes(
   licenseIds: readonly License["id"][],
+  platformId?: "windows-servers" | "linux-server",
 ): string[] {
+  const applicableLicenseIds = platformId === "windows-servers"
+    ? licenseIds.filter((licenseId) => windowsServerLicenseIds.has(licenseId))
+    : licenseIds;
+  if (
+    platformId === "windows-servers" &&
+    applicableLicenseIds.length > 0 &&
+    applicableLicenseIds.every((licenseId) =>
+      licenseId.startsWith("f1") || licenseId.startsWith("f3"),
+    )
+  ) {
+    return [
+      "Limited Windows Server experience: Microsoft 365 F1 or F3 with Defender Suite does not include server licensing. Purchase either Microsoft Defender for Servers Plan 1 or Plan 2 through Microsoft Defender for Cloud, or a Microsoft Defender for Endpoint Server license for each server, before deploying these policies.",
+    ];
+  }
   return [
     ...new Set(
-      licenseIds
+      applicableLicenseIds
         .map((licenseId) => getWindowsServerLicenseNote(licenseId))
         .filter((note): note is string => note !== undefined),
     ),
@@ -529,7 +550,7 @@ export function getPlatformExperienceForLicenses(
     getLimitedExperienceNoteForLicenses(licenseIds, platformId) !== undefined;
   const needsServerLicense =
     (platformId === "windows-servers" || platformId === "linux-server") &&
-    getWindowsServerLicenseNotes(licenseIds).length > 0;
+    getWindowsServerLicenseNotes(licenseIds, platformId).length > 0;
 
   return hasLimitedExperienceNote || needsServerLicense ? "limited" : "full";
 }
