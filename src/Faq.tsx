@@ -61,6 +61,30 @@ export const faqItems = [
       "Once the policies have been reviewed and approved, organizations can deploy their customized baseline to production environments using their preferred deployment solutions. Many of the templates are intended to provide a starting point and can be adapted to fit your organization's governance and operational requirements.",
     ],
   },
+  {
+    question: "Who created these templates, and who maintains them?",
+    answer: [
+      "The security policy templates are developed and maintained by ALSO's central Microsoft Security technical team.",
+      "The repository contains a combination of original work created by ALSO security specialists, security best practices, hardening recommendations, and selected content inspired by or rebuilt from publicly available open-source projects released under permissive licenses such as MIT, where applicable.",
+      "All templates, documentation, and updates are maintained exclusively by authorized members of ALSO's central Microsoft Security technical team. Only designated team members have permission to manage changes to the GitHub repositories and the Navigator website.",
+    ],
+  },
+  {
+    question: "I cannot report an issue on the site. What should I do?",
+    answer: [
+      "To report an issue with the Navigator website, you must sign in with a GitHub account.",
+      "The site uses GitHub Issues for issue tracking and feedback submission. If you do not have a GitHub account, you will need to create one before you can submit a report, feature request, or bug report.",
+      "Once signed in, you can use the available issue templates to provide details about the problem you have encountered.",
+    ],
+  },
+  {
+    question: "How do I report an issue with a security policy template?",
+    answer: [
+      "Each security policy template repository has its own GitHub issue tracker and issue templates.",
+      "To report a problem, navigate to the relevant repository, select Issues, and create a new issue using the most appropriate template. Providing clear information about the problem helps us investigate and resolve issues more efficiently.",
+      "For security and privacy reasons, never include sensitive information, credentials, tenant details, screenshots containing confidential data, or other private information in issue reports, as all repositories are publicly accessible.",
+    ],
+  },
 ] as const;
 
 export function Faq() {
