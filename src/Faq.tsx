@@ -53,6 +53,14 @@ export const faqItems = [
       "We encourage all partners and customers to review the requested permissions, perform their own security assessment, and follow their organization's governance and approval processes before using any deployment tool.",
     ],
   },
+  {
+    question: "I do not want to use the provided import scripts or tools, and/or I do not want to import policies directly into production tenants. What are my options?",
+    answer: [
+      "That is completely understandable, and how you use the templates is entirely your decision.",
+      "Many organizations choose to import the policies into a development or test environment first, where they can review, validate, and customize the configurations before deployment. This allows them to build their own security baseline, perform internal testing, and ensure the policies align with their or customer requirements.",
+      "Once the policies have been reviewed and approved, organizations can deploy their customized baseline to production environments using their preferred deployment solutions. Many of the templates are intended to provide a starting point and can be adapted to fit your organization's governance and operational requirements.",
+    ],
+  },
 ] as const;
 
 export function Faq() {
