@@ -85,6 +85,22 @@ export const faqItems = [
       "For security and privacy reasons, never include sensitive information, credentials, tenant details, screenshots containing confidential data, or other private information in issue reports, as all repositories are publicly accessible.",
     ],
   },
+  {
+    question: "Can a company use security configuration templates from GitHub that are licensed under Apache 2.0 and include them in a paid commercial offering?",
+    answer: [
+      "Yes. The Apache 2.0 license generally allows companies to use, modify, distribute, package, and include software, code, or configuration templates in commercial products and services.",
+      "However, organizations must comply with the applicable license requirements, including preserving copyright notices, license notices, and any required NOTICE file information. The original Apache-licensed content remains subject to its license terms, and its original authors retain ownership of their work.",
+      "Always review the license files and documentation within each repository before use. Some repositories may contain content from multiple sources and therefore include more than one license, such as Apache 2.0 and MIT. Understanding the applicable licenses helps ensure compliance with the original licensing terms.",
+    ],
+  },
+  {
+    question: "Why do you use \"ALSO\" in front of every policy name, and can it be removed?",
+    answer: [
+      "The ALSO prefix is included in policy names to make it easier to identify and manage the policies after they have been imported into a tenant.",
+      "This naming convention helps administrators quickly distinguish ALSO-provided policies from existing customer-created policies and other configurations within the environment.",
+      "The prefix is fully customizable and can be removed, renamed, or replaced at any time. Organizations are free to modify policy names to align with their own naming standards, operational requirements, or governance practices.",
+    ],
+  },
 ] as const;
 
 export function Faq() {
