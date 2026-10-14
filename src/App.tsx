@@ -236,7 +236,10 @@ function App() {
           <a className="brand" href={import.meta.env.BASE_URL} aria-label="ALSO Microsoft Security Policy Templates Navigator home">
             <img className="brand-logo" src={`${import.meta.env.BASE_URL}also-logo.png`} alt="ALSO" />
             <span className="brand-divider" aria-hidden="true" />
-            <span className="brand-product">ALSO Microsoft Security Policy Templates Navigator</span>
+            <span className="brand-title-group">
+              <span className="brand-product">ALSO Microsoft Security Policy Templates Navigator</span>
+              <span className="brand-preview">(Public Preview)</span>
+            </span>
           </a>
           <div className="header-actions">
             <button
@@ -268,7 +271,7 @@ function App() {
       <main>
         <div className="content">
           {step !== "blocked" && step !== "overview" && step !== "faq" && <StepIndicator step={step} />}
-          {(step === "license" || step === "overview") && (
+          {step === "license" && (
             <PolicyCounters metadata={repositoryMetadata} status={metadataStatus} />
           )}
           {step === "faq" && (

@@ -105,6 +105,23 @@ h1:focus {
   font-weight: 600;
 }
 
+.brand-title-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.brand-preview {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  border-radius: 999px;
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .issue-link {
   min-height: 2.5rem;
   font-size: 0.95rem;
@@ -953,7 +970,7 @@ footer p {
     width: 5.5rem;
   }
 
-  .brand-product {
+  .brand-title-group {
     display: none;
   }
 
