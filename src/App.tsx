@@ -238,7 +238,7 @@ function App() {
             <span className="brand-divider" aria-hidden="true" />
             <span className="brand-title-group">
               <span className="brand-product">ALSO Microsoft Security Policy Templates Navigator</span>
-              <span className="brand-preview">(Public Preview)</span>
+              <span className="brand-preview">Public Preview</span>
             </span>
           </a>
           <div className="header-actions">
