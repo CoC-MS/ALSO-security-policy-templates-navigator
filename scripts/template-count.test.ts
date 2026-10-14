@@ -131,6 +131,23 @@ describe("policy JSON file count", () => {
     expect(hashes.conditionalAccess).toEqual(["policy"]);
   });
 
+  it("counts only policy JSON in package exports, not sibling named locations or auth contexts", () => {
+    const hashes = getRepositoryCategoryHashes({
+      tree: [
+        { type: "blob", path: "ALSO_CA_BP/ConditionalAccess/BP-policy.json", sha: "policy" },
+        { type: "blob", path: "ALSO_CA_E5/ConditionalAccess/BP-policy.json", sha: "policy" },
+        { type: "blob", path: "ALSO_CA_E7/ConditionalAccess/BP-policy.json", sha: "policy" },
+        { type: "blob", path: "ALSO_CA_BP/NamedLocations/location-a.json", sha: "location-a" },
+        { type: "blob", path: "ALSO_CA_BP/NamedLocations/location-b.json", sha: "location-b" },
+        { type: "blob", path: "ALSO_CA_BP/NamedLocations/location-c.json", sha: "location-c" },
+        { type: "blob", path: "ALSO_CA_E5/AuthenticationContext/context.json", sha: "auth-context" },
+        { type: "blob", path: "ALSO_CA_E7/AuthenticationContext/context.json", sha: "auth-context" },
+      ],
+    });
+
+    expect(hashes.conditionalAccess).toEqual(["policy"]);
+  });
+
   it("deduplicates category hashes across repositories and adds fixed Purview counts", () => {
     const categoryHashes = {
       conditionalAccess: ["ca", "shared"],

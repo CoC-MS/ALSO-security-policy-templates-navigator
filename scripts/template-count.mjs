@@ -6,6 +6,8 @@ const excludedFolders = new Set([
 ]);
 const excludedConditionalAccessFolders = new Set([
   "authenticationcontext",
+  "authenticationcontexts",
+  "namedlocation",
   "namedlocations",
 ]);
 const devicePolicyFolders = new Set([

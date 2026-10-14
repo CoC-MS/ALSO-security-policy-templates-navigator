@@ -6,7 +6,7 @@ import type { RepositoryMetadataIndex } from "./repositoryMetadata";
 const metadata: RepositoryMetadataIndex = {
   generatedAt: "2026-10-12T11:20:40.450Z",
   categoryCounts: {
-    conditionalAccess: 43,
+    conditionalAccess: 44,
     devicePolicies: 130,
     compliance: 34,
     scripts: 30,
@@ -31,7 +31,7 @@ describe("policy counter dashboard", () => {
       "Conditional Access policies", "Endpoint policies", "Endpoint compliance policies",
       "Scripts", "Filter settings", "Applications", "Purview policies",
     ]) expect(html).toContain(label);
-    for (const count of [287, 43, 130, 34, 30, 17, 9, 24]) {
+    for (const count of [288, 44, 130, 34, 30, 17, 9, 24]) {
       expect(html).toContain(`class="visually-hidden">${count}</span>`);
     }
     expect(html).toContain("12 Oct 2026, 13:20:40 CEST");

@@ -15,9 +15,10 @@ instead of fabricated zero counts. Count-up animation respects reduced-motion
 preferences. Category
 totals count unique Git blob contents across repositories:
 
-- Conditional Access policies: JSON files in `ConditionalAccess` folders, excluding
-  nested Authentication Context and Named Locations folders (including spelling
-  variations such as `AuthenticationContext` and `named-locations`).
+- Conditional Access policies: unique JSON files in `ConditionalAccess` folders.
+  Named-location and authentication-context JSON files stored alongside those
+  policy folders in package exports are not included. Folder spelling variations
+  are normalized, including `AuthenticationContext` and `named-locations`.
 - Endpoint policies: JSON files in `SettingsCatalog`, `AdministrativeTemplates`,
   `ADMXFiles`, `Autopilot`, `DeviceConfiguration`, `DriveUpdateProfiles`,
   `QualityUpdatePolicies`, and `UpdatePolicies`.
