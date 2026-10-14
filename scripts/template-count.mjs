@@ -4,6 +4,10 @@ const excludedFolders = new Set([
   "groups",
   "namedlocations",
 ]);
+const excludedConditionalAccessFolders = new Set([
+  "authenticationcontext",
+  "namedlocations",
+]);
 const devicePolicyFolders = new Set([
   "settingscatalog",
   "administrativetemplates",
@@ -91,7 +95,9 @@ export function getPolicyJsonHashes(tree) {
 export function getRepositoryCategoryHashes(tree) {
   return {
     conditionalAccess: getFileHashes(tree, (path) =>
-      isJson(path) && pathFolders(path).includes("conditionalaccess"),
+      isJson(path) &&
+      pathFolders(path).includes("conditionalaccess") &&
+      !pathFolders(path).some((folder) => excludedConditionalAccessFolders.has(folder)),
     ),
     devicePolicies: getFileHashes(tree, (path) =>
       isJson(path) && pathFolders(path).some((folder) => devicePolicyFolders.has(folder)),

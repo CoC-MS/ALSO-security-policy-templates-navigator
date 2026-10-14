@@ -117,6 +117,20 @@ describe("policy JSON file count", () => {
     });
   });
 
+  it("excludes authentication contexts and named locations from Conditional Access counts", () => {
+    const hashes = getRepositoryCategoryHashes({
+      tree: [
+        { type: "blob", path: "ConditionalAccess/Policies/require-mfa.json", sha: "policy" },
+        { type: "blob", path: "ConditionalAccess/Authentication Context/context.json", sha: "auth-context" },
+        { type: "blob", path: "ConditionalAccess/AuthenticationContext/other.json", sha: "auth-context-2" },
+        { type: "blob", path: "ConditionalAccess/named-locations/location.json", sha: "named-location" },
+        { type: "blob", path: "ConditionalAccess/NamedLocations/other.json", sha: "named-location-2" },
+      ],
+    });
+
+    expect(hashes.conditionalAccess).toEqual(["policy"]);
+  });
+
   it("deduplicates category hashes across repositories and adds fixed Purview counts", () => {
     const categoryHashes = {
       conditionalAccess: ["ca", "shared"],
