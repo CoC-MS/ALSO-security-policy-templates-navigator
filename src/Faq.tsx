@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 export const faqItems = [
   {
     question: "What is the purpose of the ALSO Security Policy Templates Navigator Site?",
@@ -101,6 +103,23 @@ export const faqItems = [
       "The prefix is fully customizable and can be removed, renamed, or replaced at any time. Organizations are free to modify policy names to align with their own naming standards, operational requirements, or governance practices.",
     ],
   },
+  {
+    question: "What happens to my existing security policies if I import the ALSO Security Policy Templates?",
+    answer: [
+      "Your existing security policies will not be affected, and there is no requirement to remove or modify them before importing the ALSO Security Policy Templates.",
+      <p>All ALSO templates follow a consistent naming convention, making it easy to distinguish imported policies from your existing configurations. In addition, the security policy templates are designed to be imported in an <strong>unassigned state</strong>. The exception is <strong>Conditional Access</strong> policies, where you should always ensure they are imported in an <strong>OFF</strong> state. This means they will not impact users, devices, or workloads immediately after import, provided they are deployed using the recommended import settings.</p>,
+      "After import, you are free to review and manage the policies as you see fit. You can:",
+      <ul>
+        <li>Remove policies that are not relevant to your environment.</li>
+        <li>Modify settings to align with your security requirements.</li>
+        <li>Test policies using pilot users or test groups.</li>
+        <li>Gradually assign policies to production users and devices.</li>
+        <li>Integrate selected policies into your existing security baseline.</li>
+      </ul>,
+      "You remain in full control of how, when, and if the imported policies are deployed within your environment.",
+      <p><strong>Note:</strong> We strongly recommend thoroughly reviewing all imported policies before assigning them to users, groups, devices, or workloads in production environments.</p>,
+    ],
+  },
 ] as const;
 
 export function Faq() {
@@ -120,7 +139,11 @@ export function Faq() {
               <span className="faq-chevron" aria-hidden="true" />
             </summary>
             <div className="faq-answer">
-              {answer.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              {answer.map((paragraph, paragraphIndex) => (
+                <Fragment key={paragraphIndex}>
+                  {typeof paragraph === "string" ? <p>{paragraph}</p> : paragraph}
+                </Fragment>
+              ))}
             </div>
           </details>
         ))}
