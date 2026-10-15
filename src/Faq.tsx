@@ -88,7 +88,7 @@ export const faqItems = [
     ],
   },
   {
-    question: "Can a company use security configuration templates from GitHub that are licensed under Apache 2.0 and include them in a paid commercial offering?",
+    question: "Can I use ALSO security policy templates that are licensed under Apache 2.0 and include them in a paid commercial offering?",
     answer: [
       "Yes. The Apache 2.0 license generally allows companies to use, modify, distribute, package, and include software, code, or configuration templates in commercial products and services.",
       "However, organizations must comply with the applicable license requirements, including preserving copyright notices, license notices, and any required NOTICE file information. The original Apache-licensed content remains subject to its license terms, and its original authors retain ownership of their work.",
