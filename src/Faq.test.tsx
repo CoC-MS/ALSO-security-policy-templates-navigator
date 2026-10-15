@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { Faq, faqItems } from "./Faq";
 
 describe("FAQ page", () => {
-  it("renders all fourteen supplied questions and their complete answers accessibly", () => {
+  it("renders all fifteen supplied questions and their complete answers accessibly", () => {
     const html = renderToStaticMarkup(<Faq />);
 
-    expect(faqItems).toHaveLength(14);
-    expect(html.match(/<details class="faq-item"/g)).toHaveLength(14);
+    expect(faqItems).toHaveLength(15);
+    expect(html.match(/<details class="faq-item"/g)).toHaveLength(15);
     expect(html).toContain("<summary>");
     expect(html).toContain("<h1 id=\"faq-title\"");
     const decodedHtml = html
@@ -19,6 +19,16 @@ describe("FAQ page", () => {
         expect(html).toContain(renderToStaticMarkup(<>{paragraph}</>));
       }
     }
+  });
+
+  it("includes the website reuse restriction and distinguishes repository licensing", () => {
+    const html = renderToStaticMarkup(<Faq />);
+
+    expect(faqItems[14].question).toBe("Can I copy this site, add my own logo, and use or redistribute it?");
+    expect(html).toContain('<span class="faq-number">15</span>');
+    expect(html).toContain("<strong>All Rights Reserved</strong>");
+    expect(html).toContain("without prior written permission from ALSO.");
+    expect(html).toContain("<strong>Note:</strong> Licensing may differ between the website and individual GitHub repositories.");
   });
 
   it("preserves the import-state emphasis, action list, and production review warning", () => {

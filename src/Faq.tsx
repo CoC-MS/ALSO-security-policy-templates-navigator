@@ -120,6 +120,16 @@ export const faqItems = [
       <p><strong>Note:</strong> We strongly recommend thoroughly reviewing all imported policies before assigning them to users, groups, devices, or workloads in production environments.</p>,
     ],
   },
+  {
+    question: "Can I copy this site, add my own logo, and use or redistribute it?",
+    answer: [
+      <p>No. This website and its content are protected under <strong>All Rights Reserved</strong> copyright.</p>,
+      "You may view and use the site for its intended purpose, but you may not copy, modify, rebrand, redistribute, publish, or create derivative versions of the site without prior written permission from ALSO.",
+      "Adding your own logo or company branding does not grant permission to reuse the website, its design, content, structure, or functionality.",
+      "If you require permission for a specific use case, please contact ALSO before reproducing or distributing any part of the site.",
+      <p><strong>Note:</strong> Licensing may differ between the website and individual GitHub repositories. Always review the license information within each repository to determine how specific templates, scripts, or other assets may be used.</p>,
+    ],
+  },
 ] as const;
 
 export function Faq() {
