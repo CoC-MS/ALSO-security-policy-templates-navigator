@@ -396,7 +396,7 @@ function App() {
             <section aria-labelledby="main-title">
               <div className="eyebrow">Find your security policy templates</div>
               <h1 id="main-title" tabIndex={-1}>Which Microsoft 365 licenses do you have today?</h1>
-              <p className="intro">Select all your current licenses to see which ALSO security policy templates are available to your organization.</p>
+              <p className="intro">Select all your current licenses to see which ALSO security policy templates are available to your customers.</p>
               <div className="license-section" aria-labelledby="enterprise-heading">
                 <h2 id="enterprise-heading">Enterprise</h2>
                 <LicenseGrid items={enterpriseLicenses} selected={selectedLicenses} onToggle={toggleLicense} />
