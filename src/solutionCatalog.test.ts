@@ -7,15 +7,45 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
-  it("covers the six requested security goals", () => {
+  it("includes administrator protection with the requested Conditional Access policies", () => {
     expect(securityGoals.map((goal) => goal.name)).toEqual([
       "Attack protection",
+      "Administrator protection",
       "Endpoint protection",
       "AI and Agent Security",
       "Endpoint management",
       "Data protection",
       "App protection",
     ]);
+
+    expect(
+      getSolutionPlatformIds("administrator-protection", [
+        "administrator-protection-policies",
+      ]),
+    ).toEqual(["conditional-access"]);
+    expect(
+      getRecommendedPolicyIds(
+        "administrator-protection",
+        ["administrator-protection-policies"],
+        "conditional-access",
+      ),
+    ).toEqual([
+      "CA100",
+      "CA101",
+      "CA102",
+      "CA103",
+      "CA104",
+      "CA105",
+      "CA107",
+      "CA108",
+      "CA109",
+      "CA110",
+    ]);
+    const administratorOption = securityGoals
+      .find((goal) => goal.id === "administrator-protection")!
+      .options[0];
+    expect(administratorOption.recommendedPolicyNote)
+      .toBe("CA106 requires Microsoft Entra ID Plan 2.");
   });
 
   it("supports selecting multiple security goals and deselecting one", () => {

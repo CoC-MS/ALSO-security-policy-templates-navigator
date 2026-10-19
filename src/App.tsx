@@ -149,6 +149,7 @@ interface RepositoryRecommendation {
   sourcePlatform: Platform;
   solutionNames: string[];
   policyIds: string[];
+  policyNotes: string[];
 }
 
 function getRepositoryRecommendations(
@@ -168,12 +169,21 @@ function getRepositoryRecommendations(
           .flatMap((option) => option.recommendedPolicyIds ?? []),
       )]
       : [];
+    const policyNotes = platform.id === "conditional-access"
+      ? [...new Set(
+        selectedOptions
+          .filter((option) => option.platformIds.includes(platform.id))
+          .map((option) => option.recommendedPolicyNote)
+          .filter((note): note is string => note !== undefined),
+      )]
+      : [];
 
     for (const repository of getPlatformRepositories(platform)) {
       const existing = recommendations.get(repository.url);
       if (existing) {
         existing.solutionNames = [...new Set([...existing.solutionNames, ...solutionNames])];
         existing.policyIds = [...new Set([...existing.policyIds, ...policyIds])];
+        existing.policyNotes = [...new Set([...existing.policyNotes, ...policyNotes])];
         if (
           "comingSoon" in existing.sourcePlatform &&
           existing.sourcePlatform.comingSoon &&
@@ -190,6 +200,7 @@ function getRepositoryRecommendations(
         sourcePlatform: platform,
         solutionNames,
         policyIds,
+        policyNotes,
       });
     }
   }
@@ -692,7 +703,7 @@ function App() {
               </div>
               {recommendedRepositories.length > 0 ? (
                 <div className="recommendation-grid">
-                  {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames, policyIds }) => {
+                  {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
@@ -729,12 +740,15 @@ function App() {
                           Recommended for: {solutionNames.join(", ")}
                         </p>
                         {policyIds.length > 0 && (
-                          <p className="recommended-policy-list">
-                            <strong>Recommended Conditional Access policies:</strong>{" "}
-                            {policyIds.map((policyId) => (
-                              <span className="recommended-policy-id" key={policyId}>{policyId}</span>
-                            ))}
-                          </p>
+                          <div className="recommended-policy-list">
+                            <p>
+                              <strong>Recommended Conditional Access policies:</strong>{" "}
+                              {policyIds.map((policyId) => (
+                                <span className="recommended-policy-id" key={policyId}>{policyId}</span>
+                              ))}
+                            </p>
+                            {policyNotes.map((note) => <p className="recommended-policy-note" key={note}>{note}</p>)}
+                          </div>
                         )}
                         {limitedExperienceNote && (
                           <aside className="license-requirement-note">

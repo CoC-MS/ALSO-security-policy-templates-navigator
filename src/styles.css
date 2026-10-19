@@ -641,14 +641,23 @@ h1 {
 }
 
 .recommended-policy-list {
-  display: flex;
   margin: 0 0 0.75rem;
-  gap: 0.4rem;
-  align-items: center;
-  flex-wrap: wrap;
   color: var(--text-muted);
   font-size: 0.82rem;
   line-height: 1.5;
+}
+
+.recommended-policy-list p {
+  display: flex;
+  margin: 0;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.recommended-policy-list .recommended-policy-note {
+  display: block;
+  margin-top: 0.2rem;
 }
 
 .recommended-policy-list strong {

@@ -6,6 +6,7 @@ export interface SolutionOption {
   description: string;
   platformIds: readonly Platform["id"][];
   recommendedPolicyIds?: readonly string[];
+  recommendedPolicyNote?: string;
 }
 
 export interface SecurityGoal {
@@ -57,6 +58,33 @@ export const securityGoals = [
         description: "Use identity and server security policies to help reduce repeated password-guessing attempts.",
         platformIds: ["conditional-access", "windows-servers"],
         recommendedPolicyIds: ["CA002", "CA000"],
+      },
+    ],
+  },
+  {
+    id: "administrator-protection",
+    name: "Administrator protection",
+    description: "Strengthen protection for administrator accounts with Conditional Access policies.",
+    prompt: "Explore recommended administrator protection policies",
+    options: [
+      {
+        id: "administrator-protection-policies",
+        name: "Administrator protection policies",
+        description: "Review Conditional Access policies designed to protect administrator accounts and privileged access.",
+        platformIds: ["conditional-access"],
+        recommendedPolicyIds: [
+          "CA100",
+          "CA101",
+          "CA102",
+          "CA103",
+          "CA104",
+          "CA105",
+          "CA107",
+          "CA108",
+          "CA109",
+          "CA110",
+        ],
+        recommendedPolicyNote: "CA106 requires Microsoft Entra ID Plan 2.",
       },
     ],
   },
