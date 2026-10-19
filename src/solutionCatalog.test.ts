@@ -13,20 +13,16 @@ describe("security goal recommendations", () => {
       "Administrator protection",
       "Endpoint protection",
       "AI and Agent Security",
-      "Endpoint management",
       "Data protection",
       "App protection",
     ]);
 
-    expect(
-      getSolutionPlatformIds("administrator-protection", [
-        "administrator-protection-policies",
-      ]),
-    ).toEqual(["conditional-access"]);
+    expect(getSolutionPlatformIds("administrator-protection", []))
+      .toEqual(["conditional-access"]);
     expect(
       getRecommendedPolicyIds(
         "administrator-protection",
-        ["administrator-protection-policies"],
+        [],
         "conditional-access",
       ),
     ).toEqual([
@@ -44,6 +40,7 @@ describe("security goal recommendations", () => {
     const administratorOption = securityGoals
       .find((goal) => goal.id === "administrator-protection")!
       .options[0];
+    expect(administratorOption.autoSelect).toBe(true);
     expect(administratorOption.recommendedPolicyNote)
       .toBe("CA106 requires Microsoft Entra ID Plan 2.");
   });
@@ -122,19 +119,7 @@ describe("security goal recommendations", () => {
     ]);
   });
 
-  it("maps management, data protection, and AI/Agent security", () => {
-    expect(
-      getSolutionPlatformIds("endpoint-management", [
-        "mobile-phone-management",
-        "device-management",
-      ]),
-    ).toEqual([
-      "android",
-      "ios-ipados",
-      "windows-11",
-      "macos",
-      "linux-desktop",
-    ]);
+  it("maps data protection and AI/Agent security", () => {
     expect(getSolutionPlatformIds("data-protection", ["purview-data-protection"]))
       .toEqual(["purview"]);
     expect(getSolutionPlatformIds("ai-agent-security", ["ai-security", "agent-security"]))

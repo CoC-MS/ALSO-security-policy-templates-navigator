@@ -208,6 +208,10 @@ function getRepositoryRecommendations(
   return [...recommendations.values()];
 }
 
+function isAutoSelectedOption(option: SolutionOption): boolean {
+  return option.autoSelect === true;
+}
+
 function App() {
   const [step, setStep] = useState<Step>("license");
   const [overviewReturnStep, setOverviewReturnStep] = useState<Step>("license");
@@ -230,7 +234,10 @@ function App() {
   );
   const selectedOptions = selectedGoals.flatMap((goal) =>
     goal.options
-      .filter((option) => selectedOptionIds.includes(`${goal.id}:${option.id}`))
+      .filter((option) =>
+        isAutoSelectedOption(option) ||
+        selectedOptionIds.includes(`${goal.id}:${option.id}`),
+      )
       .map((option) => ({
         ...option,
         selectionId: `${goal.id}:${option.id}`,
@@ -240,7 +247,10 @@ function App() {
     getSolutionPlatformIds(
       goal.id,
       goal.options
-        .filter((option) => selectedOptionIds.includes(`${goal.id}:${option.id}`))
+        .filter((option) =>
+          isAutoSelectedOption(option) ||
+          selectedOptionIds.includes(`${goal.id}:${option.id}`),
+        )
         .map((option) => option.id),
     ),
   );
@@ -331,7 +341,7 @@ function App() {
   }
 
   function continueFromFocus() {
-    if (selectedOptionIds.length > 0) setStep("result");
+    if (selectedOptions.length > 0) setStep("result");
   }
 
   function startOver() {
@@ -605,7 +615,16 @@ function App() {
                   className="button primary"
                   type="button"
                   disabled={selectedGoals.length === 0}
-                  onClick={() => selectedGoals.length > 0 && setStep("focus")}
+                  onClick={() => {
+                    if (selectedGoals.length === 0) return;
+                    setStep(
+                      selectedGoals.every((goal) =>
+                        goal.options.every(isAutoSelectedOption),
+                      )
+                        ? "result"
+                        : "focus",
+                    );
+                  }}
                 >
                   {selectedGoals.length > 0
                     ? `Continue with ${selectedGoals.length} security goal${selectedGoals.length === 1 ? "" : "s"}`
@@ -628,12 +647,14 @@ function App() {
               <h1 id="main-title" tabIndex={-1}>Choose the scenarios and platforms to include</h1>
               <p className="intro">Select one or more options under each goal. Select an option again to remove it. Recommendations will be matched to the licenses selected above.</p>
               <div className="goal-option-sections">
-                {selectedGoals.map((goal) => (
+                {selectedGoals.filter((goal) =>
+                  goal.options.some((option) => !isAutoSelectedOption(option)),
+                ).map((goal) => (
                   <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
                     <h2 id={`${goal.id}-heading`}>{goal.name}</h2>
                     <p>{goal.prompt}</p>
                     <div className="card-grid goal-option-grid" aria-label={`${goal.name} options`}>
-                      {goal.options.map((option, index) => {
+                      {goal.options.filter((option) => !isAutoSelectedOption(option)).map((option, index) => {
                         const selectionId = `${goal.id}:${option.id}`;
                         const isSelected = selectedOptionIds.includes(selectionId);
                         return (
@@ -665,7 +686,7 @@ function App() {
                 <button
                   className="button primary"
                   type="button"
-                  disabled={selectedOptionIds.length === 0}
+                  disabled={selectedOptions.length === 0}
                   onClick={continueFromFocus}
                 >
                   {selectedOptions.length === 0
@@ -792,7 +813,21 @@ function App() {
                 </div>
               )}
               <div className="actions centered">
-                <button className="button secondary" type="button" onClick={() => setStep("focus")}>&larr; Back</button>
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() =>
+                    setStep(
+                      selectedGoals.some((goal) =>
+                          goal.options.some((option) => !isAutoSelectedOption(option)),
+                      )
+                        ? "focus"
+                        : "goal",
+                    )
+                  }
+                >
+                  &larr; Back
+                </button>
                 <button className="button text-button" type="button" onClick={startOver}>Start over</button>
               </div>
             </section>

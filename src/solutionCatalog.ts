@@ -7,6 +7,7 @@ export interface SolutionOption {
   platformIds: readonly Platform["id"][];
   recommendedPolicyIds?: readonly string[];
   recommendedPolicyNote?: string;
+  autoSelect?: boolean;
 }
 
 export interface SecurityGoal {
@@ -72,6 +73,7 @@ export const securityGoals = [
         name: "Administrator protection policies",
         description: "Review Conditional Access policies designed to protect administrator accounts and privileged access.",
         platformIds: ["conditional-access"],
+        autoSelect: true,
         recommendedPolicyIds: [
           "CA100",
           "CA101",
@@ -120,26 +122,6 @@ export const securityGoals = [
         name: "Agent Security",
         description: "Explore Conditional Access and AI Security policies for Agent Security.",
         platformIds: ["agent-security"],
-      },
-    ],
-  },
-  {
-    id: "endpoint-management",
-    name: "Endpoint management",
-    description: "Find device management templates for mobile phones and managed endpoints.",
-    prompt: "What type of endpoint management are you working on?",
-    options: [
-      {
-        id: "mobile-phone-management",
-        name: "Mobile phone management",
-        description: "Manage Android and iOS/iPadOS devices.",
-        platformIds: ["android", "ios-ipados"],
-      },
-      {
-        id: "device-management",
-        name: "Device management",
-        description: "Manage Windows, macOS, and Linux Desktop devices.",
-        platformIds: ["windows-11", "macos", "linux-desktop"],
       },
     ],
   },
@@ -215,7 +197,7 @@ export function getSolutionPlatformIds(
   optionIds: readonly string[],
 ): Platform["id"][] {
   const selectedOptions = getSecurityGoal(goalId).options.filter((option) =>
-    optionIds.includes(option.id),
+    option.autoSelect || optionIds.includes(option.id),
   );
   return [...new Set(selectedOptions.flatMap((option) => option.platformIds))];
 }
@@ -229,7 +211,8 @@ export function getRecommendedPolicyIds(
   return [...new Set(
     getSecurityGoal(goalId).options
       .filter((option) =>
-        optionIds.includes(option.id) && option.platformIds.includes(platformId),
+        (option.autoSelect || optionIds.includes(option.id)) &&
+        option.platformIds.includes(platformId),
       )
       .flatMap((option) => option.recommendedPolicyIds ?? []),
   )];
