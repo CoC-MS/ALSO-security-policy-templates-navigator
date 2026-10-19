@@ -158,8 +158,8 @@ export const securityGoals = [
       {
         id: "oauth-apps",
         name: "OAuth apps",
-        description: "Explore Conditional Access policies for OAuth app access.",
-        platformIds: ["conditional-access"],
+        description: "Explore Conditional Access, Windows, and macOS policies for OAuth app protection.",
+        platformIds: ["conditional-access", "windows-11", "macos"],
       },
       {
         id: "desktop-apps",
