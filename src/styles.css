@@ -549,6 +549,21 @@ h1 {
   flex-direction: column;
 }
 
+.platform-title {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.platform-title .choice-name {
+  display: inline;
+}
+
+.platform-title h2 {
+  margin: 1rem 0 0.5rem;
+}
+
 .experience-badge {
   display: inline-flex;
   padding: 0.25rem 0.5rem;

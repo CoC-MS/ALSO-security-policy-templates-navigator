@@ -93,9 +93,11 @@ function StepIndicator({ step }: { step: Step }) {
 function RepositoryDetails({
   repositories,
   metadata,
+  comingSoon = false,
 }: {
   repositories: ReturnType<typeof getPlatformRepositories>;
   metadata: readonly RepositoryMetadata[];
+  comingSoon?: boolean;
 }) {
   return (
     <div className="repository-descriptions">
@@ -104,25 +106,28 @@ function RepositoryDetails({
           metadata,
           repository.url,
         );
-        const description =
-          repositoryMetadata?.description || repository.description;
+        const description = comingSoon
+          ? repository.description
+          : repositoryMetadata?.description || repository.description;
 
         return (
           <section key={repository.url}>
             {repositories.length > 1 && <h3>{repository.name}</h3>}
             <p>{description}</p>
-            <div
-              className="repository-topics"
-              aria-label={`${repository.name} GitHub topics`}
-            >
-              {repositoryMetadata && repositoryMetadata.topics.length > 0 ? (
-                repositoryMetadata.topics.map((topic) => (
-                  <span className="repository-topic" key={topic}>{topic}</span>
-                ))
-              ) : (
-                <span className="repository-topic empty">No topics configured</span>
-              )}
-            </div>
+            {!comingSoon && (
+              <div
+                className="repository-topics"
+                aria-label={`${repository.name} GitHub topics`}
+              >
+                {repositoryMetadata && repositoryMetadata.topics.length > 0 ? (
+                  repositoryMetadata.topics.map((topic) => (
+                    <span className="repository-topic" key={topic}>{topic}</span>
+                  ))
+                ) : (
+                  <span className="repository-topic empty">No topics configured</span>
+                )}
+              </div>
+            )}
           </section>
         );
       })}
@@ -371,29 +376,35 @@ function App() {
               <div className="recommendation-grid">
                 {overviewPlatforms.map((platform) => {
                   const repositories = getPlatformRepositories(platform);
+                  const comingSoon = "comingSoon" in platform && platform.comingSoon;
                   return (
                     <article className="recommendation-card" key={platform.id}>
                       <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
-                      <h2>{platform.name}</h2>
-                      {"comingSoon" in platform && platform.comingSoon && (
-                        <span className="experience-badge coming-soon-badge">(Coming)</span>
-                      )}
+                      <div className="platform-title">
+                        <h2>{platform.name}</h2>
+                        {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
+                      </div>
                       <RepositoryDetails
                         repositories={repositories}
                         metadata={repositoryMetadata.repositories}
+                        comingSoon={comingSoon}
                       />
                       <div className="repository-links">
-                        {repositories.map((repository) => (
-                          <a
-                            className="button primary repository-link"
-                            href={repository.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            key={repository.url}
-                          >
-                            Open {repository.name} repository <ArrowIcon />
-                          </a>
-                        ))}
+                        {comingSoon ? (
+                          <button className="button primary repository-link" type="button" disabled>
+                            AI Security macOS repository coming soon
+                          </button>
+                        ) : repositories.map((repository) => (
+                            <a
+                              className="button primary repository-link"
+                              href={repository.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              key={repository.url}
+                            >
+                              Open {repository.name} repository <ArrowIcon />
+                            </a>
+                          ))}
                       </div>
                     </article>
                   );
@@ -455,6 +466,7 @@ function App() {
                     isPlatformAvailableForLicenses(eligibleLicenseIds, platform.id),
                   )
                   .map((platform) => {
+                    const comingSoon = "comingSoon" in platform && platform.comingSoon;
                     const isSelected = selectedPlatforms.some((item) => item.id === platform.id);
                     const experience = getPlatformExperienceForLicenses(
                       eligibleLicenseIds,
@@ -470,12 +482,14 @@ function App() {
                       >
                         <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
                         <span className="choice-details">
-                          <span className="choice-name">{platform.name}</span>
-                          <span className={`experience-badge ${experience}`}>
-                            {experience === "full" ? "Full experience" : "Limited experience"}
+                          <span className="platform-title">
+                            <span className="choice-name">{platform.name}</span>
+                            {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
                           </span>
-                          {"comingSoon" in platform && platform.comingSoon && (
-                            <span className="experience-badge coming-soon-badge">(Coming)</span>
+                          {!comingSoon && (
+                            <span className={`experience-badge ${experience}`}>
+                              {experience === "full" ? "Full experience" : "Limited experience"}
+                            </span>
                           )}
                         </span>
                         <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
@@ -526,6 +540,7 @@ function App() {
               <div className="recommendation-grid">
                 {selectedPlatforms.map((platform) => {
                   const repositories = getPlatformRepositories(platform);
+                  const comingSoon = "comingSoon" in platform && platform.comingSoon;
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
@@ -548,13 +563,14 @@ function App() {
                     >
                       <div className="recommendation-card-main">
                         <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
-                        <h2>{platform.name}</h2>
-                        {"comingSoon" in platform && platform.comingSoon && (
-                          <span className="experience-badge coming-soon-badge">(Coming)</span>
-                        )}
+                        <div className="platform-title">
+                          <h2>{platform.name}</h2>
+                          {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
+                        </div>
                         <RepositoryDetails
                           repositories={repositories}
                           metadata={repositoryMetadata.repositories}
+                          comingSoon={comingSoon}
                         />
                         {limitedExperienceNote && (
                           <aside className="license-requirement-note">
@@ -569,7 +585,11 @@ function App() {
                           </aside>
                         ))}
                         <div className="repository-links">
-                          {repositories.map((repository) => (
+                          {comingSoon ? (
+                            <button className="button primary repository-link" type="button" disabled>
+                              AI Security macOS repository coming soon
+                            </button>
+                          ) : repositories.map((repository) => (
                             <a
                               className="button primary repository-link"
                               href={repository.url}

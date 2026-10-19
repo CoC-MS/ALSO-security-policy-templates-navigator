@@ -66,7 +66,7 @@ export const platforms = [
     shortLabel: "AI",
     repository: "https://github.com/CoC-MS/ALSO-Microsoft-Security-MacOS",
     repositoryLabel: "macOS",
-    description: "AI Security policy templates for macOS are coming soon. Visit the macOS repository for current macOS security policy templates.",
+    description: "This baseline delivers a hardened MacOS configuration that minimizes the risk of unauthorized third-party AI access while maintaining a productive user experience,",
     comingSoon: true,
   },
   {

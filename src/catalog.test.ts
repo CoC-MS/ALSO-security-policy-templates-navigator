@@ -107,6 +107,9 @@ describe("repository routing", () => {
     expect(availableLicenseIds("ai-security-macos")).toEqual(
       availableLicenseIds("ai-security"),
     );
+    expect(getPlatform("ai-security-macos").description).toBe(
+      "This baseline delivers a hardened MacOS configuration that minimizes the risk of unauthorized third-party AI access while maintaining a productive user experience,",
+    );
   });
 
   it("routes Agent Security to Conditional Access and AI Security Windows 11", () => {
