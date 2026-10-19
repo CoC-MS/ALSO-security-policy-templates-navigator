@@ -376,13 +376,13 @@ export function getLimitedExperienceNoteForLicenses(
     if (needsEntraIdP2) {
       return {
         title: "Limited Conditional Access experience",
-        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 for risky user and risky sign-in policy templates. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on. An Agent 365 license is required for all Agent 365 policy templates.`,
+        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 for risky user and risky sign-in policy templates. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on. An Agent 365 license is required for all Agent 365 policy templates; Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
 
     return {
       title: "Agent 365 license required for full Conditional Access experience",
-      message: `With ${selectedNames}, add an Agent 365 license to unlock the full Conditional Access policy-template experience.`,
+      message: `With ${selectedNames}, add an Agent 365 license to unlock the full Conditional Access policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
     };
   }
 
@@ -394,7 +394,7 @@ export function getLimitedExperienceNoteForLicenses(
     ) {
       return {
         title: "Agent 365 license required for full AI Security experience",
-        message: `With ${selectedNames}, add an Agent 365 license to unlock the full AI Security Windows 11 policy-template experience.`,
+        message: `With ${selectedNames}, add an Agent 365 license to unlock the full AI Security Windows 11 policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
   }
@@ -410,7 +410,7 @@ export function getLimitedExperienceNoteForLicenses(
 
     return {
       title: "Agent 365 license required for full Agent Security experience",
-      message: `With ${formatSelectedLicenseNames(supportedLicenseIds)}, add an Agent 365 license to unlock the full Agent Security policy-template experience.`,
+      message: `With ${formatSelectedLicenseNames(supportedLicenseIds)}, add an Agent 365 license to unlock the full Agent Security policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
     };
   }
 

@@ -639,6 +639,7 @@ describe("full-capability suite tier", () => {
         "Agent 365 license required for full Conditional Access experience",
       );
       expect(note?.message).toContain("add an Agent 365 license");
+      expect(note?.message).toContain("Agent 365 is also included in Microsoft 365 E7");
       expect(note?.message).not.toContain("Microsoft Entra ID Plan 2");
     },
   );
@@ -673,6 +674,7 @@ describe("full-capability suite tier", () => {
         "Agent 365 license required for full Agent Security experience",
       );
       expect(note?.message).toContain("add an Agent 365 license");
+      expect(note?.message).toContain("Agent 365 is also included in Microsoft 365 E7");
     },
   );
 
@@ -688,6 +690,7 @@ describe("full-capability suite tier", () => {
         "Agent 365 license required for full AI Security experience",
       );
       expect(note?.message).toContain("add an Agent 365 license");
+      expect(note?.message).toContain("Agent 365 is also included in Microsoft 365 E7");
     },
   );
 
