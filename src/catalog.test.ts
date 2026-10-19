@@ -191,6 +191,27 @@ describe("selection helpers", () => {
       },
     );
 
+    it.each([
+      ["business-premium", "Microsoft Defender Suite add-on"],
+      ["e3", "Microsoft Defender Suite add-on"],
+      ["f3", "Microsoft Defender Suite FLW add-on"],
+      ["f1", "Microsoft Defender Suite FLW add-on"],
+    ] as const)(
+      "requires the Defender Suite and Agent 365 for full AI Security with %s",
+      (licenseId, defenderSuiteRequirement) => {
+        for (const platformId of ["ai-security", "ai-security-macos"] as const) {
+          const note = getLimitedExperienceNoteForLicenses([licenseId], platformId);
+
+          expect(note?.title).toBe(`Limited ${getPlatform(platformId).name} experience`);
+          expect(note?.message).toContain(defenderSuiteRequirement);
+          expect(note?.message).toContain("and an Agent 365 license");
+          expect(note?.message).toContain(
+            "Agent 365 is also included in Microsoft 365 E7",
+          );
+        }
+      },
+    );
+
     it("marks server repositories with an additional license as limited", () => {
       expect(
         getPlatformExperienceForLicenses(["e7"], "windows-servers"),

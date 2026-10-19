@@ -247,6 +247,13 @@ const fullDefenderExperienceLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
+const aiSecurityAgent365PrerequisiteLicenseIds = new Set<License["id"]>([
+  "business-premium",
+  "e3",
+  "f3",
+  "f1",
+]);
+
 const entraIdP2LicenseIds = new Set<License["id"]>([
   "e7",
   "e5",
@@ -419,6 +426,15 @@ export function getLimitedExperienceNoteForLicenses(
       return {
         title: "Agent 365 license required for full AI Security experience",
         message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+      };
+    }
+
+    if (eligibleLicenseIds.some((licenseId) =>
+      aiSecurityAgent365PrerequisiteLicenseIds.has(licenseId),
+    )) {
+      return {
+        title: `Limited ${getPlatform(platformId).name} experience`,
+        message: `With ${selectedNames}, add the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on and an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
   }
