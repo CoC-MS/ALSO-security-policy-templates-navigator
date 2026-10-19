@@ -133,7 +133,11 @@ describe("security goal recommendations", () => {
   it("maps data protection directly and AI/Agent security by option", () => {
     expect(getSolutionPlatformIds("data-protection", []))
       .toEqual(["purview"]);
-    expect(securityGoals.find((goal) => goal.id === "data-protection")!.options[0].autoSelect)
+    const dataProtectionOption = securityGoals
+      .find((goal) => goal.id === "data-protection")!
+      .options[0];
+    expect(dataProtectionOption.name).toBe("Data protection");
+    expect(dataProtectionOption.autoSelect)
       .toBe(true);
     expect(getSolutionPlatformIds("ai-agent-security", ["ai-security", "agent-security"]))
       .toEqual(["ai-security", "ai-security-macos", "purview", "agent-security"]);

@@ -142,7 +142,7 @@ export const securityGoals = [
     options: [
       {
         id: "purview-data-protection",
-        name: "Microsoft Purview",
+        name: "Data protection",
         description: "Discover policies for data protection and compliance.",
         platformIds: ["purview"],
         autoSelect: true,
