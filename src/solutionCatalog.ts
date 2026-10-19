@@ -141,6 +141,15 @@ export const securityGoals = [
 
 export type SecurityGoalId = (typeof securityGoals)[number]["id"];
 
+export function toggleSecurityGoalSelection(
+  selected: readonly SecurityGoalId[],
+  goalId: SecurityGoalId,
+): SecurityGoalId[] {
+  return selected.includes(goalId)
+    ? selected.filter((selectedId) => selectedId !== goalId)
+    : [...selected, goalId];
+}
+
 export function getSecurityGoal(goalId: SecurityGoalId): SecurityGoal {
   const goal = securityGoals.find((item) => item.id === goalId);
   if (!goal) {

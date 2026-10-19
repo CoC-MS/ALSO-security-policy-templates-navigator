@@ -13,9 +13,9 @@ import {
   type Platform,
 } from "./catalog";
 import {
-  getSecurityGoal,
   getSolutionPlatformIds,
   securityGoals,
+  toggleSecurityGoalSelection,
   type SecurityGoalId,
   type SolutionOption,
 } from "./solutionCatalog";
@@ -192,7 +192,7 @@ function App() {
   const [overviewReturnStep, setOverviewReturnStep] = useState<Step>("license");
   const [faqReturnStep, setFaqReturnStep] = useState<Step>("license");
   const [selectedLicenses, setSelectedLicenses] = useState<License[]>([]);
-  const [selectedGoalId, setSelectedGoalId] = useState<SecurityGoalId | undefined>();
+  const [selectedGoalIds, setSelectedGoalIds] = useState<SecurityGoalId[]>([]);
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -204,14 +204,23 @@ function App() {
   >("loading");
   const eligibleLicenses = selectedLicenses.filter((license) => license.eligible);
   const eligibleLicenseIds = eligibleLicenses.map((license) => license.id);
-  const selectedGoal = selectedGoalId ? getSecurityGoal(selectedGoalId) : undefined;
-  const selectedOptions = selectedGoal?.options.filter((option) =>
-    selectedOptionIds.includes(option.id),
-  ) ?? [];
-  const selectedPlatformIds = selectedGoalId
-    ? getSolutionPlatformIds(selectedGoalId, selectedOptionIds)
-    : [];
-  const selectedPlatforms = selectedGoal
+  const selectedGoals = securityGoals.filter((goal) =>
+    selectedGoalIds.includes(goal.id),
+  );
+  const selectedOptions = selectedGoals.flatMap((goal) =>
+    goal.options
+      .filter((option) => selectedOptionIds.includes(`${goal.id}:${option.id}`))
+      .map((option) => ({ ...option, selectionId: `${goal.id}:${option.id}` })),
+  );
+  const selectedPlatformIds = selectedGoals.flatMap((goal) =>
+    getSolutionPlatformIds(
+      goal.id,
+      goal.options
+        .filter((option) => selectedOptionIds.includes(`${goal.id}:${option.id}`))
+        .map((option) => option.id),
+    ),
+  );
+  const selectedPlatforms = selectedGoals.length > 0
     ? uniquePlatforms(selectedPlatformIds)
       .filter((platform) =>
         isPlatformAvailableForLicenses(eligibleLicenseIds, platform.id),
@@ -273,21 +282,27 @@ function App() {
       return;
     }
 
-    setSelectedGoalId(undefined);
+    setSelectedGoalIds([]);
     setSelectedOptionIds([]);
     setStep("goal");
   }
 
   function chooseGoal(goalId: SecurityGoalId) {
-    setSelectedGoalId(goalId);
-    setSelectedOptionIds([]);
+    const isSelected = selectedGoalIds.includes(goalId);
+    setSelectedGoalIds((current) => toggleSecurityGoalSelection(current, goalId));
+    if (isSelected) {
+      setSelectedOptionIds((current) =>
+        current.filter((selection) => !selection.startsWith(`${goalId}:`)),
+      );
+    }
   }
 
-  function toggleOption(optionId: string) {
+  function toggleOption(goalId: SecurityGoalId, optionId: string) {
+    const selection = `${goalId}:${optionId}`;
     setSelectedOptionIds((current) =>
-      current.includes(optionId)
-        ? current.filter((selectedId) => selectedId !== optionId)
-        : [...current, optionId],
+      current.includes(selection)
+        ? current.filter((selectedId) => selectedId !== selection)
+        : [...current, selection],
     );
   }
 
@@ -297,7 +312,7 @@ function App() {
 
   function startOver() {
     setSelectedLicenses([]);
-    setSelectedGoalId(undefined);
+    setSelectedGoalIds([]);
     setSelectedOptionIds([]);
     setStep("license");
   }
@@ -538,14 +553,14 @@ function App() {
                 ))}
               </div>
               <h1 id="main-title" tabIndex={-1}>What security challenges are you trying to solve?</h1>
-              <p className="intro">Choose a security goal to see relevant scenarios, device types, and template recommendations.</p>
+              <p className="intro">Select one or more security goals. Select a goal again to remove it. You can combine any goals before continuing.</p>
               <div className="card-grid goal-grid" aria-label="Security goals">
                 {securityGoals.map((goal, index) => (
                   <button
-                    className={`choice-card goal-card ${selectedGoalId === goal.id ? "selected" : ""}`}
+                    className={`choice-card goal-card ${selectedGoalIds.includes(goal.id) ? "selected" : ""}`}
                     type="button"
                     key={goal.id}
-                    aria-pressed={selectedGoalId === goal.id}
+                    aria-pressed={selectedGoalIds.includes(goal.id)}
                     onClick={() => chooseGoal(goal.id)}
                   >
                     <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
@@ -553,7 +568,7 @@ function App() {
                       <span className="choice-name">{goal.name}</span>
                       <span className="goal-description">{goal.description}</span>
                     </span>
-                    <span className="choice-check" aria-hidden="true">{selectedGoalId === goal.id ? "\u2713" : ""}</span>
+                    <span className="choice-check" aria-hidden="true">{selectedGoalIds.includes(goal.id) ? "\u2713" : ""}</span>
                   </button>
                 ))}
               </div>
@@ -565,16 +580,18 @@ function App() {
                 <button
                   className="button primary"
                   type="button"
-                  disabled={!selectedGoal}
-                  onClick={() => selectedGoal && setStep("focus")}
+                  disabled={selectedGoals.length === 0}
+                  onClick={() => selectedGoals.length > 0 && setStep("focus")}
                 >
-                  {selectedGoal ? `Continue with ${selectedGoal.name}` : "Select a security goal"} &rarr;
+                  {selectedGoals.length > 0
+                    ? `Continue with ${selectedGoals.length} security goal${selectedGoals.length === 1 ? "" : "s"}`
+                    : "Select at least one security goal"} &rarr;
                 </button>
               </div>
             </section>
           )}
 
-          {step === "focus" && selectedGoal && eligibleLicenses.length > 0 && (
+          {step === "focus" && selectedGoals.length > 0 && eligibleLicenses.length > 0 && (
             <section aria-labelledby="main-title">
               <div className="selection-pills" aria-label="Selected eligible licenses">
                 {eligibleLicenses.map((license) => (
@@ -583,29 +600,38 @@ function App() {
                   </span>
                 ))}
               </div>
-              <div className="eyebrow">{selectedGoal.name}</div>
-              <h1 id="main-title" tabIndex={-1}>{selectedGoal.prompt}</h1>
-              <p className="intro">Select one or more options. Recommendations will be matched to the licenses selected above.</p>
-              <div className="card-grid goal-option-grid" aria-label={`${selectedGoal.name} options`}>
-                {selectedGoal.options.map((option, index) => {
-                  const isSelected = selectedOptionIds.includes(option.id);
-                  return (
-                    <button
-                      className={`choice-card goal-card ${isSelected ? "selected" : ""}`}
-                      type="button"
-                      key={option.id}
-                      aria-pressed={isSelected}
-                      onClick={() => toggleOption(option.id)}
-                    >
-                      <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                      <span className="choice-details">
-                        <span className="choice-name">{option.name}</span>
-                        <span className="goal-description">{option.description}</span>
-                      </span>
-                      <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
-                    </button>
-                  );
-                })}
+              <div className="eyebrow">Your selected security goals</div>
+              <h1 id="main-title" tabIndex={-1}>Choose the scenarios and platforms to include</h1>
+              <p className="intro">Select one or more options under each goal. Select an option again to remove it. Recommendations will be matched to the licenses selected above.</p>
+              <div className="goal-option-sections">
+                {selectedGoals.map((goal) => (
+                  <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
+                    <h2 id={`${goal.id}-heading`}>{goal.name}</h2>
+                    <p>{goal.prompt}</p>
+                    <div className="card-grid goal-option-grid" aria-label={`${goal.name} options`}>
+                      {goal.options.map((option, index) => {
+                        const selectionId = `${goal.id}:${option.id}`;
+                        const isSelected = selectedOptionIds.includes(selectionId);
+                        return (
+                          <button
+                            className={`choice-card goal-card ${isSelected ? "selected" : ""}`}
+                            type="button"
+                            key={selectionId}
+                            aria-pressed={isSelected}
+                            onClick={() => toggleOption(goal.id, option.id)}
+                          >
+                            <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                            <span className="choice-details">
+                              <span className="choice-name">{option.name}</span>
+                              <span className="goal-description">{option.description}</span>
+                            </span>
+                            <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
               </div>
               <div className="actions platform-actions">
                 <div>
@@ -618,7 +644,7 @@ function App() {
                   disabled={selectedOptionIds.length === 0}
                   onClick={continueFromFocus}
                 >
-                  {selectedOptionIds.length === 0
+                  {selectedOptions.length === 0
                     ? "Select at least one option"
                     : "View recommendations"} &rarr;
                 </button>
@@ -639,15 +665,15 @@ function App() {
             </section>
           )}
 
-          {step === "result" && eligibleLicenses.length > 0 && selectedGoal && selectedOptions.length > 0 && (
+          {step === "result" && eligibleLicenses.length > 0 && selectedGoals.length > 0 && selectedOptions.length > 0 && (
             <section className="result-wrap" aria-labelledby="main-title">
               <div className="result-heading">
-                <div className="eyebrow">{selectedGoal.name}</div>
+                <div className="eyebrow">{selectedGoals.map((goal) => goal.name).join(" + ")}</div>
                 <h1 id="main-title" tabIndex={-1}>Recommended security policy templates</h1>
                 <p>Based on <strong>{eligibleLicenses.map((license) => license.name).join(", ")}</strong> and the needs you selected, explore these ALSO repositories.</p>
                 <div className="recommendation-context" aria-label="Selected needs">
                   {selectedOptions.map((option) => (
-                    <span className="selection-pill" key={option.id}>{option.name}</span>
+                    <span className="selection-pill" key={option.selectionId}>{option.name}</span>
                   ))}
                 </div>
               </div>

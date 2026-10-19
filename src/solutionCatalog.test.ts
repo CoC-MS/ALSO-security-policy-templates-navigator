@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { platforms } from "./catalog";
-import { getSolutionPlatformIds, securityGoals } from "./solutionCatalog";
+import {
+  getSolutionPlatformIds,
+  securityGoals,
+  toggleSecurityGoalSelection,
+} from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
   it("covers the six requested security goals", () => {
@@ -12,6 +16,17 @@ describe("security goal recommendations", () => {
       "Data protection",
       "App protection",
     ]);
+  });
+
+  it("supports selecting multiple security goals and deselecting one", () => {
+    const selected = toggleSecurityGoalSelection(
+      toggleSecurityGoalSelection([], "attack-protection"),
+      "endpoint-protection",
+    );
+
+    expect(selected).toEqual(["attack-protection", "endpoint-protection"]);
+    expect(toggleSecurityGoalSelection(selected, "attack-protection"))
+      .toEqual(["endpoint-protection"]);
   });
 
   it.each([
