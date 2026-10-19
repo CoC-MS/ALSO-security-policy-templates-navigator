@@ -136,7 +136,7 @@ describe("security goal recommendations", () => {
     expect(securityGoals.find((goal) => goal.id === "data-protection")!.options[0].autoSelect)
       .toBe(true);
     expect(getSolutionPlatformIds("ai-agent-security", ["ai-security", "agent-security"]))
-      .toEqual(["ai-security", "ai-security-macos", "agent-security"]);
+      .toEqual(["ai-security", "ai-security-macos", "purview", "agent-security"]);
   });
 
   it.each([

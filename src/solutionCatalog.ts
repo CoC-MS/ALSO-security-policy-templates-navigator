@@ -124,7 +124,7 @@ export const securityGoals = [
         id: "ai-security",
         name: "AI Security",
         description: "Explore available AI Security policies for Windows 11 and macOS.",
-        platformIds: ["ai-security", "ai-security-macos"],
+        platformIds: ["ai-security", "ai-security-macos", "purview"],
       },
       {
         id: "agent-security",
