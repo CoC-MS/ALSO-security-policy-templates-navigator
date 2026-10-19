@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { platforms } from "./catalog";
 import {
   getSolutionPlatformIds,
   securityGoals,
@@ -61,7 +60,7 @@ describe("security goal recommendations", () => {
     ]);
   });
 
-  it("maps management, data protection, AI/Agent, and app protection", () => {
+  it("maps management, data protection, and AI/Agent security", () => {
     expect(
       getSolutionPlatformIds("endpoint-management", [
         "mobile-phone-management",
@@ -78,7 +77,32 @@ describe("security goal recommendations", () => {
       .toEqual(["purview"]);
     expect(getSolutionPlatformIds("ai-agent-security", ["ai-security", "agent-security"]))
       .toEqual(["ai-security", "ai-security-macos", "agent-security"]);
-    expect(getSolutionPlatformIds("app-protection", ["all-app-protection"]))
-      .toEqual(platforms.map((platform) => platform.id));
+  });
+
+  it.each([
+    ["oauth-apps", ["conditional-access"]],
+    ["desktop-apps", ["windows-11", "macos"]],
+    ["mobile-apps", ["ios-ipados", "android"]],
+    ["cloud-apps", ["windows-11", "windows-servers", "macos", "conditional-access"]],
+  ])("maps app protection option %s to the requested repositories", (optionId, expected) => {
+    expect(getSolutionPlatformIds("app-protection", [optionId])).toEqual(expected);
+  });
+
+  it("combines app protection types and deduplicates shared repositories", () => {
+    expect(
+      getSolutionPlatformIds("app-protection", [
+        "oauth-apps",
+        "desktop-apps",
+        "mobile-apps",
+        "cloud-apps",
+      ]),
+    ).toEqual([
+      "conditional-access",
+      "windows-11",
+      "macos",
+      "ios-ipados",
+      "android",
+      "windows-servers",
+    ]);
   });
 });

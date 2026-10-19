@@ -1,4 +1,4 @@
-import { platforms, type Platform } from "./catalog";
+import type { Platform } from "./catalog";
 
 export interface SolutionOption {
   id: string;
@@ -126,14 +126,32 @@ export const securityGoals = [
   {
     id: "app-protection",
     name: "App protection",
-    description: "Browse all available security policy template repositories.",
-    prompt: "Explore all security policy template repositories",
+    description: "Find policies for the types of apps your customer uses.",
+    prompt: "Which types of apps do you want to protect?",
     options: [
       {
-        id: "all-app-protection",
-        name: "Explore all repositories",
-        description: "See every repository that matches your selected licenses.",
-        platformIds: platforms.map((platform) => platform.id),
+        id: "oauth-apps",
+        name: "OAuth apps",
+        description: "Explore Conditional Access policies for OAuth app access.",
+        platformIds: ["conditional-access"],
+      },
+      {
+        id: "desktop-apps",
+        name: "Desktop apps",
+        description: "Explore policies for Windows and macOS desktop apps.",
+        platformIds: ["windows-11", "macos"],
+      },
+      {
+        id: "mobile-apps",
+        name: "Mobile apps",
+        description: "Explore policies for iOS/iPadOS and Android apps.",
+        platformIds: ["ios-ipados", "android"],
+      },
+      {
+        id: "cloud-apps",
+        name: "Cloud apps",
+        description: "Explore policies for Windows, Windows Server, macOS, and Conditional Access.",
+        platformIds: ["windows-11", "windows-servers", "macos", "conditional-access"],
       },
     ],
   },
