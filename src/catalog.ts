@@ -230,15 +230,6 @@ const fullDefenderExperienceLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
-const linuxDesktopLicenseIds = new Set<License["id"]>([
-  "business-premium-defender",
-  "e5",
-  "e7",
-  "e3-defender",
-  "f3-defender",
-  "f1-defender",
-]);
-
 const entraIdP2LicenseIds = new Set<License["id"]>([
   "e7",
   "e5",
@@ -333,9 +324,7 @@ export function isPlatformAvailableForLicenses(
   }
 
   if (platformId === "linux-desktop") {
-    return eligibleLicenseIds.some((licenseId) =>
-      linuxDesktopLicenseIds.has(licenseId),
-    );
+    return eligibleLicenseIds.length > 0;
   }
 
   if (platformId === "windows-servers") {

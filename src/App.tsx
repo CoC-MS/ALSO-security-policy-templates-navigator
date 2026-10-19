@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
   getPlatform,
   getLimitedExperienceNoteForLicenses,
+  getPlatformExperienceForLicenses,
   enterpriseLicenses,
   platforms,
   smbLicenses,
@@ -657,6 +658,15 @@ function App() {
                       {goal.options.filter((option) => !isAutoSelectedOption(option)).map((option, index) => {
                         const selectionId = `${goal.id}:${option.id}`;
                         const isSelected = selectedOptionIds.includes(selectionId);
+                        const optionPlatforms = option.platformIds.filter((platformId) =>
+                          isPlatformAvailableForLicenses(eligibleLicenseIds, platformId),
+                        );
+                        const experience = optionPlatforms.length > 0 &&
+                          optionPlatforms.some((platformId) =>
+                            getPlatformExperienceForLicenses(eligibleLicenseIds, platformId) === "limited",
+                          )
+                          ? "limited"
+                          : "full";
                         return (
                           <button
                             className={`choice-card goal-card ${isSelected ? "selected" : ""}`}
@@ -669,6 +679,11 @@ function App() {
                             <span className="choice-details">
                               <span className="choice-name">{option.name}</span>
                               <span className="goal-description">{option.description}</span>
+                              {optionPlatforms.length > 0 && (
+                                <span className={`experience-badge ${experience}`}>
+                                  {experience === "full" ? "Full experience" : "Limited experience"}
+                                </span>
+                              )}
                             </span>
                             <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
                           </button>

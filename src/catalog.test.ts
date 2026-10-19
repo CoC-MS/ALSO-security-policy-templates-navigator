@@ -183,34 +183,36 @@ describe("selection helpers", () => {
     ).toBe(true);
   });
 
-  it("limits Linux Desktop to the licenses and combinations shown", () => {
+  it("shows Linux Desktop for every eligible license", () => {
     const availableLinuxDesktopLicenses = licenses
       .filter((license) => isPlatformAvailableForLicense(license.id, "linux-desktop"))
       .map((license) => license.id);
 
-    expect(availableLinuxDesktopLicenses).toEqual([
-      "e7",
-      "e5",
-      "e3-defender",
-      "f3-defender",
-      "f1-defender",
-      "business-premium-defender",
-    ]);
-    expect(
-      isPlatformAvailableForLicenses(
-        ["e3-defender-purview", "business-premium-defender-purview"],
-        "linux-desktop",
-      ),
-    ).toBe(false);
+    expect(availableLinuxDesktopLicenses).toEqual(
+      licenses.filter((license) => license.eligible).map((license) => license.id),
+    );
     expect(isPlatformAvailableForLicenses(["business-premium", "e5"], "linux-desktop"))
       .toBe(true);
+  });
+
+  it("preserves Linux Desktop's Defender for Endpoint Plan 2 upgrade guidance", () => {
+    const note = getLimitedExperienceNoteForLicenses(
+      ["business-premium"],
+      "linux-desktop",
+    );
+
+    expect(note?.title).toBe("Limited Linux Desktop experience");
+    expect(note?.message).toContain("purchase Microsoft Defender for Endpoint Plan 2");
+    expect(
+      getLimitedExperienceNoteForLicenses(["e3-defender-purview"], "linux-desktop"),
+    ).toBeUndefined();
   });
 });
 
 describe("Business Premium-only results", () => {
   const licenseIds = ["business-premium"] as const;
 
-  it("shows every in-scope repository except Linux Desktop", () => {
+  it("shows every in-scope repository, with Linux Desktop limited", () => {
     expect(
       platforms
         .filter((platform) => isPlatformAvailableForLicenses(licenseIds, platform.id))
@@ -221,6 +223,7 @@ describe("Business Premium-only results", () => {
       "ai-security",
       "ai-security-macos",
       "conditional-access",
+      "linux-desktop",
       "linux-server",
       "macos",
       "ios-ipados",
@@ -313,16 +316,12 @@ describe("full-capability suite tier", () => {
     "f1-defender-purview",
   ] as const;
 
-  it.each(fullSuiteLicenseIds)("%s provides all platforms allowed for its license", (licenseId) => {
+  it.each(fullSuiteLicenseIds)("%s provides every in-scope platform", (licenseId) => {
     expect(
       platforms.filter((platform) =>
         isPlatformAvailableForLicense(licenseId, platform.id),
       ),
-    ).toEqual(
-      platforms.filter((platform) =>
-        platform.id !== "linux-desktop" || licenseId === "e5",
-      ),
-    );
+    ).toHaveLength(platforms.length);
   });
 
   describe("Microsoft 365 E7 results", () => {
@@ -411,7 +410,7 @@ describe("full-capability suite tier", () => {
     describe("Microsoft 365 F1-only results", () => {
       const licenseIds = ["f1"] as const;
 
-      it("excludes Windows Servers and Linux Desktop", () => {
+      it("excludes Windows Servers but includes Linux Desktop", () => {
         expect(
           platforms
             .filter((platform) =>
@@ -423,6 +422,7 @@ describe("full-capability suite tier", () => {
           "ai-security",
           "ai-security-macos",
           "conditional-access",
+          "linux-desktop",
           "linux-server",
           "macos",
           "ios-ipados",
@@ -455,7 +455,7 @@ describe("full-capability suite tier", () => {
           ] as const;
 
           it.each(purviewSuiteLicenseIds)(
-            "%s provides the base-tier repositories except Linux Desktop",
+            "%s provides the base-tier repositories including Linux Desktop",
             (licenseId) => {
               expect(
                 platforms
@@ -469,6 +469,7 @@ describe("full-capability suite tier", () => {
                 "ai-security",
                 "ai-security-macos",
                 "conditional-access",
+                "linux-desktop",
                 "linux-server",
                 "macos",
                 "ios-ipados",
