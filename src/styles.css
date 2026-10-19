@@ -640,6 +640,31 @@ h1 {
   line-height: 1.5;
 }
 
+.recommended-policy-list {
+  display: flex;
+  margin: 0 0 0.75rem;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.recommended-policy-list strong {
+  color: var(--text);
+}
+
+.recommended-policy-id {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .selection-pill {
   display: flex;
   width: fit-content;

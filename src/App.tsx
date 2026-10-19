@@ -148,6 +148,7 @@ interface RepositoryRecommendation {
   repository: ReturnType<typeof getPlatformRepositories>[number];
   sourcePlatform: Platform;
   solutionNames: string[];
+  policyIds: string[];
 }
 
 function getRepositoryRecommendations(
@@ -160,11 +161,19 @@ function getRepositoryRecommendations(
     const solutionNames = selectedOptions
       .filter((option) => option.platformIds.includes(platform.id))
       .map((option) => option.name);
+    const policyIds = platform.id === "conditional-access"
+      ? [...new Set(
+        selectedOptions
+          .filter((option) => option.platformIds.includes(platform.id))
+          .flatMap((option) => option.recommendedPolicyIds ?? []),
+      )]
+      : [];
 
     for (const repository of getPlatformRepositories(platform)) {
       const existing = recommendations.get(repository.url);
       if (existing) {
         existing.solutionNames = [...new Set([...existing.solutionNames, ...solutionNames])];
+        existing.policyIds = [...new Set([...existing.policyIds, ...policyIds])];
         if (
           "comingSoon" in existing.sourcePlatform &&
           existing.sourcePlatform.comingSoon &&
@@ -180,6 +189,7 @@ function getRepositoryRecommendations(
         repository,
         sourcePlatform: platform,
         solutionNames,
+        policyIds,
       });
     }
   }
@@ -210,7 +220,10 @@ function App() {
   const selectedOptions = selectedGoals.flatMap((goal) =>
     goal.options
       .filter((option) => selectedOptionIds.includes(`${goal.id}:${option.id}`))
-      .map((option) => ({ ...option, selectionId: `${goal.id}:${option.id}` })),
+      .map((option) => ({
+        ...option,
+        selectionId: `${goal.id}:${option.id}`,
+      })),
   );
   const selectedPlatformIds = selectedGoals.flatMap((goal) =>
     getSolutionPlatformIds(
@@ -679,7 +692,7 @@ function App() {
               </div>
               {recommendedRepositories.length > 0 ? (
                 <div className="recommendation-grid">
-                  {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames }) => {
+                  {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames, policyIds }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
@@ -715,6 +728,14 @@ function App() {
                         <p className="recommendation-reasons">
                           Recommended for: {solutionNames.join(", ")}
                         </p>
+                        {policyIds.length > 0 && (
+                          <p className="recommended-policy-list">
+                            <strong>Recommended Conditional Access policies:</strong>{" "}
+                            {policyIds.map((policyId) => (
+                              <span className="recommended-policy-id" key={policyId}>{policyId}</span>
+                            ))}
+                          </p>
+                        )}
                         {limitedExperienceNote && (
                           <aside className="license-requirement-note">
                             <strong>{limitedExperienceNote.title}</strong>

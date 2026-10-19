@@ -5,6 +5,7 @@ export interface SolutionOption {
   name: string;
   description: string;
   platformIds: readonly Platform["id"][];
+  recommendedPolicyIds?: readonly string[];
 }
 
 export interface SecurityGoal {
@@ -27,30 +28,35 @@ export const securityGoals = [
         name: "Device code phishing attacks",
         description: "Protect sign-in flows that can be abused to trick users into authorizing an attacker’s device.",
         platformIds: ["conditional-access"],
+        recommendedPolicyIds: ["CA004"],
       },
       {
         id: "token-theft",
         name: "Token theft attacks",
         description: "Help reduce the risk of stolen authentication tokens being used to access accounts and devices.",
         platformIds: ["conditional-access", "macos", "windows-11"],
+        recommendedPolicyIds: ["CA105", "CA107"],
       },
       {
         id: "aitm-phishing",
         name: "AiTM (Adversary-in-the-middle) phishing attacks",
         description: "Strengthen access controls against phishing proxies that attempt to capture credentials and session tokens.",
         platformIds: ["conditional-access"],
+        recommendedPolicyIds: ["CA105", "CA107"],
       },
       {
         id: "password-spray",
         name: "Password spray attacks",
         description: "Apply access policies that help mitigate attempts to sign in with commonly used passwords across many accounts.",
         platformIds: ["conditional-access"],
+        recommendedPolicyIds: ["CA002", "CA000"],
       },
       {
         id: "brute-force",
         name: "Brute force attacks",
         description: "Use identity and server security policies to help reduce repeated password-guessing attempts.",
         platformIds: ["conditional-access", "windows-servers"],
+        recommendedPolicyIds: ["CA002", "CA000"],
       },
     ],
   },
@@ -184,4 +190,19 @@ export function getSolutionPlatformIds(
     optionIds.includes(option.id),
   );
   return [...new Set(selectedOptions.flatMap((option) => option.platformIds))];
+}
+
+export function getRecommendedPolicyIds(
+  goalId: SecurityGoalId,
+  optionIds: readonly string[],
+  platformId: Platform["id"],
+): string[] {
+  if (platformId !== "conditional-access") return [];
+  return [...new Set(
+    getSecurityGoal(goalId).options
+      .filter((option) =>
+        optionIds.includes(option.id) && option.platformIds.includes(platformId),
+      )
+      .flatMap((option) => option.recommendedPolicyIds ?? []),
+  )];
 }

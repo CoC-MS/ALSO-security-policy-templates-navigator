@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getRecommendedPolicyIds,
   getSolutionPlatformIds,
   securityGoals,
   toggleSecurityGoalSelection,
@@ -36,6 +37,37 @@ describe("security goal recommendations", () => {
     ["brute-force", ["conditional-access", "windows-servers"]],
   ])("maps attack scenario %s to the requested repositories", (optionId, expected) => {
     expect(getSolutionPlatformIds("attack-protection", [optionId])).toEqual(expected);
+  });
+
+  it.each([
+    ["device-code-phishing", ["CA004"]],
+    ["aitm-phishing", ["CA105", "CA107"]],
+    ["token-theft", ["CA105", "CA107"]],
+    ["password-spray", ["CA002", "CA000"]],
+    ["brute-force", ["CA002", "CA000"]],
+  ])("recommends the specified Conditional Access policies for %s", (optionId, expected) => {
+    expect(
+      getRecommendedPolicyIds("attack-protection", [optionId], "conditional-access"),
+    ).toEqual(expected);
+  });
+
+  it("shows attack policy IDs only on the Conditional Access repository", () => {
+    expect(
+      getRecommendedPolicyIds("attack-protection", ["token-theft"], "windows-11"),
+    ).toEqual([]);
+    expect(
+      getRecommendedPolicyIds("attack-protection", ["token-theft"], "macos"),
+    ).toEqual([]);
+  });
+
+  it("deduplicates policies when multiple attack scenarios are selected", () => {
+    expect(
+      getRecommendedPolicyIds(
+        "attack-protection",
+        ["aitm-phishing", "token-theft"],
+        "conditional-access",
+      ),
+    ).toEqual(["CA105", "CA107"]);
   });
 
   it("maps endpoint protection to all seven requested platforms", () => {
