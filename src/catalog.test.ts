@@ -182,6 +182,29 @@ describe("selection helpers", () => {
       isPlatformAvailableForLicenses(["business-premium", "e5"], "linux-desktop"),
     ).toBe(true);
   });
+
+  it("limits Linux Desktop to the licenses and combinations shown", () => {
+    const availableLinuxDesktopLicenses = licenses
+      .filter((license) => isPlatformAvailableForLicense(license.id, "linux-desktop"))
+      .map((license) => license.id);
+
+    expect(availableLinuxDesktopLicenses).toEqual([
+      "e7",
+      "e5",
+      "e3-defender",
+      "f3-defender",
+      "f1-defender",
+      "business-premium-defender",
+    ]);
+    expect(
+      isPlatformAvailableForLicenses(
+        ["e3-defender-purview", "business-premium-defender-purview"],
+        "linux-desktop",
+      ),
+    ).toBe(false);
+    expect(isPlatformAvailableForLicenses(["business-premium", "e5"], "linux-desktop"))
+      .toBe(true);
+  });
 });
 
 describe("Business Premium-only results", () => {
@@ -290,12 +313,16 @@ describe("full-capability suite tier", () => {
     "f1-defender-purview",
   ] as const;
 
-  it.each(fullSuiteLicenseIds)("%s provides every in-scope platform", (licenseId) => {
+  it.each(fullSuiteLicenseIds)("%s provides all platforms allowed for its license", (licenseId) => {
     expect(
       platforms.filter((platform) =>
         isPlatformAvailableForLicense(licenseId, platform.id),
       ),
-    ).toHaveLength(platforms.length);
+    ).toEqual(
+      platforms.filter((platform) =>
+        platform.id !== "linux-desktop" || licenseId === "e5",
+      ),
+    );
   });
 
   describe("Microsoft 365 E7 results", () => {
