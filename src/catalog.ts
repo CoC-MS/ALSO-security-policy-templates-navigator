@@ -61,6 +61,15 @@ export const platforms = [
     description: "This baseline delivers a hardened Windows 11 configuration that minimizes the risk of unauthorized third-party AI access while maintaining a productive user experience",
   },
   {
+    id: "ai-security-macos",
+    name: "AI Security macOS",
+    shortLabel: "AI",
+    repository: "https://github.com/CoC-MS/ALSO-Microsoft-Security-MacOS",
+    repositoryLabel: "macOS",
+    description: "AI Security policy templates for macOS are coming soon. Visit the macOS repository for current macOS security policy templates.",
+    comingSoon: true,
+  },
+  {
     id: "agent-security",
     name: "Agent Security",
     shortLabel: "AG",
@@ -293,7 +302,7 @@ export function isPlatformAvailableForLicenses(
     return eligibleLicenseIds.length > 0;
   }
 
-  if (platformId === "ai-security") {
+  if (platformId === "ai-security" || platformId === "ai-security-macos") {
     return eligibleLicenseIds.some((licenseId) =>
       aiSecurityLicenseIds.has(licenseId),
     );
@@ -386,7 +395,7 @@ export function getLimitedExperienceNoteForLicenses(
     };
   }
 
-  if (platformId === "ai-security") {
+  if (platformId === "ai-security" || platformId === "ai-security-macos") {
     if (
       eligibleLicenseIds.some((licenseId) =>
         fullDefenderExperienceLicenseIds.has(licenseId),
@@ -394,7 +403,7 @@ export function getLimitedExperienceNoteForLicenses(
     ) {
       return {
         title: "Agent 365 license required for full AI Security experience",
-        message: `With ${selectedNames}, add an Agent 365 license to unlock the full AI Security Windows 11 policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+        message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
   }
@@ -416,6 +425,7 @@ export function getLimitedExperienceNoteForLicenses(
 
   if (
     platformId === "ai-security" ||
+    platformId === "ai-security-macos" ||
     platformId === "windows-11" ||
     platformId === "macos" ||
     platformId === "ios-ipados" ||

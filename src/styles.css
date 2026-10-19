@@ -571,6 +571,13 @@ h1 {
   color: #92400e;
 }
 
+.coming-soon-badge {
+  width: fit-content;
+  border-color: #aab4c2;
+  background: #f1f4f8;
+  color: #475569;
+}
+
 .choice-arrow {
   color: var(--text-muted);
   font-size: 1.25rem;

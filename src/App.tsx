@@ -375,6 +375,9 @@ function App() {
                     <article className="recommendation-card" key={platform.id}>
                       <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
                       <h2>{platform.name}</h2>
+                      {"comingSoon" in platform && platform.comingSoon && (
+                        <span className="experience-badge coming-soon-badge">(Coming)</span>
+                      )}
                       <RepositoryDetails
                         repositories={repositories}
                         metadata={repositoryMetadata.repositories}
@@ -471,6 +474,9 @@ function App() {
                           <span className={`experience-badge ${experience}`}>
                             {experience === "full" ? "Full experience" : "Limited experience"}
                           </span>
+                          {"comingSoon" in platform && platform.comingSoon && (
+                            <span className="experience-badge coming-soon-badge">(Coming)</span>
+                          )}
                         </span>
                         <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
                       </button>
@@ -543,6 +549,9 @@ function App() {
                       <div className="recommendation-card-main">
                         <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
                         <h2>{platform.name}</h2>
+                        {"comingSoon" in platform && platform.comingSoon && (
+                          <span className="experience-badge coming-soon-badge">(Coming)</span>
+                        )}
                         <RepositoryDetails
                           repositories={repositories}
                           metadata={repositoryMetadata.repositories}

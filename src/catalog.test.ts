@@ -77,6 +77,7 @@ describe("repository routing", () => {
     ["windows-11", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Windows"],
     ["windows-servers", "https://github.com/CoC-MS/ALSO-Microsoft-Security-WindowsServer"],
     ["ai-security", "https://github.com/CoC-MS/ALSO-Microsoft-Security-AI-Security-Windows11"],
+    ["ai-security-macos", "https://github.com/CoC-MS/ALSO-Microsoft-Security-MacOS"],
     ["agent-security", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Conditional-Access"],
     ["conditional-access", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Conditional-Access"],
     ["linux-desktop", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Linux"],
@@ -89,9 +90,23 @@ describe("repository routing", () => {
     expect(getPlatform(platformId).repository).toBe(repository);
   });
 
-  it("restores Agent Security as the eleventh platform", () => {
+  it("includes Agent Security and coming-soon AI Security macOS", () => {
     expect(platforms.map((platform) => platform.id)).toContain("agent-security");
-    expect(platforms).toHaveLength(11);
+    expect(platforms).toHaveLength(12);
+    const macAiSecurity = getPlatform("ai-security-macos");
+    expect("comingSoon" in macAiSecurity && macAiSecurity.comingSoon).toBe(true);
+    expect(getPlatformRepositories(macAiSecurity)[0].name).toBe("macOS");
+  });
+
+  it("gives AI Security macOS the same license mapping as Windows AI Security", () => {
+    const availableLicenseIds = (platformId: Platform["id"]) =>
+      licenses
+        .filter((license) => isPlatformAvailableForLicense(license.id, platformId))
+        .map((license) => license.id);
+
+    expect(availableLicenseIds("ai-security-macos")).toEqual(
+      availableLicenseIds("ai-security"),
+    );
   });
 
   it("routes Agent Security to Conditional Access and AI Security Windows 11", () => {
@@ -178,6 +193,7 @@ describe("Business Premium-only results", () => {
       "windows-11",
       "windows-servers",
       "ai-security",
+      "ai-security-macos",
       "conditional-access",
       "linux-server",
       "macos",
@@ -239,6 +255,7 @@ describe("Business Premium-only results", () => {
   it.each([
     "windows-11",
     "ai-security",
+    "ai-security-macos",
     "macos",
     "ios-ipados",
     "android",
@@ -334,7 +351,7 @@ describe("full-capability suite tier", () => {
               platform.id,
             );
 
-            if (platform.id === "ai-security") {
+            if (platform.id === "ai-security" || platform.id === "ai-security-macos") {
               expect(limitedNotice?.message).toContain("Agent 365 license");
             } else if (platform.id === "conditional-access") {
               expect(limitedNotice?.message).toContain("Agent 365 license");
@@ -374,6 +391,7 @@ describe("full-capability suite tier", () => {
         ).toEqual([
           "windows-11",
           "ai-security",
+          "ai-security-macos",
           "conditional-access",
           "linux-server",
           "macos",
@@ -419,6 +437,7 @@ describe("full-capability suite tier", () => {
                 "windows-11",
                 ...(!licenseId.startsWith("f") ? ["windows-servers"] : []),
                 "ai-security",
+                "ai-security-macos",
                 "conditional-access",
                 "linux-server",
                 "macos",
@@ -441,7 +460,7 @@ describe("full-capability suite tier", () => {
           it.each(["business-premium-purview", "e3-purview"] as const)(
             "%s uses standard Defender Suite upgrade messages",
             (licenseId) => {
-              const messages = ["windows-11", "ai-security", "macos", "ios-ipados", "android"]
+              const messages = ["windows-11", "ai-security", "ai-security-macos", "macos", "ios-ipados", "android"]
                 .map(
                   (platformId) =>
                     getLimitedExperienceNoteForLicenses(
@@ -484,6 +503,7 @@ describe("full-capability suite tier", () => {
         it.each([
           "windows-11",
           "ai-security",
+          "ai-security-macos",
           "macos",
           "ios-ipados",
           "android",
@@ -529,6 +549,7 @@ describe("full-capability suite tier", () => {
           const relevantPlatforms = [
             "windows-11",
             "ai-security",
+            "ai-security-macos",
             "macos",
             "ios-ipados",
             "android",
@@ -552,6 +573,7 @@ describe("full-capability suite tier", () => {
       it.each([
         "windows-11",
         "ai-security",
+        "ai-security-macos",
         "macos",
         "ios-ipados",
         "android",
@@ -617,6 +639,7 @@ describe("full-capability suite tier", () => {
       for (const platform of platforms.filter(
         (item) =>
           item.id !== "ai-security" &&
+          item.id !== "ai-security-macos" &&
           item.id !== "agent-security" &&
           item.id !== "conditional-access",
       )) {
@@ -690,6 +713,23 @@ describe("full-capability suite tier", () => {
         "Agent 365 license required for full AI Security experience",
       );
       expect(note?.message).toContain("add an Agent 365 license");
+      expect(note?.message).toContain("Agent 365 is also included in Microsoft 365 E7");
+    },
+  );
+
+  it.each(fullSuiteLicenseIds)(
+    "%s requires Agent 365 for full AI Security macOS",
+    (licenseId) => {
+      const note = getLimitedExperienceNoteForLicenses(
+        [licenseId],
+        "ai-security-macos",
+      );
+
+      expect(note?.title).toBe(
+        "Agent 365 license required for full AI Security experience",
+      );
+      expect(note?.message).toContain("add an Agent 365 license");
+      expect(note?.message).toContain("AI Security macOS");
       expect(note?.message).toContain("Agent 365 is also included in Microsoft 365 E7");
     },
   );
