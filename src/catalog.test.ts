@@ -161,6 +161,34 @@ describe("selection helpers", () => {
       ).toBe("limited");
     });
 
+    it.each([
+      ["business-premium", "Microsoft 365 Business Premium"],
+      ["e3", "Microsoft 365 E3"],
+      ["f1-defender", "Microsoft 365 F1 + Defender Suite FLW"],
+      ["f3-defender", "Microsoft 365 F3 + Defender Suite FLW"],
+      ["business-premium-defender", "Microsoft 365 Business Premium + Defender Suite"],
+    ] as const)(
+      "marks Agent Security as limited for %s and explains the Agent 365 prerequisite",
+      (licenseId, licenseName) => {
+        const note = getLimitedExperienceNoteForLicenses(
+          [licenseId],
+          "agent-security",
+        );
+
+        expect(isPlatformAvailableForLicense(licenseId, "agent-security")).toBe(true);
+        expect(note?.title).toBe("Limited Agent Security experience");
+        expect(note?.message).toContain(licenseName);
+        expect(note?.message).toContain(
+          "an Agent 365 license is a prerequisite for using the Conditional Access policies",
+        );
+        expect(note?.message).toContain(
+          "Adding Agent 365 does not by itself provide the full Agent Security experience",
+        );
+        expect(getPlatformExperienceForLicenses([licenseId], "agent-security"))
+          .toBe("limited");
+      },
+    );
+
     it("marks server repositories with an additional license as limited", () => {
       expect(
         getPlatformExperienceForLicenses(["e7"], "windows-servers"),
@@ -222,6 +250,7 @@ describe("Business Premium-only results", () => {
       "windows-servers",
       "ai-security",
       "ai-security-macos",
+      "agent-security",
       "conditional-access",
       "linux-desktop",
       "linux-server",
@@ -344,17 +373,14 @@ describe("full-capability suite tier", () => {
       ] as const;
 
       it.each(defenderSuiteLicenseIds)(
-        "%s provides every repository except Agent Security",
+        "%s provides Agent Security only when explicitly eligible",
         (licenseId) => {
-          expect(
-            platforms.filter((platform) =>
-              isPlatformAvailableForLicense(licenseId, platform.id),
-            ),
-          ).toHaveLength(platforms.length - 1);
+          expect(isPlatformAvailableForLicense(licenseId, "agent-security"))
+            .toBe(licenseId !== "e3-defender");
         },
       );
 
-      it("makes Agent Security available only for E7 and the specified suite packages", () => {
+      it("makes Agent Security available for the supported base and suite licenses", () => {
         expect(
           licenses
             .filter((license) =>
@@ -364,10 +390,15 @@ describe("full-capability suite tier", () => {
         ).toEqual([
           "e7",
           "e5",
+          "e3",
           "e3-defender-purview",
+          "f3-defender",
           "f3-defender-purview",
+          "f1-defender",
           "f1-defender-purview",
           "business-premium-defender-purview",
+          "business-premium-defender",
+          "business-premium",
         ]);
       });
 
@@ -384,6 +415,10 @@ describe("full-capability suite tier", () => {
               expect(limitedNotice?.message).toContain("Agent 365 license");
             } else if (platform.id === "conditional-access") {
               expect(limitedNotice?.message).toContain("Agent 365 license");
+            } else if (platform.id === "agent-security" && licenseId !== "e3-defender") {
+              expect(limitedNotice?.message).toContain(
+                "Agent 365 license is a prerequisite for using the Conditional Access policies",
+              );
             } else if (platform.id === "purview") {
               expect(limitedNotice?.message).toContain(
                 licenseId.startsWith("f")
@@ -434,9 +469,13 @@ describe("full-capability suite tier", () => {
       describe("Microsoft 365 E3-only results", () => {
         const licenseIds = ["e3"] as const;
 
-        it("mirrors F1 availability except for Windows Servers", () => {
+        it("mirrors F1 availability except for Windows Servers and Agent Security", () => {
           for (const platform of platforms) {
             if (platform.id === "windows-servers") {
+              expect(isPlatformAvailableForLicenses(licenseIds, platform.id)).toBe(true);
+              continue;
+            }
+            if (platform.id === "agent-security") {
               expect(isPlatformAvailableForLicenses(licenseIds, platform.id)).toBe(true);
               continue;
             }

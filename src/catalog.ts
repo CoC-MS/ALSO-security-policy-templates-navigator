@@ -211,10 +211,23 @@ const aiSecurityLicenseIds = new Set<License["id"]>([
 const agentSecurityLicenseIds = new Set<License["id"]>([
   "e7",
   "e5",
+  "e3",
   "e3-defender-purview",
+  "f3-defender",
   "f3-defender-purview",
+  "f1-defender",
   "f1-defender-purview",
+  "business-premium",
+  "business-premium-defender",
   "business-premium-defender-purview",
+]);
+
+const agentSecurityLimitedLicenseIds = new Set<License["id"]>([
+  "e3",
+  "f3-defender",
+  "f1-defender",
+  "business-premium",
+  "business-premium-defender",
 ]);
 
 const fullDefenderExperienceLicenseIds = new Set<License["id"]>([
@@ -413,6 +426,15 @@ export function getLimitedExperienceNoteForLicenses(
 
     if (supportedLicenseIds.length === 0 || supportedLicenseIds.includes("e7")) {
       return undefined;
+    }
+
+    if (supportedLicenseIds.some((licenseId) =>
+      agentSecurityLimitedLicenseIds.has(licenseId),
+    )) {
+      return {
+        title: "Limited Agent Security experience",
+        message: `With ${formatSelectedLicenseNames(supportedLicenseIds)}, an Agent 365 license is a prerequisite for using the Conditional Access policies. Adding Agent 365 does not by itself provide the full Agent Security experience.`,
+      };
     }
 
     return {
