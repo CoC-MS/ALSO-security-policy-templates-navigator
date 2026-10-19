@@ -477,6 +477,24 @@ h1 {
   margin: 0 auto;
 }
 
+.goal-grid,
+.goal-option-grid {
+  max-width: 950px;
+  margin: 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.goal-card {
+  min-height: 7rem;
+  align-items: start;
+}
+
+.goal-description {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .choice-card {
   display: grid;
   min-height: 5.5rem;
@@ -605,6 +623,21 @@ h1 {
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.recommendation-context {
+  display: flex;
+  margin-top: 1rem;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.recommendation-reasons {
+  margin: 0.25rem 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .selection-pill {
@@ -1128,7 +1161,9 @@ footer p {
   }
 
   .license-grid,
-  .platform-grid {
+  .platform-grid,
+  .goal-grid,
+  .goal-option-grid {
     grid-template-columns: 1fr;
   }
 

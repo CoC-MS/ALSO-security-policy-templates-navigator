@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import {
   getPlatform,
-  getPlatformExperienceForLicenses,
   getLimitedExperienceNoteForLicenses,
   enterpriseLicenses,
   platforms,
@@ -10,10 +9,16 @@ import {
   getWindowsServerLicenseNotes,
   isPlatformAvailableForLicenses,
   toggleLicenseSelection,
-  togglePlatformSelection,
   type License,
   type Platform,
 } from "./catalog";
+import {
+  getSecurityGoal,
+  getSolutionPlatformIds,
+  securityGoals,
+  type SecurityGoalId,
+  type SolutionOption,
+} from "./solutionCatalog";
 import {
   filterPlatformsByTopics,
   getRepositoryMetadata,
@@ -27,7 +32,7 @@ import {
   shouldShowAiSecurityLicenseActions,
 } from "./AiSecurityLicenseActions";
 
-type Step = "license" | "platform" | "blocked" | "result" | "overview" | "faq";
+type Step = "license" | "goal" | "focus" | "blocked" | "result" | "overview" | "faq";
 
 function ArrowIcon() {
   return (
@@ -69,7 +74,7 @@ function LicenseGrid({
 }
 
 function StepIndicator({ step }: { step: Step }) {
-  const platformActive = step === "platform" || step === "result";
+  const goalActive = step === "goal" || step === "focus" || step === "result";
   return (
     <div className="steps" aria-label="Progress">
       <div className="step-item active">
@@ -77,14 +82,14 @@ function StepIndicator({ step }: { step: Step }) {
         <strong>Licenses</strong>
       </div>
       <div className="step-line" aria-hidden="true" />
-      <div className={`step-item ${platformActive ? "active" : ""}`}>
+      <div className={`step-item ${goalActive ? "active" : ""}`}>
         <span aria-hidden="true">2</span>
-        <strong>Platform/Solution</strong>
+        <strong>Security goals</strong>
       </div>
       <div className="step-line" aria-hidden="true" />
       <div className={`step-item ${step === "result" ? "active" : ""}`}>
         <span aria-hidden="true">3</span>
-        <strong>Templates</strong>
+        <strong>Recommended templates</strong>
       </div>
     </div>
   );
@@ -135,12 +140,60 @@ function RepositoryDetails({
   );
 }
 
+function uniquePlatforms(platformIds: readonly Platform["id"][]): Platform[] {
+  return [...new Set(platformIds)].map(getPlatform);
+}
+
+interface RepositoryRecommendation {
+  repository: ReturnType<typeof getPlatformRepositories>[number];
+  sourcePlatform: Platform;
+  solutionNames: string[];
+}
+
+function getRepositoryRecommendations(
+  selectedPlatforms: readonly Platform[],
+  selectedOptions: readonly SolutionOption[],
+): RepositoryRecommendation[] {
+  const recommendations = new Map<string, RepositoryRecommendation>();
+
+  for (const platform of selectedPlatforms) {
+    const solutionNames = selectedOptions
+      .filter((option) => option.platformIds.includes(platform.id))
+      .map((option) => option.name);
+
+    for (const repository of getPlatformRepositories(platform)) {
+      const existing = recommendations.get(repository.url);
+      if (existing) {
+        existing.solutionNames = [...new Set([...existing.solutionNames, ...solutionNames])];
+        if (
+          "comingSoon" in existing.sourcePlatform &&
+          existing.sourcePlatform.comingSoon &&
+          !("comingSoon" in platform && platform.comingSoon)
+        ) {
+          existing.sourcePlatform = platform;
+          existing.repository = repository;
+        }
+        continue;
+      }
+
+      recommendations.set(repository.url, {
+        repository,
+        sourcePlatform: platform,
+        solutionNames,
+      });
+    }
+  }
+
+  return [...recommendations.values()];
+}
+
 function App() {
   const [step, setStep] = useState<Step>("license");
   const [overviewReturnStep, setOverviewReturnStep] = useState<Step>("license");
   const [faqReturnStep, setFaqReturnStep] = useState<Step>("license");
   const [selectedLicenses, setSelectedLicenses] = useState<License[]>([]);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<SecurityGoalId | undefined>();
+  const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [repositoryMetadata, setRepositoryMetadata] = useState<
@@ -151,6 +204,23 @@ function App() {
   >("loading");
   const eligibleLicenses = selectedLicenses.filter((license) => license.eligible);
   const eligibleLicenseIds = eligibleLicenses.map((license) => license.id);
+  const selectedGoal = selectedGoalId ? getSecurityGoal(selectedGoalId) : undefined;
+  const selectedOptions = selectedGoal?.options.filter((option) =>
+    selectedOptionIds.includes(option.id),
+  ) ?? [];
+  const selectedPlatformIds = selectedGoalId
+    ? getSolutionPlatformIds(selectedGoalId, selectedOptionIds)
+    : [];
+  const selectedPlatforms = selectedGoal
+    ? uniquePlatforms(selectedPlatformIds)
+      .filter((platform) =>
+        isPlatformAvailableForLicenses(eligibleLicenseIds, platform.id),
+      )
+    : [];
+  const recommendedRepositories = getRepositoryRecommendations(
+    selectedPlatforms,
+    selectedOptions,
+  );
   const overviewPlatforms = filterPlatformsByTopics(
     platforms,
     repositoryMetadata.repositories,
@@ -203,23 +273,32 @@ function App() {
       return;
     }
 
-    setSelectedPlatforms((current) =>
-      current.filter((platform) =>
-        isPlatformAvailableForLicenses(eligibleLicenseIds, platform.id),
-      ),
-    );
-    setStep("platform");
+    setSelectedGoalId(undefined);
+    setSelectedOptionIds([]);
+    setStep("goal");
   }
 
-  function togglePlatform(platform: Platform) {
-    setSelectedPlatforms((current) =>
-      togglePlatformSelection(current, getPlatform(platform.id)),
+  function chooseGoal(goalId: SecurityGoalId) {
+    setSelectedGoalId(goalId);
+    setSelectedOptionIds([]);
+  }
+
+  function toggleOption(optionId: string) {
+    setSelectedOptionIds((current) =>
+      current.includes(optionId)
+        ? current.filter((selectedId) => selectedId !== optionId)
+        : [...current, optionId],
     );
+  }
+
+  function continueFromFocus() {
+    if (selectedOptionIds.length > 0) setStep("result");
   }
 
   function startOver() {
     setSelectedLicenses([]);
-    setSelectedPlatforms([]);
+    setSelectedGoalId(undefined);
+    setSelectedOptionIds([]);
     setStep("license");
   }
 
@@ -425,8 +504,8 @@ function App() {
           {step === "license" && (
             <section aria-labelledby="main-title">
               <div className="eyebrow">Find your security policy templates</div>
-              <h1 id="main-title" tabIndex={-1}>Which Microsoft 365 licenses do you have today?</h1>
-              <p className="intro">Select all your current licenses to see which ALSO security policy templates are available to your customers.</p>
+              <h1 id="main-title" tabIndex={-1}>Which Microsoft 365 licenses does your customer have?</h1>
+              <p className="intro">Select all current licenses. Next, choose the security challenges your customer wants to solve to find relevant ALSO security policy templates.</p>
               <div className="license-section" aria-labelledby="enterprise-heading">
                 <h2 id="enterprise-heading">Enterprise</h2>
                 <LicenseGrid items={enterpriseLicenses} selected={selectedLicenses} onToggle={toggleLicense} />
@@ -449,7 +528,7 @@ function App() {
             </section>
           )}
 
-          {step === "platform" && eligibleLicenses.length > 0 && (
+          {step === "goal" && eligibleLicenses.length > 0 && (
             <section aria-labelledby="main-title">
               <div className="selection-pills" aria-label="Selected eligible licenses">
                 {eligibleLicenses.map((license) => (
@@ -458,44 +537,25 @@ function App() {
                   </span>
                 ))}
               </div>
-              <h1 id="main-title" tabIndex={-1}>Which platforms or solutions do you need security templates for?</h1>
-              <p className="intro">Select one or more platforms, then continue to see every relevant policy template repository.</p>
-              <div className="card-grid platform-grid" aria-label="Platforms and solutions">
-                {platforms
-                  .filter((platform) =>
-                    isPlatformAvailableForLicenses(eligibleLicenseIds, platform.id),
-                  )
-                  .map((platform) => {
-                    const comingSoon = "comingSoon" in platform && platform.comingSoon;
-                    const isSelected = selectedPlatforms.some((item) => item.id === platform.id);
-                    const experience = getPlatformExperienceForLicenses(
-                      eligibleLicenseIds,
-                      platform.id,
-                    );
-                    return (
-                      <button
-                        className={`choice-card platform-card ${isSelected ? "selected" : ""}`}
-                        type="button"
-                        key={platform.id}
-                        aria-pressed={isSelected}
-                        onClick={() => togglePlatform(platform)}
-                      >
-                        <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
-                        <span className="choice-details">
-                          <span className="platform-title">
-                            <span className="choice-name">{platform.name}</span>
-                            {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
-                          </span>
-                          {!comingSoon && (
-                            <span className={`experience-badge ${experience}`}>
-                              {experience === "full" ? "Full experience" : "Limited experience"}
-                            </span>
-                          )}
-                        </span>
-                        <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
-                      </button>
-                    );
-                  })}
+              <h1 id="main-title" tabIndex={-1}>What security challenges are you trying to solve?</h1>
+              <p className="intro">Choose a security goal to see relevant scenarios, device types, and template recommendations.</p>
+              <div className="card-grid goal-grid" aria-label="Security goals">
+                {securityGoals.map((goal, index) => (
+                  <button
+                    className={`choice-card goal-card ${selectedGoalId === goal.id ? "selected" : ""}`}
+                    type="button"
+                    key={goal.id}
+                    aria-pressed={selectedGoalId === goal.id}
+                    onClick={() => chooseGoal(goal.id)}
+                  >
+                    <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="choice-details">
+                      <span className="choice-name">{goal.name}</span>
+                      <span className="goal-description">{goal.description}</span>
+                    </span>
+                    <span className="choice-check" aria-hidden="true">{selectedGoalId === goal.id ? "\u2713" : ""}</span>
+                  </button>
+                ))}
               </div>
               <div className="actions platform-actions">
                 <div>
@@ -505,12 +565,62 @@ function App() {
                 <button
                   className="button primary"
                   type="button"
-                  disabled={selectedPlatforms.length === 0}
-                  onClick={() => setStep("result")}
+                  disabled={!selectedGoal}
+                  onClick={() => selectedGoal && setStep("focus")}
                 >
-                  {selectedPlatforms.length === 0
-                    ? "Select at least one platform"
-                    : `View ${selectedPlatforms.length} recommendation${selectedPlatforms.length === 1 ? "" : "s"}`} &rarr;
+                  {selectedGoal ? `Continue with ${selectedGoal.name}` : "Select a security goal"} &rarr;
+                </button>
+              </div>
+            </section>
+          )}
+
+          {step === "focus" && selectedGoal && eligibleLicenses.length > 0 && (
+            <section aria-labelledby="main-title">
+              <div className="selection-pills" aria-label="Selected eligible licenses">
+                {eligibleLicenses.map((license) => (
+                  <span className="selection-pill" key={license.id}>
+                    <span aria-hidden="true">&#10003;</span>{license.name}
+                  </span>
+                ))}
+              </div>
+              <div className="eyebrow">{selectedGoal.name}</div>
+              <h1 id="main-title" tabIndex={-1}>{selectedGoal.prompt}</h1>
+              <p className="intro">Select one or more options. Recommendations will be matched to the licenses selected above.</p>
+              <div className="card-grid goal-option-grid" aria-label={`${selectedGoal.name} options`}>
+                {selectedGoal.options.map((option, index) => {
+                  const isSelected = selectedOptionIds.includes(option.id);
+                  return (
+                    <button
+                      className={`choice-card goal-card ${isSelected ? "selected" : ""}`}
+                      type="button"
+                      key={option.id}
+                      aria-pressed={isSelected}
+                      onClick={() => toggleOption(option.id)}
+                    >
+                      <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="choice-details">
+                        <span className="choice-name">{option.name}</span>
+                        <span className="goal-description">{option.description}</span>
+                      </span>
+                      <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="actions platform-actions">
+                <div>
+                  <button className="button secondary" type="button" onClick={() => setStep("goal")}>&larr; Back</button>
+                  <button className="button text-button" type="button" onClick={startOver}>Start over</button>
+                </div>
+                <button
+                  className="button primary"
+                  type="button"
+                  disabled={selectedOptionIds.length === 0}
+                  onClick={continueFromFocus}
+                >
+                  {selectedOptionIds.length === 0
+                    ? "Select at least one option"
+                    : "View recommendations"} &rarr;
                 </button>
               </div>
             </section>
@@ -529,49 +639,56 @@ function App() {
             </section>
           )}
 
-          {step === "result" && eligibleLicenses.length > 0 && selectedPlatforms.length > 0 && (
+          {step === "result" && eligibleLicenses.length > 0 && selectedGoal && selectedOptions.length > 0 && (
             <section className="result-wrap" aria-labelledby="main-title">
               <div className="result-heading">
-                <div className="result-icon" aria-hidden="true">&#10003;</div>
-                <div className="eyebrow">Recommended repositories</div>
-                <h1 id="main-title" tabIndex={-1}>Your security template repositories</h1>
-                <p>Based on <strong>{eligibleLicenses.map((license) => license.name).join(", ")}</strong>, here are the repositories for your {selectedPlatforms.length} selected {selectedPlatforms.length === 1 ? "platform" : "platforms"}.</p>
+                <div className="eyebrow">{selectedGoal.name}</div>
+                <h1 id="main-title" tabIndex={-1}>Recommended security policy templates</h1>
+                <p>Based on <strong>{eligibleLicenses.map((license) => license.name).join(", ")}</strong> and the needs you selected, explore these ALSO repositories.</p>
+                <div className="recommendation-context" aria-label="Selected needs">
+                  {selectedOptions.map((option) => (
+                    <span className="selection-pill" key={option.id}>{option.name}</span>
+                  ))}
+                </div>
               </div>
-              <div className="recommendation-grid">
-                {selectedPlatforms.map((platform) => {
-                  const repositories = getPlatformRepositories(platform);
-                  const comingSoon = "comingSoon" in platform && platform.comingSoon;
+              {recommendedRepositories.length > 0 ? (
+                <div className="recommendation-grid">
+                  {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames }) => {
+                  const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
-                      platform.id,
+                      sourcePlatform.id,
                     );
                   const windowsServerNotes =
-                    platform.id === "windows-servers" ||
-                    platform.id === "linux-server"
-                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, platform.id)
+                    sourcePlatform.id === "windows-servers" ||
+                    sourcePlatform.id === "linux-server"
+                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
                       : [];
                   const showAiSecurityLicenseActions =
                     shouldShowAiSecurityLicenseActions(
                       eligibleLicenseIds,
-                      platform.id,
+                      sourcePlatform.id,
                     );
                   return (
                     <article
                       className={`recommendation-card${showAiSecurityLicenseActions ? " recommendation-card-ai-security" : ""}`}
-                      key={platform.id}
+                      key={repository.url}
                     >
                       <div className="recommendation-card-main">
-                        <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
+                        <span className="choice-icon" aria-hidden="true">{sourcePlatform.shortLabel}</span>
                         <div className="platform-title">
-                          <h2>{platform.name}</h2>
+                          <h2>{repository.name}</h2>
                           {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
                         </div>
                         <RepositoryDetails
-                          repositories={repositories}
+                          repositories={[repository]}
                           metadata={repositoryMetadata.repositories}
                           comingSoon={comingSoon}
                         />
+                        <p className="recommendation-reasons">
+                          Recommended for: {solutionNames.join(", ")}
+                        </p>
                         {limitedExperienceNote && (
                           <aside className="license-requirement-note">
                             <strong>{limitedExperienceNote.title}</strong>
@@ -587,9 +704,9 @@ function App() {
                         <div className="repository-links">
                           {comingSoon ? (
                             <button className="button primary repository-link" type="button" disabled>
-                              AI Security macOS repository coming soon
+                              AI Security macOS templates coming soon
                             </button>
-                          ) : repositories.map((repository) => (
+                          ) : (
                             <a
                               className="button primary repository-link"
                               href={repository.url}
@@ -599,16 +716,22 @@ function App() {
                             >
                               Open {repository.name} repository <ArrowIcon />
                             </a>
-                          ))}
+                          )}
                         </div>
                       </div>
                       {showAiSecurityLicenseActions && <AiSecurityLicenseActions />}
                     </article>
                   );
-                })}
-              </div>
+                  })}
+                </div>
+              ) : (
+                <div className="result-card">
+                  <h2>No matching repositories for these licenses</h2>
+                  <p>The selected security goal does not currently have repositories available for the licenses selected. Review the license selection or choose another security goal.</p>
+                </div>
+              )}
               <div className="actions centered">
-                <button className="button secondary" type="button" onClick={() => setStep("platform")}>&larr; Back</button>
+                <button className="button secondary" type="button" onClick={() => setStep("focus")}>&larr; Back</button>
                 <button className="button text-button" type="button" onClick={startOver}>Start over</button>
               </div>
             </section>
