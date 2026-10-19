@@ -72,12 +72,11 @@ h1:focus {
 
 .header-inner {
   display: flex;
-  max-width: 1180px;
+  width: 100%;
   height: 4.5rem;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .brand {
@@ -131,8 +130,85 @@ h1:focus {
 
 .header-actions {
   display: flex;
+  margin-left: 1.5rem;
   gap: 0.65rem;
   align-items: center;
+}
+
+.language-menu {
+  display: flex;
+  min-height: 2.5rem;
+  margin-left: auto;
+  padding: 0 0.4rem;
+  gap: 0.45rem;
+  align-items: center;
+  color: var(--text);
+}
+
+.language-menu svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.language-menu select {
+  max-width: 8.5rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.language-menu select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1000px) {
+  .brand-product,
+  .brand-divider {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .header-inner {
+    height: auto;
+    min-height: 4rem;
+    padding: 0.5rem;
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+  }
+
+  .brand-logo {
+    width: 4.5rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    margin-left: 0;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    order: 2;
+  }
+
+  .issue-link {
+    min-height: 2.4rem;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.76rem;
+  }
+
+  .language-menu {
+    min-height: 2.4rem;
+    padding-right: 0.15rem;
+    order: 1;
+  }
 }
 
 main {
@@ -1009,31 +1085,8 @@ footer p {
     text-align: left;
   }
 
-  .header-inner {
-    height: 4rem;
-    padding: 0 0.5rem;
-  }
-
-  .brand-logo {
-    width: 5.5rem;
-  }
-
-  .brand-title-group {
+  .brand-product {
     display: none;
-  }
-
-  .brand-divider {
-    display: none;
-  }
-
-  .issue-link {
-    min-height: 2.4rem;
-    padding: 0.5rem 0.6rem;
-    font-size: 0.76rem;
-  }
-
-  .header-actions {
-    gap: 0.4rem;
   }
 
   .content {
