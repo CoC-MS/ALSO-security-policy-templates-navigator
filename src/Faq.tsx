@@ -4,7 +4,7 @@ export const faqItems = [
   {
     question: "What is the purpose of the ALSO Security Policy Templates Navigator Site?",
     answer: [
-      "The purpose of the ALSO Security Policy Templates Navigator is to help partners and customers quickly identify which security policy templates are available for their Microsoft licenses. The site maps popular Microsoft licenses to the relevant security policy templates provided by ALSO, making it easier to understand what can be deployed and what features are supported.",
+      <p>The purpose of the ALSO Security Policy Templates Navigator is to help partners and customers quickly identify which security policy templates are available for their Microsoft licenses <strong>and security challenges</strong>. The site maps popular Microsoft licenses and common security scenarios to the relevant security policy templates provided by ALSO, making it easier to understand what can be deployed, what features are supported, and which templates can help address specific security needs.</p>,
       "Our goal is to remove blockers, simplify decision-making, and help organizations get started with Microsoft Security faster. We understand that navigating security features, licensing requirements, and deployment prerequisites can be complex, and this site is designed to make that process easier.",
     ],
   },

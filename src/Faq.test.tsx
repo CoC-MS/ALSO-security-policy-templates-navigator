@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { Faq, faqItems } from "./Faq";
 
 describe("FAQ page", () => {
+  it("updates the first answer to include license and security challenge mapping", () => {
+    const html = renderToStaticMarkup(<Faq />);
+
+    expect(html).toContain("<strong>and security challenges</strong>");
+    expect(html).toContain("maps popular Microsoft licenses and common security scenarios");
+    expect(html).toContain("which templates can help address specific security needs.");
+  });
+
   it("renders all fifteen supplied questions and their complete answers accessibly", () => {
     const html = renderToStaticMarkup(<Faq />);
 
