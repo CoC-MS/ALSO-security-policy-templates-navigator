@@ -382,7 +382,9 @@ function formatSelectedLicenseNames(
 export function getLimitedExperienceNoteForLicenses(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
+  options: { includeAgent365Guidance?: boolean } = {},
 ): { title: string; message: string } | undefined {
+  const includeAgent365Guidance = options.includeAgent365Guidance ?? true;
   const eligibleLicenseIds = licenseIds.filter((licenseId) =>
     isLicenseEligible(licenseId),
   );
@@ -407,8 +409,12 @@ export function getLimitedExperienceNoteForLicenses(
     if (needsEntraIdP2) {
       return {
         title: "Limited Conditional Access experience",
-        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 for risky user and risky sign-in policy templates. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on. An Agent 365 license is required for all Agent 365 policy templates; Agent 365 is also included in Microsoft 365 E7.`,
+        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 for risky user and risky sign-in policy templates. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${includeAgent365Guidance ? " An Agent 365 license is required for all Agent 365 policy templates; Agent 365 is also included in Microsoft 365 E7." : ""}`,
       };
+    }
+
+    if (!includeAgent365Guidance) {
+      return undefined;
     }
 
     return {

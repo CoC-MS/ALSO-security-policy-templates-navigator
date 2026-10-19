@@ -741,10 +741,23 @@ function App() {
                 <div className="recommendation-grid">
                   {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
+                  const conditionalAccessSelections = sourcePlatform.id === "conditional-access"
+                    ? selectedOptions.filter((option) =>
+                      option.platformIds.some((platformId) =>
+                        platformId === "conditional-access",
+                      ),
+                    )
+                    : [];
+                  const attackScenarioOnly =
+                    conditionalAccessSelections.length > 0 &&
+                    conditionalAccessSelections.every((option) =>
+                      option.selectionId.startsWith("attack-protection:"),
+                    );
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
                       sourcePlatform.id,
+                      { includeAgent365Guidance: !attackScenarioOnly },
                     );
                   const windowsServerNotes =
                     sourcePlatform.id === "windows-servers" ||

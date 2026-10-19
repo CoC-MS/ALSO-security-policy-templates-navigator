@@ -333,6 +333,28 @@ describe("Business Premium-only results", () => {
     );
   });
 
+  it("omits Agent 365 guidance for attack-scenario Conditional Access recommendations", () => {
+    const note = getLimitedExperienceNoteForLicenses(
+      ["business-premium"],
+      "conditional-access",
+      { includeAgent365Guidance: false },
+    );
+
+    expect(note?.message).toContain("Microsoft Entra ID Plan 2");
+    expect(note?.message).toContain("Microsoft Defender Suite add-on");
+    expect(note?.message).not.toContain("Agent 365");
+  });
+
+  it("does not show a Conditional Access limitation solely for Agent 365 on attack scenarios", () => {
+    expect(
+      getLimitedExperienceNoteForLicenses(
+        ["e5"],
+        "conditional-access",
+        { includeAgent365Guidance: false },
+      ),
+    ).toBeUndefined();
+  });
+
   it.each([
     "windows-11",
     "ai-security",
