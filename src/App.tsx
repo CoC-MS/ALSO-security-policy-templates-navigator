@@ -22,6 +22,10 @@ import {
 } from "./repositoryMetadata";
 import { PolicyCounters } from "./PolicyCounters";
 import { Faq } from "./Faq";
+import {
+  AiSecurityLicenseActions,
+  shouldShowAiSecurityLicenseActions,
+} from "./AiSecurityLicenseActions";
 
 type Step = "license" | "platform" | "blocked" | "result" | "overview" | "faq";
 
@@ -514,39 +518,50 @@ function App() {
                     platform.id === "linux-server"
                       ? getWindowsServerLicenseNotes(eligibleLicenseIds, platform.id)
                       : [];
+                  const showAiSecurityLicenseActions =
+                    shouldShowAiSecurityLicenseActions(
+                      eligibleLicenseIds,
+                      platform.id,
+                    );
                   return (
-                    <article className="recommendation-card" key={platform.id}>
-                      <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
-                      <h2>{platform.name}</h2>
-                      <RepositoryDetails
-                        repositories={repositories}
-                        metadata={repositoryMetadata.repositories}
-                      />
-                      {limitedExperienceNote && (
-                        <aside className="license-requirement-note">
-                          <strong>{limitedExperienceNote.title}</strong>
-                          <p>{limitedExperienceNote.message}</p>
-                        </aside>
-                      )}
-                      {windowsServerNotes.map((note) => (
-                        <aside className="license-requirement-note" key={note}>
-                          <strong>Additional server license required</strong>
-                          <p>{note}</p>
-                        </aside>
-                      ))}
-                      <div className="repository-links">
-                        {repositories.map((repository) => (
-                          <a
-                            className="button primary repository-link"
-                            href={repository.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            key={repository.url}
-                          >
-                            Open {repository.name} repository <ArrowIcon />
-                          </a>
+                    <article
+                      className={`recommendation-card${showAiSecurityLicenseActions ? " recommendation-card-ai-security" : ""}`}
+                      key={platform.id}
+                    >
+                      <div className="recommendation-card-main">
+                        <span className="choice-icon" aria-hidden="true">{platform.shortLabel}</span>
+                        <h2>{platform.name}</h2>
+                        <RepositoryDetails
+                          repositories={repositories}
+                          metadata={repositoryMetadata.repositories}
+                        />
+                        {limitedExperienceNote && (
+                          <aside className="license-requirement-note">
+                            <strong>{limitedExperienceNote.title}</strong>
+                            <p>{limitedExperienceNote.message}</p>
+                          </aside>
+                        )}
+                        {windowsServerNotes.map((note) => (
+                          <aside className="license-requirement-note" key={note}>
+                            <strong>Additional server license required</strong>
+                            <p>{note}</p>
+                          </aside>
                         ))}
+                        <div className="repository-links">
+                          {repositories.map((repository) => (
+                            <a
+                              className="button primary repository-link"
+                              href={repository.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              key={repository.url}
+                            >
+                              Open {repository.name} repository <ArrowIcon />
+                            </a>
+                          ))}
+                        </div>
                       </div>
+                      {showAiSecurityLicenseActions && <AiSecurityLicenseActions />}
                     </article>
                   );
                 })}
