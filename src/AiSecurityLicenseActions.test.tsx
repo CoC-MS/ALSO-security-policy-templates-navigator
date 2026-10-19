@@ -22,16 +22,18 @@ describe("AI Security license actions", () => {
     ).toBe(false);
   });
 
-  it("renders three unavailable purchase and services actions", () => {
+  it("links to ACMP for both licenses and marks professional services as coming soon", () => {
     const html = renderToStaticMarkup(<AiSecurityLicenseActions />);
 
     expect(html).toContain("Need implementation or consulting?");
-    expect(html.match(/<button/g)).toHaveLength(3);
-    expect(html.match(/disabled=""/g)).toHaveLength(3);
-    expect(html).toContain("Purchase Agent 365 license");
-    expect(html).toContain("Purchase Microsoft 365 E7 license");
+    expect(html).toContain('href="https://marketplace.also.no/#/Marketplace/Explore/p:1;l:20;st:Root;ord:Ranking,ASC;n:QWdlbnQgMzY1"');
+    expect(html).toContain('href="https://marketplace.also.no/#/Marketplace/Explore/p:1;l:20;st:Root;ord:Ranking,ASC;n:bWljcm9zb2Z0IDM2NSBFNw=="');
+    expect(html).toContain("Explore Agent 365 licenses in ACMP");
+    expect(html).toContain("Explore Microsoft 365 E7 licenses in ACMP");
     expect(html).toContain("Request Professional Services Help from ALSO CoE");
-    expect(html.match(/Link coming soon/g)).toHaveLength(2);
+    expect(html.match(/<a /g)).toHaveLength(2);
+    expect(html.match(/<button/g)).toHaveLength(1);
+    expect(html.match(/disabled=""/g)).toHaveLength(1);
     expect(html).toContain("Coming soon");
   });
 });
