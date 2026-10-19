@@ -22,14 +22,16 @@ describe("AI Security license actions", () => {
     ).toBe(false);
   });
 
-  it("links to ACMP for both licenses and marks professional services as coming soon", () => {
+  it("groups license links separately from consulting and uses primary license buttons", () => {
     const html = renderToStaticMarkup(<AiSecurityLicenseActions />);
 
-    expect(html).toContain("Need implementation or consulting?");
+    expect(html).toContain("<h3 id=\"ai-security-license-title\">Explore licenses</h3>");
+    expect(html).toContain("<h3 id=\"ai-security-services-title\">Need implementation help or consulting?</h3>");
     expect(html).toContain('href="https://marketplace.also.no/#/Marketplace/Explore/p:1;l:20;st:Root;ord:Ranking,ASC;n:QWdlbnQgMzY1"');
     expect(html).toContain('href="https://marketplace.also.no/#/Marketplace/Explore/p:1;l:20;st:Root;ord:Ranking,ASC;n:bWljcm9zb2Z0IDM2NSBFNw=="');
     expect(html).toContain("Explore Agent 365 licenses in ACMP");
     expect(html).toContain("Explore Microsoft 365 E7 licenses in ACMP");
+    expect(html.match(/class="button primary"/g)).toHaveLength(2);
     expect(html).toContain("Request Professional Services Help from ALSO CoE");
     expect(html.match(/<a /g)).toHaveLength(2);
     expect(html.match(/<button/g)).toHaveLength(1);

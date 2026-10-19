@@ -794,8 +794,14 @@ h1 {
 }
 
 .ai-security-actions h3 {
-  margin: 0 0 0.9rem;
+  margin: 0 0 0.75rem;
   font-size: 1rem;
+}
+
+.ai-security-action-section + .ai-security-action-section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
 }
 
 .ai-security-action-list {
@@ -803,17 +809,12 @@ h1 {
   gap: 0.8rem;
 }
 
-.ai-security-action {
-  display: grid;
-  gap: 0.3rem;
-}
-
-.ai-security-action .button {
+.ai-security-action-list .button {
   width: 100%;
   text-align: left;
 }
 
-.ai-security-action span {
+.ai-security-action-list > span {
   padding-left: 0.2rem;
   color: var(--text-muted);
   font-size: 0.78rem;
