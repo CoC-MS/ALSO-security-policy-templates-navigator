@@ -87,6 +87,15 @@ describe("security goal recommendations", () => {
     ).toEqual([]);
   });
 
+  it("adds a protection disclaimer to each attack policy recommendation", () => {
+    const attackOptions = securityGoals.find((goal) => goal.id === "attack-protection")!.options;
+
+    expect(attackOptions.every((option) =>
+      option.recommendedPolicyNote ===
+      "These recommended policies are a good starting point, but implementing them does not guarantee full protection.",
+    )).toBe(true);
+  });
+
   it("deduplicates policies when multiple attack scenarios are selected", () => {
     expect(
       getRecommendedPolicyIds(
@@ -119,9 +128,11 @@ describe("security goal recommendations", () => {
     ]);
   });
 
-  it("maps data protection and AI/Agent security", () => {
-    expect(getSolutionPlatformIds("data-protection", ["purview-data-protection"]))
+  it("maps data protection directly and AI/Agent security by option", () => {
+    expect(getSolutionPlatformIds("data-protection", []))
       .toEqual(["purview"]);
+    expect(securityGoals.find((goal) => goal.id === "data-protection")!.options[0].autoSelect)
+      .toBe(true);
     expect(getSolutionPlatformIds("ai-agent-security", ["ai-security", "agent-security"]))
       .toEqual(["ai-security", "ai-security-macos", "agent-security"]);
   });

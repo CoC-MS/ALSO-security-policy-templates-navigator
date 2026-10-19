@@ -18,6 +18,9 @@ export interface SecurityGoal {
   options: readonly SolutionOption[];
 }
 
+const ATTACK_POLICY_NOTE =
+  "These recommended policies are a good starting point, but implementing them does not guarantee full protection.";
+
 export const securityGoals = [
   {
     id: "attack-protection",
@@ -31,6 +34,7 @@ export const securityGoals = [
         description: "Protect sign-in flows that can be abused to trick users into authorizing an attacker’s device.",
         platformIds: ["conditional-access"],
         recommendedPolicyIds: ["CA004"],
+        recommendedPolicyNote: ATTACK_POLICY_NOTE,
       },
       {
         id: "token-theft",
@@ -38,6 +42,7 @@ export const securityGoals = [
         description: "Help reduce the risk of stolen authentication tokens being used to access accounts and devices.",
         platformIds: ["conditional-access", "macos", "windows-11"],
         recommendedPolicyIds: ["CA105", "CA107"],
+        recommendedPolicyNote: ATTACK_POLICY_NOTE,
       },
       {
         id: "aitm-phishing",
@@ -45,6 +50,7 @@ export const securityGoals = [
         description: "Strengthen access controls against phishing proxies that attempt to capture credentials and session tokens.",
         platformIds: ["conditional-access"],
         recommendedPolicyIds: ["CA105", "CA107"],
+        recommendedPolicyNote: ATTACK_POLICY_NOTE,
       },
       {
         id: "password-spray",
@@ -52,6 +58,7 @@ export const securityGoals = [
         description: "Apply access policies that help mitigate attempts to sign in with commonly used passwords across many accounts.",
         platformIds: ["conditional-access"],
         recommendedPolicyIds: ["CA002", "CA000"],
+        recommendedPolicyNote: ATTACK_POLICY_NOTE,
       },
       {
         id: "brute-force",
@@ -59,6 +66,7 @@ export const securityGoals = [
         description: "Use identity and server security policies to help reduce repeated password-guessing attempts.",
         platformIds: ["conditional-access", "windows-servers"],
         recommendedPolicyIds: ["CA002", "CA000"],
+        recommendedPolicyNote: ATTACK_POLICY_NOTE,
       },
     ],
   },
@@ -136,6 +144,7 @@ export const securityGoals = [
         name: "Microsoft Purview",
         description: "Discover policies for data protection and compliance.",
         platformIds: ["purview"],
+        autoSelect: true,
       },
     ],
   },
