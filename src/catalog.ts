@@ -212,9 +212,11 @@ const agentSecurityLicenseIds = new Set<License["id"]>([
   "e7",
   "e5",
   "e3",
+  "f3",
   "e3-defender-purview",
   "f3-defender",
   "f3-defender-purview",
+  "f1",
   "f1-defender",
   "f1-defender-purview",
   "business-premium",
@@ -224,6 +226,8 @@ const agentSecurityLicenseIds = new Set<License["id"]>([
 
 const agentSecurityLimitedLicenseIds = new Set<License["id"]>([
   "e3",
+  "f3",
+  "f1",
   "f3-defender",
   "f1-defender",
   "business-premium",
