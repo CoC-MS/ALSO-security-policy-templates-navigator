@@ -42,7 +42,9 @@ describe("security goal recommendations", () => {
       .options[0];
     expect(administratorOption.autoSelect).toBe(true);
     expect(administratorOption.recommendedPolicyNote)
-      .toBe("CA106 requires Microsoft Entra ID Plan 2.");
+      .toBe(
+        "CA106 requires Microsoft Entra ID Plan 2. These recommended policies are a good starting point, but implementing them does not guarantee full protection.",
+      );
   });
 
   it("supports selecting multiple security goals and deselecting one", () => {

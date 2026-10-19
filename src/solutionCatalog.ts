@@ -94,7 +94,8 @@ export const securityGoals = [
           "CA109",
           "CA110",
         ],
-        recommendedPolicyNote: "CA106 requires Microsoft Entra ID Plan 2.",
+        recommendedPolicyNote:
+          `CA106 requires Microsoft Entra ID Plan 2. ${ATTACK_POLICY_NOTE}`,
       },
     ],
   },
