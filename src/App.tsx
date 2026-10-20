@@ -40,7 +40,15 @@ import {
   shouldShowAiSecurityLicenseActions,
 } from "./AiSecurityLicenseActions";
 
-type Step = "license" | "goal" | "focus" | "blocked" | "result" | "overview" | "faq";
+type Step =
+  | "license"
+  | "goal"
+  | "focus"
+  | "endpoint-categories"
+  | "blocked"
+  | "result"
+  | "overview"
+  | "faq";
 
 function renderWindowsServerLicenseNote(note: string) {
   const productTermsPrerequisite =
@@ -137,7 +145,11 @@ function LicenseGrid({
 }
 
 function StepIndicator({ step }: { step: Step }) {
-  const goalActive = step === "goal" || step === "focus" || step === "result";
+  const goalActive =
+    step === "goal" ||
+    step === "focus" ||
+    step === "endpoint-categories" ||
+    step === "result";
   return (
     <div className="steps" aria-label="Progress">
       <div className="step-item active">
@@ -294,6 +306,19 @@ function App() {
   const eligibleLicenseIds = eligibleLicenses.map((license) => license.id);
   const selectedGoals = securityGoals.filter((goal) =>
     selectedGoalIds.includes(goal.id),
+  );
+  const endpointProtectionGoal = securityGoals.find(
+    (goal) => goal.id === "endpoint-protection",
+  )!;
+  const selectedEndpointPlatforms = endpointProtectionGoal.options.filter((option) =>
+    selectedOptionIds.includes(`endpoint-protection:${option.id}`),
+  );
+  const selectedEndpointCategoryIds = selectedOptionIds.filter((selectionId) =>
+    endpointProtectionGoal.options.some((option) =>
+      getSecurityGoalOptionChildren(option).some((child) =>
+        selectionId === `endpoint-protection:${child.id}`,
+      ),
+    ),
   );
   const selectedOptions = selectedGoals.flatMap((goal) =>
     getSecurityGoalOptions(goal.id)
@@ -470,7 +495,15 @@ function App() {
   }
 
   function continueFromFocus() {
+    if (selectedGoalIds.includes("endpoint-protection")) {
+      if (selectedEndpointPlatforms.length > 0) setStep("endpoint-categories");
+      return;
+    }
     if (selectedOptions.length > 0) setStep("result");
+  }
+
+  function continueFromEndpointCategories() {
+    if (selectedEndpointCategoryIds.length > 0) setStep("result");
   }
 
   function startOver() {
@@ -773,8 +806,24 @@ function App() {
                 ))}
               </div>
               <div className="eyebrow">Your selected security goals</div>
-              <h1 id="main-title" tabIndex={-1}>Choose the scenarios and platforms to include</h1>
-              <p className="intro">Select one or more options under each goal. Select an option again to remove it. Recommendations will be matched to the licenses selected above.</p>
+              <h1 id="main-title" tabIndex={-1}>
+                {selectedGoalIds.length === 1 &&
+                selectedGoalIds[0] === "endpoint-protection"
+                  ? "Choose endpoint platforms"
+                  : selectedGoalIds.length === 1 &&
+                    selectedGoalIds[0] === "data-protection"
+                    ? "Choose Data Security categories"
+                    : "Choose the scenarios and platforms to include"}
+              </h1>
+              <p className="intro">
+                {selectedGoalIds.length === 1 &&
+                selectedGoalIds[0] === "endpoint-protection"
+                  ? "Select the operating systems you want to protect, then choose policy categories for each."
+                  : selectedGoalIds.length === 1 &&
+                    selectedGoalIds[0] === "data-protection"
+                    ? "Select the Purview policy categories to include in your recommendations."
+                    : "Select one or more options under each goal. Select an option again to remove it. Recommendations will be matched to the licenses selected above."}
+              </p>
               <div className="goal-option-sections">
                 {selectedGoals.filter((goal) =>
                   goal.options.some((option) => !isAutoSelectedOption(option)),
@@ -784,21 +833,7 @@ function App() {
                     <p>{goal.prompt}</p>
                     <div className="card-grid goal-option-grid" aria-label={`${goal.name} options`}>
                       {goal.options.filter((option) => !isAutoSelectedOption(option)).map((option, index) => {
-                        return (
-                          <Fragment key={`${goal.id}:${option.id}`}>
-                            {renderOptionCard(goal.id, option, index)}
-                            {getSecurityGoalOptionChildren(option).length > 0 && (
-                              <div className="endpoint-subcategories">
-                                <h3>Choose {option.name} policy categories</h3>
-                                <div className="card-grid endpoint-subcategory-grid">
-                                  {getSecurityGoalOptionChildren(option).map((child, childIndex) =>
-                                    renderOptionCard(goal.id, child, childIndex, true),
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </Fragment>
-                        );
+                        return renderOptionCard(goal.id, option, index);
                       })}
                     </div>
                   </section>
@@ -812,16 +847,81 @@ function App() {
                 <button
                   className="button primary"
                   type="button"
-                  disabled={selectedOptions.length === 0}
+                  disabled={
+                    selectedGoalIds.includes("endpoint-protection")
+                      ? selectedEndpointPlatforms.length === 0
+                      : selectedOptions.length === 0
+                  }
                   onClick={continueFromFocus}
                 >
-                  {selectedOptions.length === 0
-                    ? "Select at least one option"
+                  {selectedGoalIds.includes("endpoint-protection")
+                    ? "Choose endpoint policy categories"
                     : "View recommendations"} &rarr;
                 </button>
               </div>
             </section>
           )}
+
+          {step === "endpoint-categories" &&
+            selectedEndpointPlatforms.length > 0 &&
+            eligibleLicenses.length > 0 && (
+              <section aria-labelledby="main-title">
+                <div className="selection-pills" aria-label="Selected eligible licenses">
+                  {eligibleLicenses.map((license) => (
+                    <span className="selection-pill" key={license.id}>
+                      <span aria-hidden="true">&#10003;</span>{license.name}
+                    </span>
+                  ))}
+                </div>
+                <div className="eyebrow">Endpoint protection</div>
+                <h1 id="main-title" tabIndex={-1}>Choose policy categories</h1>
+                <p className="intro">
+                  Select categories for the endpoint platforms you chose. Each selection will lead to its matching ALSO repository.
+                </p>
+                <div className="goal-option-sections">
+                  {selectedEndpointPlatforms.map((platformOption) => (
+                    <section
+                      className="goal-option-section"
+                      key={platformOption.id}
+                      aria-labelledby={`${platformOption.id}-categories-heading`}
+                    >
+                      <h2 id={`${platformOption.id}-categories-heading`}>
+                        {platformOption.name}
+                      </h2>
+                      <div className="card-grid endpoint-subcategory-grid">
+                        {getSecurityGoalOptionChildren(platformOption).map((child, index) =>
+                          renderOptionCard("endpoint-protection", child, index, true),
+                        )}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+                <div className="actions platform-actions">
+                  <div>
+                    <button
+                      className="button secondary"
+                      type="button"
+                      onClick={() => setStep("focus")}
+                    >
+                      &larr; Back to platforms
+                    </button>
+                    <button className="button text-button" type="button" onClick={startOver}>
+                      Start over
+                    </button>
+                  </div>
+                  <button
+                    className="button primary"
+                    type="button"
+                    disabled={selectedEndpointCategoryIds.length === 0}
+                    onClick={continueFromEndpointCategories}
+                  >
+                    {selectedEndpointCategoryIds.length === 0
+                      ? "Select at least one category"
+                      : "View recommendations"} &rarr;
+                  </button>
+                </div>
+              </section>
+            )}
 
           {step === "blocked" && selectedLicenses.length > 0 && (
             <section className="result-wrap" aria-labelledby="main-title">
@@ -1066,7 +1166,9 @@ function App() {
                   type="button"
                   onClick={() =>
                     setStep(
-                      selectedGoals.some((goal) =>
+                      selectedGoalIds.includes("endpoint-protection")
+                        ? "endpoint-categories"
+                        : selectedGoals.some((goal) =>
                           goal.options.some((option) => !isAutoSelectedOption(option)),
                       )
                         ? "focus"
