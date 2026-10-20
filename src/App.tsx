@@ -38,16 +38,20 @@ import {
 type Step = "license" | "goal" | "focus" | "blocked" | "result" | "overview" | "faq";
 
 function renderWindowsServerLicenseNote(note: string) {
-  const prerequisite = "Microsoft Defender for Business servers license";
-  const parts = note.split(prerequisite);
+  const productTermsPrerequisite =
+    "Microsoft Defender for Business servers license";
+  const defenderForServersPrerequisite =
+    "Microsoft Defender for Servers Plan 1 or Plan 2";
+  const parts = note.split(
+    /(Microsoft Defender for Business servers license|Microsoft Defender for Servers Plan 1 or Plan 2)/g,
+  );
   if (parts.length === 1) return note;
 
   return parts.map((part, index) => (
     <Fragment key={index}>
-      {part}
-      {index < parts.length - 1 && (
+      {part === productTermsPrerequisite ? (
         <>
-          {prerequisite} (
+          {part} (
           <a
             href="https://www.microsoft.com/licensing/terms/productoffering/MicrosoftDefenderforBusinessservers/MCA#ServiceSpecificTerms"
             target="_blank"
@@ -57,7 +61,19 @@ function renderWindowsServerLicenseNote(note: string) {
           </a>
           )
         </>
-      )}
+      ) : part === defenderForServersPrerequisite ? (
+        <>
+          {part} (
+          <a
+            href="https://www.microsoft.com/licensing/faqs/48"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Licensing Documents
+          </a>
+          )
+        </>
+      ) : part}
     </Fragment>
   ));
 }
