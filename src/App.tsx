@@ -743,27 +743,30 @@ function App() {
                 <div className="recommendation-grid">
                   {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
-                  const conditionalAccessSelections = sourcePlatform.id === "conditional-access"
-                    ? selectedOptions.filter((option) =>
-                      option.platformIds.some((platformId) =>
-                        platformId === "conditional-access",
-                      ),
-                    )
-                    : [];
-                  const suppressAgent365Guidance =
-                    conditionalAccessSelections.length > 0 &&
-                    conditionalAccessSelections.every((option) =>
+                  const platformSelections = selectedOptions.filter((option) =>
+                    option.platformIds.some((platformId) =>
+                      platformId === sourcePlatform.id,
+                    ),
+                  );
+                  const attackProtectionOnly =
+                    platformSelections.length > 0 &&
+                    platformSelections.every((option) =>
+                      option.selectionId.startsWith("attack-protection:"),
+                    );
+                  const suppressAgent365Guidance = sourcePlatform.id === "conditional-access" &&
+                    platformSelections.length > 0 &&
+                    platformSelections.every((option) =>
                       option.selectionId.startsWith("attack-protection:") ||
                       option.selectionId === "app-protection:oauth-apps",
                     );
                   const oauthAppsOnly =
-                    conditionalAccessSelections.length === 1 &&
-                    conditionalAccessSelections[0].selectionId ===
-                      "app-protection:oauth-apps";
+                    sourcePlatform.id === "conditional-access" &&
+                    platformSelections.length === 1 &&
+                    platformSelections[0].selectionId === "app-protection:oauth-apps";
                   const cloudAppsOnly =
-                    conditionalAccessSelections.length === 1 &&
-                    conditionalAccessSelections[0].selectionId ===
-                      "app-protection:cloud-apps";
+                    sourcePlatform.id === "conditional-access" &&
+                    platformSelections.length === 1 &&
+                    platformSelections[0].selectionId === "app-protection:cloud-apps";
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
@@ -771,7 +774,7 @@ function App() {
                       {
                         includeAgent365Guidance: !suppressAgent365Guidance,
                         includeConditionalAccessPolicyGuidance:
-                          !oauthAppsOnly && !cloudAppsOnly,
+                          !oauthAppsOnly && !cloudAppsOnly && !attackProtectionOnly,
                       },
                     );
                   const cloudAppsConditionalAccessLicenseNote =
@@ -785,7 +788,9 @@ function App() {
                   const windowsServerNotes =
                     sourcePlatform.id === "windows-servers" ||
                     sourcePlatform.id === "linux-server"
-                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
+                      ? attackProtectionOnly
+                        ? []
+                        : getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
                       : [];
                   const showAiSecurityLicenseActions =
                     shouldShowAiSecurityLicenseActions(

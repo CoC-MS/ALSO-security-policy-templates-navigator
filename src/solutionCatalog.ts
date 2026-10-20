@@ -37,6 +37,18 @@ export const securityGoals = [
         recommendedPolicyNote: ATTACK_POLICY_NOTE,
       },
       {
+        id: "clickfix",
+        name: "ClickFix attacks",
+        description: "Explore Windows and macOS policies that help protect against ClickFix attacks.",
+        platformIds: ["windows-11", "macos"],
+      },
+      {
+        id: "ransomware",
+        name: "Ransomware attacks",
+        description: "Explore Windows, macOS, and Windows Server policies that help protect against ransomware.",
+        platformIds: ["windows-11", "macos", "windows-servers"],
+      },
+      {
         id: "token-theft",
         name: "Token theft attacks",
         description: "Help reduce the risk of stolen authentication tokens being used to access accounts and devices.",

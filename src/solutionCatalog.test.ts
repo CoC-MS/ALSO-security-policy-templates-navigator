@@ -60,6 +60,8 @@ describe("security goal recommendations", () => {
 
   it.each([
     ["device-code-phishing", ["conditional-access"]],
+    ["clickfix", ["windows-11", "macos"]],
+    ["ransomware", ["windows-11", "macos", "windows-servers"]],
     ["token-theft", ["conditional-access", "macos", "windows-11"]],
     ["aitm-phishing", ["conditional-access"]],
     ["password-spray", ["conditional-access"]],
@@ -91,8 +93,12 @@ describe("security goal recommendations", () => {
 
   it("adds a protection disclaimer to each attack policy recommendation", () => {
     const attackOptions = securityGoals.find((goal) => goal.id === "attack-protection")!.options;
+    const policyRecommendations = attackOptions.filter(
+      (option) => "recommendedPolicyIds" in option,
+    );
 
-    expect(attackOptions.every((option) =>
+    expect(policyRecommendations.every((option) =>
+      "recommendedPolicyNote" in option &&
       option.recommendedPolicyNote ===
       "These recommended policies are a good starting point, but implementing them does not guarantee full protection.",
     )).toBe(true);
