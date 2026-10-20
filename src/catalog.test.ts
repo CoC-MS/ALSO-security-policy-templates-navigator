@@ -4,6 +4,7 @@ import {
   getLimitedExperienceNoteForLicenses,
   getPlatformExperienceForLicenses,
   getPlatform,
+  getCloudAppsConditionalAccessLicenseNote,
   requiresWorkloadIdPremiumForOAuthApps,
   getPlatformRepositories,
   getWindowsServerLicenseNote,
@@ -30,6 +31,21 @@ describe("license catalog", () => {
     expect(requiresWorkloadIdPremiumForOAuthApps(["e7"])).toBe(false);
     expect(requiresWorkloadIdPremiumForOAuthApps(["e5", "e7"])).toBe(false);
     expect(requiresWorkloadIdPremiumForOAuthApps([])).toBe(false);
+  });
+
+  it("shows the Cloud apps Defender Suite requirement only when Entra ID P2 is not included", () => {
+    expect(getCloudAppsConditionalAccessLicenseNote(["business-premium"]))
+      .toMatchObject({
+        title: "Microsoft Defender Suite required for full Conditional Access experience",
+        message: expect.stringContaining("add the Microsoft Defender Suite add-on"),
+      });
+    expect(
+      getCloudAppsConditionalAccessLicenseNote(["f3"])?.message,
+    ).toContain("Microsoft Defender Suite FLW add-on");
+
+    for (const licenseId of ["e7", "e5", "e3-defender", "business-premium-defender"] as const) {
+      expect(getCloudAppsConditionalAccessLicenseNote([licenseId])).toBeUndefined();
+    }
   });
 
   it("blocks only Business Basic and Business Standard", () => {

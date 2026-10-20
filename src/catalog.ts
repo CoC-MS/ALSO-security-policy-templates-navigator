@@ -149,6 +149,28 @@ export function requiresWorkloadIdPremiumForOAuthApps(
   return eligibleLicenseIds.length > 0 && !eligibleLicenseIds.includes("e7");
 }
 
+export function getCloudAppsConditionalAccessLicenseNote(
+  licenseIds: readonly License["id"][],
+): { title: string; message: string } | undefined {
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (
+    eligibleLicenseIds.length === 0 ||
+    eligibleLicenseIds.includes("e7") ||
+    eligibleLicenseIds.some((licenseId) => entraIdP2LicenseIds.has(licenseId))
+  ) {
+    return undefined;
+  }
+
+  const selectedNames = formatSelectedLicenseNames(eligibleLicenseIds);
+  const usesFlwAddOns = eligibleLicenseIds.every(
+    (licenseId) => licenseId.startsWith("f1") || licenseId.startsWith("f3"),
+  );
+  return {
+    title: "Microsoft Defender Suite required for full Conditional Access experience",
+    message: `With ${selectedNames}, add the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on to unlock the full Conditional Access experience for Cloud apps.`,
+  };
+}
+
 export function getPlatform(platformId: Platform["id"]): Platform {
   const platform = platforms.find((item) => item.id === platformId);
   if (!platform) {

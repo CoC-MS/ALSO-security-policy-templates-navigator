@@ -3,6 +3,7 @@ import {
   getPlatform,
   getLimitedExperienceNoteForLicenses,
   getPlatformExperienceForLicenses,
+  getCloudAppsConditionalAccessLicenseNote,
   requiresWorkloadIdPremiumForOAuthApps,
   enterpriseLicenses,
   platforms,
@@ -759,15 +760,24 @@ function App() {
                     conditionalAccessSelections.length === 1 &&
                     conditionalAccessSelections[0].selectionId ===
                       "app-protection:oauth-apps";
+                  const cloudAppsOnly =
+                    conditionalAccessSelections.length === 1 &&
+                    conditionalAccessSelections[0].selectionId ===
+                      "app-protection:cloud-apps";
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
                       sourcePlatform.id,
                       {
                         includeAgent365Guidance: !suppressAgent365Guidance,
-                        includeConditionalAccessPolicyGuidance: !oauthAppsOnly,
+                        includeConditionalAccessPolicyGuidance:
+                          !oauthAppsOnly && !cloudAppsOnly,
                       },
                     );
+                  const cloudAppsConditionalAccessLicenseNote =
+                    sourcePlatform.id === "conditional-access" && cloudAppsOnly
+                      ? getCloudAppsConditionalAccessLicenseNote(eligibleLicenseIds)
+                      : undefined;
                   const needsOAuthAppsWorkloadIdLicense =
                     sourcePlatform.id === "conditional-access" &&
                     solutionNames.includes("OAuth apps") &&
@@ -816,6 +826,12 @@ function App() {
                           <aside className="license-requirement-note">
                             <strong>{limitedExperienceNote.title}</strong>
                             <p>{limitedExperienceNote.message}</p>
+                          </aside>
+                        )}
+                        {cloudAppsConditionalAccessLicenseNote && (
+                          <aside className="license-requirement-note">
+                            <strong>{cloudAppsConditionalAccessLicenseNote.title}</strong>
+                            <p>{cloudAppsConditionalAccessLicenseNote.message}</p>
                           </aside>
                         )}
                         {needsOAuthAppsWorkloadIdLicense && (
