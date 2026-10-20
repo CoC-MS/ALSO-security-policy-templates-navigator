@@ -15,6 +15,7 @@ export interface SolutionOption {
   endpointFeature?: "intune" | "defender";
   recommendedPolicyIds?: readonly string[];
   recommendedPolicyNote?: string;
+  hasPolicyLicensingPrerequisites?: boolean;
   autoSelect?: boolean;
 }
 
@@ -116,6 +117,7 @@ export const securityGoals = [
         ],
         recommendedPolicyNote:
           `CA106 requires Microsoft Entra ID Plan 2. ${ATTACK_POLICY_NOTE}`,
+        hasPolicyLicensingPrerequisites: true,
       },
     ],
   },

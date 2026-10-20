@@ -1131,6 +1131,14 @@ h1 {
   line-height: 1.55;
 }
 
+.licensing-disclaimer strong {
+  display: inline;
+}
+
+.licensing-disclaimer .licensing-comparison-links {
+  margin-top: 0.75rem;
+}
+
 .recommendation-card .repository-link {
   margin-top: auto;
 }

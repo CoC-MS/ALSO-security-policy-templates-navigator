@@ -35,6 +35,7 @@ import {
 } from "./repositoryMetadata";
 import { PolicyCounters } from "./PolicyCounters";
 import { Faq } from "./Faq";
+import { LicensingDisclaimer } from "./LicensingDisclaimer";
 import {
   AiSecurityLicenseActions,
   shouldShowAiSecurityLicenseActions,
@@ -1025,6 +1026,14 @@ function App() {
                     sourcePlatform.id === "linux-server"
                       ? getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
                       : [];
+                  const visibleLimitedExperienceNote =
+                    endpointFeatureNotes.length === 0 &&
+                    !(sourcePlatform.id === "purview" &&
+                      dataSecuritySelection &&
+                      !otherPurviewSelection &&
+                      dataSecurityLicenseNote)
+                      ? limitedExperienceNote
+                      : undefined;
                   const showAiSecurityLicenseActions =
                     shouldShowAiSecurityLicenseActions(
                       eligibleLicenseIds,
@@ -1060,16 +1069,11 @@ function App() {
                             {policyNotes.map((note) => <p className="recommended-policy-note" key={note}>{note}</p>)}
                           </div>
                         )}
-                        {limitedExperienceNote &&
-                          endpointFeatureNotes.length === 0 &&
-                          !(sourcePlatform.id === "purview" &&
-                            dataSecuritySelection &&
-                            !otherPurviewSelection &&
-                            dataSecurityLicenseNote) && (
+                        {visibleLimitedExperienceNote && (
                           <aside className="license-requirement-note">
-                            <strong>{limitedExperienceNote.title}</strong>
-                            <p>{limitedExperienceNote.message}</p>
-                            {limitedExperienceNote.message.includes("Agent 365 license") && (
+                            <strong>{visibleLimitedExperienceNote.title}</strong>
+                            <p>{visibleLimitedExperienceNote.message}</p>
+                            {visibleLimitedExperienceNote.message.includes("Agent 365 license") && (
                               <p>
                                 Learn more about Agent 365 licensing:{" "}
                                 <a
@@ -1132,6 +1136,17 @@ function App() {
                             <p>{renderWindowsServerLicenseNote(note)}</p>
                           </aside>
                         ))}
+                        <LicensingDisclaimer
+                          limitedExperienceNote={visibleLimitedExperienceNote}
+                          dataSecurityNote={dataSecurityLicenseNote}
+                          endpointNotes={endpointFeatureNotes}
+                          cloudAppsNote={cloudAppsConditionalAccessLicenseNote}
+                          needsWorkloadIdLicense={needsOAuthAppsWorkloadIdLicense}
+                          serverNotes={windowsServerNotes}
+                          hasPolicyLicensingPrerequisites={platformSelections.some(
+                            (option) => option.hasPolicyLicensingPrerequisites,
+                          )}
+                        />
                         <div className="repository-links">
                           {comingSoon ? (
                             <button className="button primary repository-link" type="button" disabled>
