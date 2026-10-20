@@ -3,6 +3,7 @@ import {
   getPlatform,
   getLimitedExperienceNoteForLicenses,
   getPlatformExperienceForLicenses,
+  requiresWorkloadIdPremiumForOAuthApps,
   enterpriseLicenses,
   platforms,
   smbLicenses,
@@ -759,6 +760,9 @@ function App() {
                       sourcePlatform.id,
                       { includeAgent365Guidance: !attackScenarioOnly },
                     );
+                  const needsOAuthAppsWorkloadIdLicense =
+                    solutionNames.includes("OAuth apps") &&
+                    requiresWorkloadIdPremiumForOAuthApps(eligibleLicenseIds);
                   const windowsServerNotes =
                     sourcePlatform.id === "windows-servers" ||
                     sourcePlatform.id === "linux-server"
@@ -803,6 +807,12 @@ function App() {
                           <aside className="license-requirement-note">
                             <strong>{limitedExperienceNote.title}</strong>
                             <p>{limitedExperienceNote.message}</p>
+                          </aside>
+                        )}
+                        {needsOAuthAppsWorkloadIdLicense && (
+                          <aside className="license-requirement-note">
+                            <strong>Microsoft Entra Workload ID Premium required for full experience</strong>
+                            <p>With the selected licenses, add Microsoft Entra Workload ID Premium licenses to unlock the full OAuth apps experience.</p>
                           </aside>
                         )}
                         {windowsServerNotes.map((note) => (

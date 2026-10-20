@@ -142,6 +142,13 @@ export function isLicenseEligible(licenseId: License["id"]): boolean {
   return licenses.find((license) => license.id === licenseId)?.eligible ?? false;
 }
 
+export function requiresWorkloadIdPremiumForOAuthApps(
+  licenseIds: readonly License["id"][],
+): boolean {
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  return eligibleLicenseIds.length > 0 && !eligibleLicenseIds.includes("e7");
+}
+
 export function getPlatform(platformId: Platform["id"]): Platform {
   const platform = platforms.find((item) => item.id === platformId);
   if (!platform) {

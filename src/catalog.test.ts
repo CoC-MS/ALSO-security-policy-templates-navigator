@@ -4,6 +4,7 @@ import {
   getLimitedExperienceNoteForLicenses,
   getPlatformExperienceForLicenses,
   getPlatform,
+  requiresWorkloadIdPremiumForOAuthApps,
   getPlatformRepositories,
   getWindowsServerLicenseNote,
   getWindowsServerLicenseNotes,
@@ -19,6 +20,18 @@ import {
 } from "./catalog";
 
 describe("license catalog", () => {
+  it("requires Workload ID Premium for OAuth apps on every eligible license except E7", () => {
+    for (const license of licenses.filter(
+      (candidate) => candidate.eligible && candidate.id !== "e7",
+    )) {
+      expect(requiresWorkloadIdPremiumForOAuthApps([license.id])).toBe(true);
+    }
+
+    expect(requiresWorkloadIdPremiumForOAuthApps(["e7"])).toBe(false);
+    expect(requiresWorkloadIdPremiumForOAuthApps(["e5", "e7"])).toBe(false);
+    expect(requiresWorkloadIdPremiumForOAuthApps([])).toBe(false);
+  });
+
   it("blocks only Business Basic and Business Standard", () => {
     expect(
       licenses.filter((license) => !isLicenseEligible(license.id)).map((license) => license.id),
