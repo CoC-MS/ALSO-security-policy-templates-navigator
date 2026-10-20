@@ -16,7 +16,12 @@ import {
 } from "./catalog";
 import {
   getSolutionPlatformIds,
+  getDataSecurityLicenseNote,
+  getEndpointFeatureLicenseNote,
+  getSecurityGoalOptions,
+  getSecurityGoalOptionChildren,
   getSecurityGoalOptionExperience,
+  isSecurityGoalOptionAvailable,
   securityGoals,
   toggleSecurityGoalSelection,
   type SecurityGoalId,
@@ -291,7 +296,7 @@ function App() {
     selectedGoalIds.includes(goal.id),
   );
   const selectedOptions = selectedGoals.flatMap((goal) =>
-    goal.options
+    getSecurityGoalOptions(goal.id)
       .filter((option) =>
         isAutoSelectedOption(option) ||
         selectedOptionIds.includes(`${goal.id}:${option.id}`),
@@ -304,7 +309,7 @@ function App() {
   const selectedPlatformIds = selectedGoals.flatMap((goal) =>
     getSolutionPlatformIds(
       goal.id,
-      goal.options
+      getSecurityGoalOptions(goal.id)
         .filter((option) =>
           isAutoSelectedOption(option) ||
           selectedOptionIds.includes(`${goal.id}:${option.id}`),
@@ -391,10 +396,76 @@ function App() {
 
   function toggleOption(goalId: SecurityGoalId, optionId: string) {
     const selection = `${goalId}:${optionId}`;
+    const goal = securityGoals.find((item) => item.id === goalId);
+    const parentOption = goal?.options.find((option) => option.id === optionId);
     setSelectedOptionIds((current) =>
       current.includes(selection)
-        ? current.filter((selectedId) => selectedId !== selection)
+        ? current.filter((selectedId) =>
+          selectedId !== selection &&
+          !(parentOption && getSecurityGoalOptionChildren(parentOption).some((child) =>
+            selectedId === `${goalId}:${child.id}`,
+          )),
+        )
         : [...current, selection],
+    );
+  }
+
+  function renderOptionCard(
+    goalId: SecurityGoalId,
+    option: SolutionOption,
+    index: number,
+    isChild = false,
+  ) {
+    const selectionId = `${goalId}:${option.id}`;
+    const isSelected = selectedOptionIds.includes(selectionId);
+    const optionAvailable = isSecurityGoalOptionAvailable(
+      goalId,
+      option.id,
+      eligibleLicenseIds,
+    );
+    const optionPlatforms = optionAvailable
+      ? option.platformIds.filter((platformId) =>
+        isPlatformAvailableForLicenses(eligibleLicenseIds, platformId),
+      )
+      : [];
+    const experience = getSecurityGoalOptionExperience(
+      goalId,
+      eligibleLicenseIds,
+      optionPlatforms,
+      option.id,
+    );
+    const featureNote = getEndpointFeatureLicenseNote(
+      option.endpointFeature,
+      eligibleLicenseIds,
+      option.platformIds[0],
+    );
+
+    return (
+      <button
+        className={`choice-card goal-card ${isChild ? "endpoint-category-card" : ""} ${isSelected ? "selected" : ""}`}
+        type="button"
+        key={selectionId}
+        aria-pressed={isSelected}
+        disabled={!optionAvailable}
+        onClick={() => toggleOption(goalId, option.id)}
+      >
+        <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+        <span className="choice-details">
+          <span className="choice-name">{option.name}</span>
+          <span className="goal-description">{option.description}</span>
+          {!optionAvailable && (
+            <span className="goal-description">
+              {featureNote ?? "Not included with the selected licenses."}
+            </span>
+          )}
+          {optionPlatforms.length > 0 && (
+            <span className={`experience-badge ${experience}`}>
+              {experience === "full" ? "Full experience" : "Limited experience"}
+            </span>
+          )}
+        </span>
+        <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
+      </button>
     );
   }
 
@@ -713,36 +784,20 @@ function App() {
                     <p>{goal.prompt}</p>
                     <div className="card-grid goal-option-grid" aria-label={`${goal.name} options`}>
                       {goal.options.filter((option) => !isAutoSelectedOption(option)).map((option, index) => {
-                        const selectionId = `${goal.id}:${option.id}`;
-                        const isSelected = selectedOptionIds.includes(selectionId);
-                        const optionPlatforms = option.platformIds.filter((platformId) =>
-                          isPlatformAvailableForLicenses(eligibleLicenseIds, platformId),
-                        );
-                        const experience = getSecurityGoalOptionExperience(
-                          goal.id,
-                          eligibleLicenseIds,
-                          optionPlatforms,
-                        );
                         return (
-                          <button
-                            className={`choice-card goal-card ${isSelected ? "selected" : ""}`}
-                            type="button"
-                            key={selectionId}
-                            aria-pressed={isSelected}
-                            onClick={() => toggleOption(goal.id, option.id)}
-                          >
-                            <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-                            <span className="choice-details">
-                              <span className="choice-name">{option.name}</span>
-                              <span className="goal-description">{option.description}</span>
-                              {optionPlatforms.length > 0 && (
-                                <span className={`experience-badge ${experience}`}>
-                                  {experience === "full" ? "Full experience" : "Limited experience"}
-                                </span>
-                              )}
-                            </span>
-                            <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
-                          </button>
+                          <Fragment key={`${goal.id}:${option.id}`}>
+                            {renderOptionCard(goal.id, option, index)}
+                            {getSecurityGoalOptionChildren(option).length > 0 && (
+                              <div className="endpoint-subcategories">
+                                <h3>Choose {option.name} policy categories</h3>
+                                <div className="card-grid endpoint-subcategory-grid">
+                                  {getSecurityGoalOptionChildren(option).map((child, childIndex) =>
+                                    renderOptionCard(goal.id, child, childIndex, true),
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </Fragment>
                         );
                       })}
                     </div>
@@ -835,6 +890,31 @@ function App() {
                     sourcePlatform.id === "conditional-access" && cloudAppsOnly
                       ? getCloudAppsConditionalAccessLicenseNote(eligibleLicenseIds)
                       : undefined;
+                  const dataSecuritySelection = selectedOptions.some((option) =>
+                    option.selectionId.startsWith("data-protection:") &&
+                    option.platformIds.some((platformId) => platformId === "purview"),
+                  );
+                  const otherPurviewSelection = selectedOptions.some((option) =>
+                    !option.selectionId.startsWith("data-protection:") &&
+                    option.platformIds.some((platformId) => platformId === "purview"),
+                  );
+                  const dataSecurityLicenseNote =
+                    sourcePlatform.id === "purview" && dataSecuritySelection
+                      ? getDataSecurityLicenseNote(eligibleLicenseIds)
+                      : undefined;
+                  const endpointFeatureNotes = sourcePlatform.id !== "purview"
+                    ? [...new Set(
+                      platformSelections
+                        .map((option) =>
+                          getEndpointFeatureLicenseNote(
+                            option.endpointFeature,
+                            eligibleLicenseIds,
+                            option.platformIds[0],
+                          ),
+                        )
+                        .filter((note): note is string => note !== undefined),
+                    )]
+                    : [];
                   const needsOAuthAppsWorkloadIdLicense =
                     sourcePlatform.id === "conditional-access" &&
                     solutionNames.includes("OAuth apps") &&
@@ -879,7 +959,12 @@ function App() {
                             {policyNotes.map((note) => <p className="recommended-policy-note" key={note}>{note}</p>)}
                           </div>
                         )}
-                        {limitedExperienceNote && (
+                        {limitedExperienceNote &&
+                          endpointFeatureNotes.length === 0 &&
+                          !(sourcePlatform.id === "purview" &&
+                            dataSecuritySelection &&
+                            !otherPurviewSelection &&
+                            dataSecurityLicenseNote) && (
                           <aside className="license-requirement-note">
                             <strong>{limitedExperienceNote.title}</strong>
                             <p>{limitedExperienceNote.message}</p>
@@ -906,6 +991,18 @@ function App() {
                             )}
                           </aside>
                         )}
+                        {dataSecurityLicenseNote && (
+                          <aside className="license-requirement-note">
+                            <strong>Limited Data Security experience</strong>
+                            <p>{dataSecurityLicenseNote}</p>
+                          </aside>
+                        )}
+                        {endpointFeatureNotes.map((note) => (
+                          <aside className="license-requirement-note" key={note}>
+                            <strong>Endpoint category licensing note</strong>
+                            <p>{note}</p>
+                          </aside>
+                        ))}
                         {cloudAppsConditionalAccessLicenseNote && (
                           <aside className="license-requirement-note">
                             <strong>{cloudAppsConditionalAccessLicenseNote.title}</strong>

@@ -1,5 +1,7 @@
 import {
+  getPlatform,
   getPlatformExperienceForLicenses,
+  isLicenseEligible,
   type License,
   type Platform,
 } from "./catalog";
@@ -9,6 +11,8 @@ export interface SolutionOption {
   name: string;
   description: string;
   platformIds: readonly Platform["id"][];
+  children?: readonly SolutionOption[];
+  endpointFeature?: "intune" | "defender";
   recommendedPolicyIds?: readonly string[];
   recommendedPolicyNote?: string;
   autoSelect?: boolean;
@@ -121,13 +125,86 @@ export const securityGoals = [
     description: "Explore endpoint security policies for the devices and operating systems you manage.",
     prompt: "Which endpoint platforms do you need to protect?",
     options: [
-      { id: "endpoint-windows", name: "Windows", description: "Windows endpoint policies.", platformIds: ["windows-11"] },
-      { id: "endpoint-macos", name: "macOS", description: "macOS endpoint policies.", platformIds: ["macos"] },
-      { id: "endpoint-windows-server", name: "Windows Server", description: "Windows Server security policies.", platformIds: ["windows-servers"] },
-      { id: "endpoint-linux-server", name: "Linux Server", description: "Linux Server security policies.", platformIds: ["linux-server"] },
-      { id: "endpoint-linux-desktop", name: "Linux Desktop", description: "Linux Desktop security policies.", platformIds: ["linux-desktop"] },
-      { id: "endpoint-ios-ipados", name: "iOS/iPadOS", description: "iOS and iPadOS endpoint policies.", platformIds: ["ios-ipados"] },
-      { id: "endpoint-android", name: "Android", description: "Android endpoint policies.", platformIds: ["android"] },
+      {
+        id: "endpoint-windows",
+        name: "Windows",
+        description: "Windows endpoint policies.",
+        platformIds: ["windows-11"],
+        children: [
+          { id: "windows-antivirus", name: "Antivirus (AV)", description: "Microsoft Defender Antivirus settings.", platformIds: ["windows-11"], endpointFeature: "defender" },
+          { id: "windows-firewall", name: "Firewall", description: "Microsoft Defender Firewall settings.", platformIds: ["windows-11"], endpointFeature: "defender" },
+          { id: "windows-asr", name: "Attack Surface Reduction (ASR)", description: "Attack Surface Reduction rules and settings.", platformIds: ["windows-11"], endpointFeature: "defender" },
+          { id: "windows-encryption", name: "Encryption", description: "Device encryption settings, including BitLocker.", platformIds: ["windows-11"], endpointFeature: "intune" },
+          { id: "windows-remediation-scripts", name: "Remediation Scripts", description: "Intune remediation scripts for Windows devices.", platformIds: ["windows-11"], endpointFeature: "intune" },
+        ],
+      },
+      {
+        id: "endpoint-macos",
+        name: "macOS",
+        description: "macOS endpoint policies.",
+        platformIds: ["macos"],
+        children: [
+          { id: "macos-antivirus", name: "Antivirus (AV)", description: "Microsoft Defender Antivirus settings.", platformIds: ["macos"], endpointFeature: "defender" },
+          { id: "macos-firewall", name: "Firewall", description: "Firewall settings for macOS devices.", platformIds: ["macos"], endpointFeature: "defender" },
+          { id: "macos-defender-onboarding", name: "Automated onboarding to Defender", description: "Automate onboarding of macOS devices to Microsoft Defender.", platformIds: ["macos"], endpointFeature: "defender" },
+        ],
+      },
+      {
+        id: "endpoint-windows-server",
+        name: "Windows Server",
+        description: "Windows Server security policies.",
+        platformIds: ["windows-servers"],
+        children: [
+          { id: "server-antivirus", name: "Antivirus (AV)", description: "Microsoft Defender Antivirus settings for Windows Server.", platformIds: ["windows-servers"], endpointFeature: "defender" },
+          { id: "server-firewall", name: "Firewall", description: "Microsoft Defender Firewall settings for Windows Server.", platformIds: ["windows-servers"], endpointFeature: "defender" },
+          { id: "server-asr", name: "Attack Surface Reduction (ASR)", description: "Attack Surface Reduction rules and settings for Windows Server.", platformIds: ["windows-servers"], endpointFeature: "defender" },
+        ],
+      },
+      {
+        id: "endpoint-linux-server",
+        name: "Linux Server",
+        description: "Linux Server security policies.",
+        platformIds: ["linux-server"],
+        children: [
+          { id: "linux-server-antivirus", name: "Antivirus (AV)", description: "Microsoft Defender Antivirus settings for Linux servers.", platformIds: ["linux-server"], endpointFeature: "defender" },
+        ],
+      },
+      {
+        id: "endpoint-linux-desktop",
+        name: "Linux Desktop",
+        description: "Linux Desktop security policies.",
+        platformIds: ["linux-desktop"],
+        children: [
+          { id: "linux-desktop-antivirus", name: "Antivirus (AV)", description: "Microsoft Defender Antivirus settings for Linux desktops.", platformIds: ["linux-desktop"], endpointFeature: "defender" },
+          { id: "linux-desktop-encryption", name: "Encryption", description: "Device encryption settings for Linux desktops.", platformIds: ["linux-desktop"], endpointFeature: "intune" },
+        ],
+      },
+      {
+        id: "endpoint-ios-ipados",
+        name: "iOS/iPadOS",
+        description: "iOS and iPadOS endpoint policies.",
+        platformIds: ["ios-ipados"],
+        children: [
+          { id: "ios-app-protection", name: "App Protection", description: "App protection policies for iOS and iPadOS.", platformIds: ["ios-ipados"], endpointFeature: "intune" },
+          { id: "ios-defender-onboarding", name: "Automated onboarding to Defender", description: "Automate onboarding of iOS and iPadOS devices to Microsoft Defender.", platformIds: ["ios-ipados"], endpointFeature: "defender" },
+          { id: "ios-antivirus", name: "Antivirus (AV)", description: "Microsoft Defender Antivirus settings for iOS and iPadOS.", platformIds: ["ios-ipados"], endpointFeature: "defender" },
+          { id: "ios-app-configuration", name: "App Configuration", description: "App configuration policies for iOS and iPadOS.", platformIds: ["ios-ipados"], endpointFeature: "intune" },
+          { id: "ios-encryption", name: "Encryption", description: "Encryption policies for iOS and iPadOS.", platformIds: ["ios-ipados"], endpointFeature: "intune" },
+        ],
+      },
+      {
+        id: "endpoint-android",
+        name: "Android",
+        description: "Android endpoint policies.",
+        platformIds: ["android"],
+        children: [
+          { id: "android-app-protection", name: "App Protection", description: "App protection policies for Android.", platformIds: ["android"], endpointFeature: "intune" },
+          { id: "android-defender-onboarding", name: "Automated onboarding to Defender", description: "Automate onboarding of Android devices to Microsoft Defender.", platformIds: ["android"], endpointFeature: "defender" },
+          { id: "android-antivirus", name: "Antivirus (AV)", description: "Microsoft Defender Antivirus settings for Android.", platformIds: ["android"], endpointFeature: "defender" },
+          { id: "android-app-configuration", name: "App Configuration", description: "App configuration policies for Android.", platformIds: ["android"], endpointFeature: "intune" },
+          { id: "android-encryption", name: "Encryption", description: "Encryption policies for Android.", platformIds: ["android"], endpointFeature: "intune" },
+        ],
+      },
     ],
   },
   {
@@ -152,16 +229,45 @@ export const securityGoals = [
   },
   {
     id: "data-protection",
-    name: "Data protection",
+    name: "Data Security",
     description: "Explore Microsoft Purview policies for protecting organizational data.",
-    prompt: "Explore data protection templates",
+    prompt: "Choose the Data Security policy categories to explore.",
     options: [
       {
-        id: "purview-data-protection",
-        name: "Data protection",
-        description: "Discover policies for data protection and compliance.",
+        id: "sensitivity-labels",
+        name: "Sensitivity labels",
+        description: "Explore policies for classifying and protecting sensitive information.",
         platformIds: ["purview"],
-        autoSelect: true,
+      },
+      {
+        id: "dlp",
+        name: "Data Loss Prevention (DLP)",
+        description: "Explore policies that help prevent sensitive data from being shared inappropriately.",
+        platformIds: ["purview"],
+      },
+      {
+        id: "endpoint-dlp",
+        name: "Endpoint Data Loss Prevention (eDLP)",
+        description: "Explore policies that help protect sensitive data on endpoints.",
+        platformIds: ["purview"],
+      },
+      {
+        id: "retention",
+        name: "Retention",
+        description: "Explore policies for retaining and deleting organizational data.",
+        platformIds: ["purview"],
+      },
+      {
+        id: "auto-labeling",
+        name: "Auto labelling",
+        description: "Explore policies that automatically apply sensitivity labels to content.",
+        platformIds: ["purview"],
+      },
+      {
+        id: "sensitive-information-types",
+        name: "Sensitive Information Types (SITs)",
+        description: "Explore policies that identify sensitive information in your organization.",
+        platformIds: ["purview"],
       },
     ],
   },
@@ -201,11 +307,267 @@ export const securityGoals = [
 
 export type SecurityGoalId = (typeof securityGoals)[number]["id"];
 
+const endpointFullExperienceLicenseIds = new Set<License["id"]>([
+  "e7",
+  "e5",
+  "e3-defender",
+  "e3-defender-purview",
+  "f3-defender",
+  "f3-defender-purview",
+  "f1-defender",
+  "f1-defender-purview",
+  "business-premium-defender",
+  "business-premium-defender-purview",
+]);
+
+const endpointIntuneFullLicenseIds = new Set<License["id"]>([
+  "e7",
+  "e5",
+  "e3",
+  "e3-defender",
+  "e3-purview",
+  "e3-defender-purview",
+  "business-premium",
+  "business-premium-defender",
+  "business-premium-purview",
+  "business-premium-defender-purview",
+]);
+
+const frontlineUnsupportedDefenderPlatforms = new Set<Platform["id"]>([
+  "macos",
+  "ios-ipados",
+  "android",
+  "linux-desktop",
+  "linux-server",
+]);
+
+const dataSecurityFullExperienceLicenseIds = new Set<License["id"]>([
+  "e7",
+  "e5",
+  "e3-purview",
+  "e3-defender-purview",
+  "business-premium-purview",
+  "business-premium-defender-purview",
+]);
+
+const flwPurviewSuiteLicenseIds = new Set<License["id"]>([
+  "f1-purview",
+  "f1-defender-purview",
+  "f3-purview",
+  "f3-defender-purview",
+]);
+
+const f1LicenseIds = new Set<License["id"]>([
+  "f1",
+  "f1-defender",
+  "f1-purview",
+  "f1-defender-purview",
+]);
+
+export function isSecurityGoalOptionAvailable(
+  goalId: SecurityGoalId,
+  optionId: string,
+  licenseIds: readonly License["id"][],
+): boolean {
+  const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
+  if (
+    goalId === "endpoint-protection" &&
+    option?.endpointFeature === "defender"
+  ) {
+    const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+    const hasFullDefenderLicense = eligibleLicenseIds.some((licenseId) =>
+      endpointFullExperienceLicenseIds.has(licenseId),
+    );
+    const frontlineOnly =
+      eligibleLicenseIds.length > 0 &&
+      eligibleLicenseIds.every((licenseId) =>
+        licenseId.startsWith("f1") || licenseId.startsWith("f3"),
+      );
+
+    if (frontlineOnly && !hasFullDefenderLicense) {
+      if (eligibleLicenseIds.some((licenseId) => licenseId.startsWith("f1"))) {
+        return false;
+      }
+
+      if (
+        option.platformIds.some((platformId) =>
+          frontlineUnsupportedDefenderPlatforms.has(platformId),
+        ) ||
+        option.id.includes("defender-onboarding")
+      ) {
+        return false;
+      }
+    }
+  }
+
+  if (goalId !== "data-protection") {
+    return true;
+  }
+
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (eligibleLicenseIds.some((licenseId) =>
+    dataSecurityFullExperienceLicenseIds.has(licenseId),
+  )) {
+    return true;
+  }
+
+  if (
+    optionId !== "sensitivity-labels" &&
+    eligibleLicenseIds.length > 0 &&
+    eligibleLicenseIds.every((licenseId) => f1LicenseIds.has(licenseId)) &&
+    !eligibleLicenseIds.some((licenseId) =>
+      flwPurviewSuiteLicenseIds.has(licenseId),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    optionId === "endpoint-dlp" &&
+    eligibleLicenseIds.length > 0 &&
+    eligibleLicenseIds.every((licenseId) =>
+      licenseId.startsWith("f1") || licenseId.startsWith("f3"),
+    ) &&
+    eligibleLicenseIds.some((licenseId) =>
+      flwPurviewSuiteLicenseIds.has(licenseId),
+    )
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export function getEndpointFeatureLicenseNote(
+  feature: SolutionOption["endpointFeature"],
+  licenseIds: readonly License["id"][],
+  platformId?: Platform["id"],
+): string | undefined {
+  if (!feature) return undefined;
+
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (eligibleLicenseIds.length === 0) return undefined;
+  if (eligibleLicenseIds.some((licenseId) =>
+    endpointFullExperienceLicenseIds.has(licenseId),
+  )) {
+    return undefined;
+  }
+
+  if (eligibleLicenseIds.every((licenseId) => licenseId.startsWith("f1"))) {
+    return feature === "defender"
+      ? "Microsoft 365 F1 does not support Microsoft Defender settings. Automated onboarding to Defender is not eligible with this license."
+      : "Microsoft 365 F1 supports Intune configuration settings only. Microsoft Defender security policy settings are not supported with F1 licensing.";
+  }
+
+  if (eligibleLicenseIds.every((licenseId) => licenseId.startsWith("f3"))) {
+    if (
+      feature === "defender" &&
+      platformId &&
+      frontlineUnsupportedDefenderPlatforms.has(platformId)
+    ) {
+      return `Microsoft 365 F3 does not support Microsoft Defender settings on ${getPlatform(platformId).name}. Automated onboarding to Defender is not eligible with this license.`;
+    }
+    return feature === "defender"
+      ? "Microsoft 365 F3 supports only Defender Antimalware, Microsoft Defender Firewall, Exploit Guard, Credential Guard, BitLocker, and BitLocker To Go. Other Defender-related configurations may require additional licensing."
+      : undefined;
+  }
+
+  if (feature === "defender") {
+    return "Add Microsoft Defender Suite to unlock the full Defender policy experience for this category.";
+  }
+
+  if (eligibleLicenseIds.every((licenseId) =>
+    licenseId.startsWith("e3") ||
+    licenseId.startsWith("business-premium"),
+  )) {
+    return "The selected licenses support Intune settings. Add Microsoft Defender Suite for the full Defender security policy experience.";
+  }
+
+  return undefined;
+}
+
+export function getDataSecurityLicenseNote(
+  licenseIds: readonly License["id"][],
+): string | undefined {
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (
+    eligibleLicenseIds.some((licenseId) =>
+      dataSecurityFullExperienceLicenseIds.has(licenseId),
+    )
+  ) {
+    return undefined;
+  }
+
+  if (
+    eligibleLicenseIds.length > 0 &&
+    eligibleLicenseIds.every((licenseId) => f1LicenseIds.has(licenseId)) &&
+    !eligibleLicenseIds.some((licenseId) =>
+      flwPurviewSuiteLicenseIds.has(licenseId),
+    )
+  ) {
+    return "Microsoft 365 F1 supports Sensitivity labels only.";
+  }
+
+  if (
+    eligibleLicenseIds.length > 0 &&
+    eligibleLicenseIds.every((licenseId) =>
+      licenseId.startsWith("f1") || licenseId.startsWith("f3"),
+    ) &&
+    eligibleLicenseIds.some((licenseId) =>
+      flwPurviewSuiteLicenseIds.has(licenseId),
+    )
+  ) {
+    return "Microsoft Purview Suite FLW supports Data Security with limitations; eDLP policies are not included.";
+  }
+
+  if (
+    eligibleLicenseIds.some((licenseId) =>
+      ["business-premium", "business-premium-defender", "e3", "e3-defender"].includes(licenseId),
+    )
+  ) {
+    return "The selected licenses provide Data Security with limitations, without the full DLP and auto-labelling experience.";
+  }
+
+  return undefined;
+}
+
 export function getSecurityGoalOptionExperience(
   goalId: SecurityGoalId,
   licenseIds: readonly License["id"][],
   platformIds: readonly Platform["id"][],
+  optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "endpoint-protection" && optionId) {
+    const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
+    if (option?.endpointFeature === "intune") {
+      return licenseIds.some((licenseId) =>
+        endpointFullExperienceLicenseIds.has(licenseId) ||
+        endpointIntuneFullLicenseIds.has(licenseId),
+      )
+        ? "full"
+        : "limited";
+    }
+    if (option?.endpointFeature === "defender") {
+      return licenseIds.some((licenseId) =>
+        endpointFullExperienceLicenseIds.has(licenseId),
+      )
+        ? "full"
+        : "limited";
+    }
+  }
+
+  if (
+    goalId === "data-protection" &&
+    licenseIds.some((licenseId) =>
+      dataSecurityFullExperienceLicenseIds.has(licenseId),
+    )
+  ) {
+    return "full";
+  }
+  if (goalId === "data-protection") {
+    return "limited";
+  }
+
   return platformIds.some(
     (platformId) =>
       !(goalId === "attack-protection" && platformId === "conditional-access") &&
@@ -232,11 +594,24 @@ export function getSecurityGoal(goalId: SecurityGoalId): SecurityGoal {
   return goal;
 }
 
+export function getSecurityGoalOptions(goalId: SecurityGoalId): SolutionOption[] {
+  return getSecurityGoal(goalId).options.flatMap((option) => [
+    option,
+    ...(option.children ?? []),
+  ]);
+}
+
+export function getSecurityGoalOptionChildren(
+  option: SolutionOption,
+): readonly SolutionOption[] {
+  return option.children ?? [];
+}
+
 export function getSolutionPlatformIds(
   goalId: SecurityGoalId,
   optionIds: readonly string[],
 ): Platform["id"][] {
-  const selectedOptions = getSecurityGoal(goalId).options.filter((option) =>
+  const selectedOptions = getSecurityGoalOptions(goalId).filter((option) =>
     option.autoSelect || optionIds.includes(option.id),
   );
   return [...new Set(selectedOptions.flatMap((option) => option.platformIds))];
@@ -249,7 +624,7 @@ export function getRecommendedPolicyIds(
 ): string[] {
   if (platformId !== "conditional-access") return [];
   return [...new Set(
-    getSecurityGoal(goalId).options
+    getSecurityGoalOptions(goalId)
       .filter((option) =>
         (option.autoSelect || optionIds.includes(option.id)) &&
         option.platformIds.includes(platformId),
