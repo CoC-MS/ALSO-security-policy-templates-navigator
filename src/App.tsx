@@ -883,6 +883,27 @@ function App() {
                           <aside className="license-requirement-note">
                             <strong>{limitedExperienceNote.title}</strong>
                             <p>{limitedExperienceNote.message}</p>
+                            {limitedExperienceNote.message.includes("Agent 365 license") && (
+                              <p>
+                                Learn more about Agent 365 licensing:{" "}
+                                <a
+                                  href="https://www.microsoft.com/licensing/terms/productoffering/Agent365/MCA#ServiceSpecificTerms"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Microsoft Product Terms
+                                </a>
+                                {" | "}
+                                <a
+                                  href="https://www.microsoft.com/licensing/faqs/122"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Licensing Documents
+                                </a>
+                                .
+                              </p>
+                            )}
                           </aside>
                         )}
                         {cloudAppsConditionalAccessLicenseNote && (
