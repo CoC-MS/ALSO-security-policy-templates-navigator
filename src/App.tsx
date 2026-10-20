@@ -749,18 +749,20 @@ function App() {
                       ),
                     )
                     : [];
-                  const attackScenarioOnly =
+                  const suppressAgent365Guidance =
                     conditionalAccessSelections.length > 0 &&
                     conditionalAccessSelections.every((option) =>
-                      option.selectionId.startsWith("attack-protection:"),
+                      option.selectionId.startsWith("attack-protection:") ||
+                      option.selectionId === "app-protection:oauth-apps",
                     );
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
                       sourcePlatform.id,
-                      { includeAgent365Guidance: !attackScenarioOnly },
+                      { includeAgent365Guidance: !suppressAgent365Guidance },
                     );
                   const needsOAuthAppsWorkloadIdLicense =
+                    sourcePlatform.id === "conditional-access" &&
                     solutionNames.includes("OAuth apps") &&
                     requiresWorkloadIdPremiumForOAuthApps(eligibleLicenseIds);
                   const windowsServerNotes =

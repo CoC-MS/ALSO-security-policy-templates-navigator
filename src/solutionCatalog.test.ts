@@ -144,7 +144,7 @@ describe("security goal recommendations", () => {
   });
 
   it.each([
-    ["oauth-apps", ["conditional-access", "windows-11", "macos"]],
+    ["oauth-apps", ["conditional-access"]],
     ["desktop-apps", ["windows-11", "macos"]],
     ["mobile-apps", ["ios-ipados", "android"]],
     ["cloud-apps", ["windows-11", "windows-servers", "macos", "conditional-access"]],
