@@ -314,6 +314,21 @@ describe("Business Premium-only results", () => {
   });
 
   describe("F-series Windows Server eligibility", () => {
+    it("shows Business Premium's separate Windows Server licensing prerequisites", () => {
+      const notes = getWindowsServerLicenseNotes(
+        ["business-premium"],
+        "windows-servers",
+      );
+
+      expect(notes).toHaveLength(1);
+      expect(notes[0]).toContain(
+        "Microsoft Defender for Business servers license",
+      );
+      expect(notes[0]).toContain(
+        "Microsoft Defender for Servers Plan 1 or Plan 2",
+      );
+    });
+
     it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
       "excludes %s from Windows Server policies",
       (licenseId) => {

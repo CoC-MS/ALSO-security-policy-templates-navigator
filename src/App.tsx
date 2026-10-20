@@ -788,9 +788,7 @@ function App() {
                   const windowsServerNotes =
                     sourcePlatform.id === "windows-servers" ||
                     sourcePlatform.id === "linux-server"
-                      ? attackProtectionOnly
-                        ? []
-                        : getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
+                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
                       : [];
                   const showAiSecurityLicenseActions =
                     shouldShowAiSecurityLicenseActions(
