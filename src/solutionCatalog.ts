@@ -503,6 +503,7 @@ export function getDataSecurityLicenseNote(
   licenseIds: readonly License["id"][],
 ): string | undefined {
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (eligibleLicenseIds.length === 0) return undefined;
   if (
     eligibleLicenseIds.some((licenseId) =>
       dataSecurityFullExperienceLicenseIds.has(licenseId),
@@ -518,7 +519,7 @@ export function getDataSecurityLicenseNote(
       flwPurviewSuiteLicenseIds.has(licenseId),
     )
   ) {
-    return "Microsoft 365 F1 supports Sensitivity labels only.";
+    return "Microsoft 365 F1 supports Sensitivity labels only. Add Microsoft Purview Suite FLW for additional Data Security capabilities with limitations; eDLP policies are not included.";
   }
 
   if (
@@ -538,10 +539,18 @@ export function getDataSecurityLicenseNote(
       ["business-premium", "business-premium-defender", "e3", "e3-defender"].includes(licenseId),
     )
   ) {
-    return "The selected licenses provide Data Security with limitations, without the full DLP and auto-labelling experience.";
+    const addOns = [
+      ...(eligibleLicenseIds.some((licenseId) => licenseId.startsWith("e3"))
+        ? ["Microsoft Purview Suite for Microsoft 365 E3"]
+        : []),
+      ...(eligibleLicenseIds.some((licenseId) => licenseId.startsWith("business-premium"))
+        ? ["Microsoft Purview Suite for Business Premium"]
+        : []),
+    ];
+    return `The selected licenses provide Data Security with limitations, without the full DLP and auto-labelling experience. Add ${addOns.join(" or ")} for the full Data Security experience.`;
   }
 
-  return undefined;
+  return "The selected frontline licenses provide Data Security with limitations. Add Microsoft Purview Suite FLW for additional Data Security capabilities; eDLP policies are not included with this add-on.";
 }
 
 export function getSecurityGoalOptionExperience(

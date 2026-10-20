@@ -832,6 +832,12 @@ function App() {
                   <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
                     <h2 id={`${goal.id}-heading`}>{goal.name}</h2>
                     <p>{goal.prompt}</p>
+                    {goal.id === "data-protection" && getDataSecurityLicenseNote(eligibleLicenseIds) && (
+                      <aside className="license-requirement-note">
+                        <strong>Data Security licensing prerequisites</strong>
+                        <p>{getDataSecurityLicenseNote(eligibleLicenseIds)}</p>
+                      </aside>
+                    )}
                     <div className="card-grid goal-option-grid" aria-label={`${goal.name} options`}>
                       {goal.options.filter((option) => !isAutoSelectedOption(option)).map((option, index) => {
                         return renderOptionCard(goal.id, option, index);
@@ -1098,7 +1104,7 @@ function App() {
                         )}
                         {dataSecurityLicenseNote && (
                           <aside className="license-requirement-note">
-                            <strong>Limited Data Security experience</strong>
+                            <strong>Data Security licensing prerequisites</strong>
                             <p>{dataSecurityLicenseNote}</p>
                           </aside>
                         )}

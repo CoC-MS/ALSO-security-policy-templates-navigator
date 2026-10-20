@@ -49,8 +49,8 @@ function expectDisclaimer(html: string, includeComparisons: boolean) {
 }
 
 describe("recommendation card licensing disclaimer", () => {
-  it("renders nothing when the card has no licensing notes", () => {
-    expect(renderDisclaimer()).toBe("");
+  it("shows the disclaimer and both links even on full-experience cards without upgrade notes", () => {
+    expectDisclaimer(renderDisclaimer(), true);
   });
 
   it.each<Platform["id"]>([
@@ -70,7 +70,7 @@ describe("recommendation card licensing disclaimer", () => {
     },
   );
 
-  it.each<License["id"]>(["e3", "f1", "f1-defender", "business-premium"])(
+  it.each<License["id"]>(["e3", "f1", "f3", "f1-defender", "business-premium"])(
     "covers the Data Security-specific note for %s",
     (licenseId) => {
       const note = getDataSecurityLicenseNote([licenseId]);

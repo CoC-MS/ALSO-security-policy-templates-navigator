@@ -25,21 +25,21 @@ export function LicensingDisclaimer({
   serverNotes,
   hasPolicyLicensingPrerequisites = false,
 }: LicensingDisclaimerProps) {
+  const hasLicensingNotes =
+    Boolean(limitedExperienceNote) ||
+    Boolean(dataSecurityNote) ||
+    endpointNotes.length > 0 ||
+    Boolean(cloudAppsNote) ||
+    needsWorkloadIdLicense ||
+    serverNotes.length > 0 ||
+    hasPolicyLicensingPrerequisites;
   const includePlanComparisons =
+    !hasLicensingNotes ||
     limitedExperienceNote?.includePlanComparisons ||
     Boolean(dataSecurityNote) ||
     endpointNotes.length > 0 ||
     Boolean(cloudAppsNote) ||
     hasPolicyLicensingPrerequisites;
-
-  if (
-    !limitedExperienceNote &&
-    !includePlanComparisons &&
-    !needsWorkloadIdLicense &&
-    serverNotes.length === 0
-  ) {
-    return null;
-  }
 
   return (
     <aside className="license-requirement-note licensing-disclaimer">

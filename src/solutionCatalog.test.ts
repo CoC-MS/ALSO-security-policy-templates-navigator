@@ -527,7 +527,35 @@ describe("security goal recommendations", () => {
         .toBe(option.id === "sensitivity-labels");
     }
     expect(getDataSecurityLicenseNote(["f1"]))
-      .toBe("Microsoft 365 F1 supports Sensitivity labels only.");
+      .toContain("Microsoft 365 F1 supports Sensitivity labels only.");
+    expect(getDataSecurityLicenseNote(["f1"]))
+      .toContain("Add Microsoft Purview Suite FLW");
+  });
+
+  it.each(["e3", "e3-defender", "business-premium", "business-premium-defender"] as const)(
+    "names the missing Purview add-on for %s without changing Sensitivity labels experience",
+    (licenseId) => {
+      expect(getDataSecurityLicenseNote([licenseId])).toContain("Add Microsoft Purview Suite");
+      expect(getDataSecurityLicenseNote([licenseId])).toContain(
+        licenseId.startsWith("business-premium")
+          ? "Microsoft Purview Suite for Business Premium"
+          : "Microsoft Purview Suite for Microsoft 365 E3",
+      );
+      expect(getSecurityGoalOptionExperience(
+        "data-protection", [licenseId], ["purview"], "sensitivity-labels",
+      )).toBe("full");
+    },
+  );
+
+  it.each(["f3", "f3-defender"] as const)("names the FLW add-on missing from %s", (licenseId) => {
+    expect(getDataSecurityLicenseNote([licenseId])).toContain("Add Microsoft Purview Suite FLW");
+    expect(getDataSecurityLicenseNote([licenseId])).toContain("eDLP policies are not included");
+  });
+
+  it("does not suggest another add-on when FLW Purview is already selected", () => {
+    expect(getDataSecurityLicenseNote(["f3-purview"])).not.toContain("Add ");
+    expect(getDataSecurityLicenseNote(["e3", "e5"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote([])).toBeUndefined();
   });
 
   it.each([
