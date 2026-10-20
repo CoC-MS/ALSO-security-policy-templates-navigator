@@ -949,7 +949,8 @@ function App() {
                 </div>
               </div>
               {recommendedRepositories.length > 0 ? (
-                <div className="recommendation-grid">
+                <div className="result-recommendations-layout">
+                  <div className="recommendation-grid result-recommendation-grid">
                   {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
                   const platformSelections = selectedOptions.filter((option) =>
@@ -1153,6 +1154,16 @@ function App() {
                     </article>
                   );
                   })}
+                  </div>
+                  <aside className="professional-services-panel" aria-labelledby="professional-services-heading">
+                    <h2 id="professional-services-heading">
+                      Need implementation help or consulting?
+                    </h2>
+                    <button className="professional-services-button" type="button" disabled>
+                      Request Professional Services Help from ALSO CoE
+                    </button>
+                    <p>Coming soon</p>
+                  </aside>
                 </div>
               ) : (
                 <div className="result-card">
