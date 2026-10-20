@@ -1,4 +1,8 @@
-import type { Platform } from "./catalog";
+import {
+  getPlatformExperienceForLicenses,
+  type License,
+  type Platform,
+} from "./catalog";
 
 export interface SolutionOption {
   id: string;
@@ -196,6 +200,23 @@ export const securityGoals = [
 ] as const satisfies readonly SecurityGoal[];
 
 export type SecurityGoalId = (typeof securityGoals)[number]["id"];
+
+export function getSecurityGoalOptionExperience(
+  goalId: SecurityGoalId,
+  licenseIds: readonly License["id"][],
+  platformIds: readonly Platform["id"][],
+): "full" | "limited" {
+  if (goalId === "attack-protection") {
+    return "full";
+  }
+
+  return platformIds.some(
+    (platformId) =>
+      getPlatformExperienceForLicenses(licenseIds, platformId) === "limited",
+  )
+    ? "limited"
+    : "full";
+}
 
 export function toggleSecurityGoalSelection(
   selected: readonly SecurityGoalId[],

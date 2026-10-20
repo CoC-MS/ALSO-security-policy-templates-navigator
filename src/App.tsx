@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
   getPlatform,
   getLimitedExperienceNoteForLicenses,
-  getPlatformExperienceForLicenses,
   getCloudAppsConditionalAccessLicenseNote,
   requiresWorkloadIdPremiumForOAuthApps,
   enterpriseLicenses,
@@ -17,6 +16,7 @@ import {
 } from "./catalog";
 import {
   getSolutionPlatformIds,
+  getSecurityGoalOptionExperience,
   securityGoals,
   toggleSecurityGoalSelection,
   type SecurityGoalId,
@@ -663,12 +663,11 @@ function App() {
                         const optionPlatforms = option.platformIds.filter((platformId) =>
                           isPlatformAvailableForLicenses(eligibleLicenseIds, platformId),
                         );
-                        const experience = optionPlatforms.length > 0 &&
-                          optionPlatforms.some((platformId) =>
-                            getPlatformExperienceForLicenses(eligibleLicenseIds, platformId) === "limited",
-                          )
-                          ? "limited"
-                          : "full";
+                        const experience = getSecurityGoalOptionExperience(
+                          goal.id,
+                          eligibleLicenseIds,
+                          optionPlatforms,
+                        );
                         return (
                           <button
                             className={`choice-card goal-card ${isSelected ? "selected" : ""}`}

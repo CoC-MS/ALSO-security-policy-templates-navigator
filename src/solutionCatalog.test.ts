@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getRecommendedPolicyIds,
+  getSecurityGoalOptionExperience,
   getSolutionPlatformIds,
   securityGoals,
   toggleSecurityGoalSelection,
@@ -68,6 +69,30 @@ describe("security goal recommendations", () => {
     ["brute-force", ["conditional-access", "windows-servers"]],
   ])("maps attack scenario %s to the requested repositories", (optionId, expected) => {
     expect(getSolutionPlatformIds("attack-protection", [optionId])).toEqual(expected);
+  });
+
+  it("shows Full experience for every attack scenario starting with Business Premium", () => {
+    const attackGoal = securityGoals.find((goal) => goal.id === "attack-protection")!;
+
+    for (const option of attackGoal.options) {
+      expect(
+        getSecurityGoalOptionExperience(
+          "attack-protection",
+          ["business-premium"],
+          option.platformIds,
+        ),
+      ).toBe("full");
+    }
+  });
+
+  it("keeps license-based experience badges for non-attack goal options", () => {
+    expect(
+      getSecurityGoalOptionExperience(
+        "app-protection",
+        ["business-premium"],
+        ["windows-11", "macos"],
+      ),
+    ).toBe("limited");
   });
 
   it.each([
