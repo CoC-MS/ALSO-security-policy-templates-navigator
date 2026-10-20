@@ -71,18 +71,58 @@ describe("security goal recommendations", () => {
     expect(getSolutionPlatformIds("attack-protection", [optionId])).toEqual(expected);
   });
 
-  it("shows Full experience for every attack scenario starting with Business Premium", () => {
-    const attackGoal = securityGoals.find((goal) => goal.id === "attack-protection")!;
-
-    for (const option of attackGoal.options) {
+  it.each([
+    ["device-code-phishing", "full"],
+    ["clickfix", "limited"],
+    ["ransomware", "limited"],
+    ["token-theft", "limited"],
+    ["aitm-phishing", "full"],
+    ["password-spray", "full"],
+    ["brute-force", "limited"],
+  ] as const)(
+    "derives the %s experience from all its actual repository prerequisites for Business Premium",
+    (optionId, expectedExperience) => {
+      const attackGoal = securityGoals.find((goal) => goal.id === "attack-protection")!;
+      const option = attackGoal.options.find((item) => item.id === optionId)!;
       expect(
         getSecurityGoalOptionExperience(
           "attack-protection",
           ["business-premium"],
           option.platformIds,
         ),
-      ).toBe("full");
-    }
+      ).toBe(expectedExperience);
+    },
+  );
+
+  it("requires every mapped repository to meet its prerequisites for Full experience", () => {
+    const attackGoal = securityGoals.find((goal) => goal.id === "attack-protection")!;
+    const clickfix = attackGoal.options.find((option) => option.id === "clickfix")!;
+    const ransomware = attackGoal.options.find((option) => option.id === "ransomware")!;
+
+    expect(
+      getSecurityGoalOptionExperience(
+        "attack-protection",
+        ["business-premium-defender"],
+        clickfix.platformIds,
+      ),
+    ).toBe("full");
+    expect(
+      getSecurityGoalOptionExperience(
+        "attack-protection",
+        ["business-premium-defender"],
+        ransomware.platformIds,
+      ),
+    ).toBe("limited");
+  });
+
+  it("does not treat generic Conditional Access upsell guidance as an attack prerequisite", () => {
+    expect(
+      getSecurityGoalOptionExperience(
+        "attack-protection",
+        ["business-premium"],
+        ["conditional-access"],
+      ),
+    ).toBe("full");
   });
 
   it("keeps license-based experience badges for non-attack goal options", () => {

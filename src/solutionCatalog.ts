@@ -206,12 +206,9 @@ export function getSecurityGoalOptionExperience(
   licenseIds: readonly License["id"][],
   platformIds: readonly Platform["id"][],
 ): "full" | "limited" {
-  if (goalId === "attack-protection") {
-    return "full";
-  }
-
   return platformIds.some(
     (platformId) =>
+      !(goalId === "attack-protection" && platformId === "conditional-access") &&
       getPlatformExperienceForLicenses(licenseIds, platformId) === "limited",
   )
     ? "limited"
