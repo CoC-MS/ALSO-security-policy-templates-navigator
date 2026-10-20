@@ -681,7 +681,7 @@ function App() {
                             <span className="choice-details">
                               <span className="choice-name">{option.name}</span>
                               <span className="goal-description">{option.description}</span>
-                              {goal.id !== "attack-protection" && optionPlatforms.length > 0 && (
+                              {optionPlatforms.length > 0 && (
                                 <span className={`experience-badge ${experience}`}>
                                   {experience === "full" ? "Full experience" : "Limited experience"}
                                 </span>
