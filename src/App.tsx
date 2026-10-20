@@ -812,7 +812,17 @@ function App() {
                         {needsOAuthAppsWorkloadIdLicense && (
                           <aside className="license-requirement-note">
                             <strong>Microsoft Entra Workload ID Premium required for full experience</strong>
-                            <p>With the selected licenses, add Microsoft Entra Workload ID Premium licenses to unlock the full OAuth apps experience.</p>
+                            <p>
+                              With the selected licenses, add Microsoft Entra Workload ID Premium licenses to unlock the full OAuth apps experience.{" "}
+                              <a
+                                href="https://learn.microsoft.com/en-gb/entra/workload-id/workload-identities-faqs?WT.mc_id=Portal-Microsoft_Azure_Support#how-many-licenses-do-i-need-to-purchase-do-i-need-to-license-all-workload-identities-including-microsoft-and-managed-service-identities"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Learn more about Microsoft Entra Workload ID licensing
+                              </a>
+                              .
+                            </p>
                           </aside>
                         )}
                         {windowsServerNotes.map((note) => (
