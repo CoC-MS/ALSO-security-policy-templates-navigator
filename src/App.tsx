@@ -40,10 +40,12 @@ type Step = "license" | "goal" | "focus" | "blocked" | "result" | "overview" | "
 function renderWindowsServerLicenseNote(note: string) {
   const productTermsPrerequisite =
     "Microsoft Defender for Business servers license";
+  const endpointServerPrerequisite =
+    "Microsoft Defender for Endpoint Server license";
   const defenderForServersPrerequisite =
     "Microsoft Defender for Servers Plan 1 or Plan 2";
   const parts = note.split(
-    /(Microsoft Defender for Business servers license|Microsoft Defender for Servers Plan 1 or Plan 2)/g,
+    /(Microsoft Defender for Business servers license|Microsoft Defender for Endpoint Server license|Microsoft Defender for Servers Plan 1 or Plan 2)/g,
   );
   if (parts.length === 1) return note;
 
@@ -54,6 +56,18 @@ function renderWindowsServerLicenseNote(note: string) {
           {part} (
           <a
             href="https://www.microsoft.com/licensing/terms/productoffering/MicrosoftDefenderforBusinessservers/MCA#ServiceSpecificTerms"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Microsoft Product Terms
+          </a>
+          )
+        </>
+      ) : part === endpointServerPrerequisite ? (
+        <>
+          {part} (
+          <a
+            href="https://www.microsoft.com/licensing/terms/productoffering/MicrosoftDefenderforEndpointforservers/MCA"
             target="_blank"
             rel="noopener noreferrer"
           >
