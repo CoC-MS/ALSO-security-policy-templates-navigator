@@ -755,11 +755,18 @@ function App() {
                       option.selectionId.startsWith("attack-protection:") ||
                       option.selectionId === "app-protection:oauth-apps",
                     );
+                  const oauthAppsOnly =
+                    conditionalAccessSelections.length === 1 &&
+                    conditionalAccessSelections[0].selectionId ===
+                      "app-protection:oauth-apps";
                   const limitedExperienceNote =
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
                       sourcePlatform.id,
-                      { includeAgent365Guidance: !suppressAgent365Guidance },
+                      {
+                        includeAgent365Guidance: !suppressAgent365Guidance,
+                        includeConditionalAccessPolicyGuidance: !oauthAppsOnly,
+                      },
                     );
                   const needsOAuthAppsWorkloadIdLicense =
                     sourcePlatform.id === "conditional-access" &&

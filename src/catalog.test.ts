@@ -358,6 +358,16 @@ describe("Business Premium-only results", () => {
     expect(note?.message).not.toContain("Agent 365");
   });
 
+  it("omits general Conditional Access licensing guidance when only OAuth apps is selected", () => {
+    expect(
+      getLimitedExperienceNoteForLicenses(
+        ["business-premium"],
+        "conditional-access",
+        { includeConditionalAccessPolicyGuidance: false },
+      ),
+    ).toBeUndefined();
+  });
+
   it("does not show a Conditional Access limitation solely for Agent 365 on attack scenarios", () => {
     expect(
       getLimitedExperienceNoteForLicenses(

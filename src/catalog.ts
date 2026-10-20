@@ -389,9 +389,14 @@ function formatSelectedLicenseNames(
 export function getLimitedExperienceNoteForLicenses(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
-  options: { includeAgent365Guidance?: boolean } = {},
+  options: {
+    includeAgent365Guidance?: boolean;
+    includeConditionalAccessPolicyGuidance?: boolean;
+  } = {},
 ): { title: string; message: string } | undefined {
   const includeAgent365Guidance = options.includeAgent365Guidance ?? true;
+  const includeConditionalAccessPolicyGuidance =
+    options.includeConditionalAccessPolicyGuidance ?? true;
   const eligibleLicenseIds = licenseIds.filter((licenseId) =>
     isLicenseEligible(licenseId),
   );
@@ -409,6 +414,10 @@ export function getLimitedExperienceNoteForLicenses(
   }
 
   if (platformId === "conditional-access") {
+    if (!includeConditionalAccessPolicyGuidance) {
+      return undefined;
+    }
+
     const needsEntraIdP2 = !eligibleLicenseIds.some((licenseId) =>
       entraIdP2LicenseIds.has(licenseId),
     );
