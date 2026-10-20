@@ -350,6 +350,17 @@ const dataSecurityFullExperienceLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
+const fullSensitivityLabelsLicenseIds = new Set<License["id"]>([
+  "business-premium",
+  "business-premium-defender",
+  "e3",
+  "e3-defender",
+  "f3",
+  "f3-defender",
+  "f1",
+  "f1-defender",
+]);
+
 const flwPurviewSuiteLicenseIds = new Set<License["id"]>([
   "f1-purview",
   "f1-defender-purview",
@@ -537,6 +548,16 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (
+    goalId === "data-protection" &&
+    optionId === "sensitivity-labels" &&
+    licenseIds.some((licenseId) =>
+      fullSensitivityLabelsLicenseIds.has(licenseId),
+    )
+  ) {
+    return "full";
+  }
+
   if (goalId === "endpoint-protection" && optionId) {
     const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
     if (option?.endpointFeature === "intune") {

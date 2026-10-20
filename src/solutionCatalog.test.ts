@@ -139,6 +139,34 @@ describe("security goal recommendations", () => {
     ).toBe("limited");
   });
 
+  it.each(["business-premium", "e3", "f3", "f1"] as const)(
+    "shows Full experience for Sensitivity labels with %s",
+    (licenseId) => {
+      expect(
+        getSecurityGoalOptionExperience(
+          "data-protection",
+          [licenseId],
+          ["purview"],
+          "sensitivity-labels",
+        ),
+      ).toBe("full");
+    },
+  );
+
+  it.each(["f1-purview", "f3-purview"] as const)(
+    "keeps Sensitivity labels Limited with %s because FLW Purview has limitations",
+    (licenseId) => {
+      expect(
+        getSecurityGoalOptionExperience(
+          "data-protection",
+          [licenseId],
+          ["purview"],
+          "sensitivity-labels",
+        ),
+      ).toBe("limited");
+    },
+  );
+
   it.each([
     ["device-code-phishing", ["CA004"]],
     ["aitm-phishing", ["CA105", "CA107"]],
