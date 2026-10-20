@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import {
   getPlatform,
   getLimitedExperienceNoteForLicenses,
@@ -36,6 +36,31 @@ import {
 } from "./AiSecurityLicenseActions";
 
 type Step = "license" | "goal" | "focus" | "blocked" | "result" | "overview" | "faq";
+
+function renderWindowsServerLicenseNote(note: string) {
+  const prerequisite = "Microsoft Defender for Business servers license";
+  const parts = note.split(prerequisite);
+  if (parts.length === 1) return note;
+
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {part}
+      {index < parts.length - 1 && (
+        <>
+          {prerequisite} (
+          <a
+            href="https://www.microsoft.com/licensing/terms/productoffering/MicrosoftDefenderforBusinessservers/MCA#ServiceSpecificTerms"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Microsoft Product Terms
+          </a>
+          )
+        </>
+      )}
+    </Fragment>
+  ));
+}
 
 function ArrowIcon() {
   return (
@@ -855,7 +880,7 @@ function App() {
                         {windowsServerNotes.map((note) => (
                           <aside className="license-requirement-note" key={note}>
                             <strong>Additional server license required</strong>
-                            <p>{note}</p>
+                            <p>{renderWindowsServerLicenseNote(note)}</p>
                           </aside>
                         ))}
                         <div className="repository-links">
