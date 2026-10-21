@@ -462,15 +462,6 @@ function App() {
       optionPlatforms,
       option.id,
     );
-    const featureNote = getEndpointFeatureLicenseNote(
-      option.endpointFeature,
-      eligibleLicenseIds,
-      option.platformIds[0],
-    );
-    const categoryLicensingNote = goalId === "conditional-access"
-      ? getConditionalAccessCategoryLicenseNote([option.id], eligibleLicenseIds)
-      : undefined;
-
     return (
       <button
         className={`choice-card goal-card ${isChild ? "endpoint-category-card" : ""} ${isSelected ? "selected" : ""}`}
@@ -484,16 +475,8 @@ function App() {
         <span className="choice-details">
           <span className="choice-name">{option.name}</span>
           <span className="goal-description">{option.description}</span>
-          {categoryLicensingNote && (
-            <span className="goal-description">{categoryLicensingNote.message}</span>
-          )}
           {option.comingSoon && (
             <span className="experience-badge coming-soon-badge">Coming</span>
-          )}
-          {!optionAvailable && !option.comingSoon && (
-            <span className="goal-description">
-              {featureNote ?? "Not included with the selected licenses."}
-            </span>
           )}
           {optionPlatforms.length > 0 && (
             <span className={`experience-badge ${experience}`}>
