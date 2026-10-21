@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getDataSecurityLicenseNote,
+  getConditionalAccessCategoryLicenseNote,
   getEndpointFeatureLicenseNote,
   getRecommendedPolicyIds,
   getSecurityGoalOptions,
@@ -12,6 +13,37 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it("states the correct prerequisite on every Conditional Access category", () => {
+    for (const option of getSecurityGoalOptions("conditional-access")) {
+      if (option.id === "agent-policies") {
+        expect(option.licensingNote).toContain("Agent 365 add-on");
+        expect(option.licensingNote).not.toContain("Entra ID P2");
+      } else {
+        expect(option.licensingNote).toBe(
+          "Some of these policies require the Microsoft Entra ID P2 add-on to work.",
+        );
+        expect(option.licensingNote).not.toContain("Agent 365");
+      }
+    }
+  });
+
+  it("uses category-specific prerequisites on final results without unrelated Agent upselling", () => {
+    const users = getConditionalAccessCategoryLicenseNote([
+      "administrator-policies", "internal-user-policies", "guest-user-policies",
+    ]);
+    expect(users?.message).toBe("Some of these policies require the Microsoft Entra ID P2 add-on to work.");
+    expect(users?.includePlanComparisons).toBe(true);
+    const agents = getConditionalAccessCategoryLicenseNote(["agent-policies"]);
+    expect(agents?.message).toContain("Agent 365 add-on");
+    expect(agents?.includePlanComparisons).toBe(false);
+    const mixed = getConditionalAccessCategoryLicenseNote(["agent-policies", "internal-user-policies"]);
+    expect(mixed?.message).toContain("Agent 365 add-on");
+    expect(mixed?.message).toContain("Entra ID P2 add-on");
+    expect(mixed?.includePlanComparisons).toBe(true);
+    expect(getConditionalAccessCategoryLicenseNote(["service-principal-policies"])).toBeUndefined();
+    expect(getConditionalAccessCategoryLicenseNote([])).toBeUndefined();
+  });
+
   it("includes administrator protection with the requested Conditional Access policies", () => {
     expect(securityGoals.map((goal) => goal.name)).toEqual([
       "Attack protection",

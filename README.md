@@ -4,6 +4,8 @@ An interactive guide that combines a customer's Microsoft 365 licenses to identi
 
 In step 2, choose **Conditional Access** to select Administrator, Internal user, Service Account, Agent, or Guest user policies. These categories recommend the Conditional Access repository. Service principal policies are marked **Coming** and cannot yet be selected.
 
+Agent policies state the Agent 365 prerequisite; the other categories note that some policies require Microsoft Entra ID P2. The selected prerequisites are also shown with the final repository recommendation.
+
 **Disclaimer:** Licensing prerequisites and feature availability listed on this page may be incorrect, incomplete, or outdated. We strongly recommend verifying all licensing information against the latest official Microsoft licensing documentation before making any purchasing or deployment decisions.
 
 Enterprise licenses: [Microsoft Enterprise Plan Comparison](https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/education/Modern-Work-Plan-Comparison-Enterprise.pdf)

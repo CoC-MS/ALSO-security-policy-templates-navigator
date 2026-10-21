@@ -16,6 +16,7 @@ import {
 } from "./catalog";
 import {
   getSolutionPlatformIds,
+  getConditionalAccessCategoryLicenseNote,
   getDataSecurityLicenseNote,
   getEndpointFeatureLicenseNote,
   getSecurityGoalOptions,
@@ -480,6 +481,9 @@ function App() {
         <span className="choice-details">
           <span className="choice-name">{option.name}</span>
           <span className="goal-description">{option.description}</span>
+          {option.licensingNote && (
+            <span className="goal-description">{option.licensingNote}</span>
+          )}
           {option.comingSoon && (
             <span className="experience-badge coming-soon-badge">Coming</span>
           )}
@@ -989,6 +993,14 @@ function App() {
                     platformSelections.length === 1 &&
                     platformSelections[0].selectionId === "app-protection:cloud-apps";
                   const limitedExperienceNote =
+                    (platformSelections.length > 0 &&
+                    platformSelections.every((option) =>
+                      option.selectionId.startsWith("conditional-access:"),
+                    )
+                      ? getConditionalAccessCategoryLicenseNote(
+                        platformSelections.map((option) => option.id),
+                      )
+                      : undefined) ??
                     getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
                       sourcePlatform.id,
@@ -1083,7 +1095,7 @@ function App() {
                           <aside className="license-requirement-note">
                             <strong>{visibleLimitedExperienceNote.title}</strong>
                             <p>{visibleLimitedExperienceNote.message}</p>
-                            {visibleLimitedExperienceNote.message.includes("Agent 365 license") && (
+                            {visibleLimitedExperienceNote.message.includes("Agent 365") && (
                               <p>
                                 Learn more about Agent 365 licensing:{" "}
                                 <a
