@@ -19,6 +19,7 @@ export interface SolutionOption {
   hasPolicyLicensingPrerequisites?: boolean;
   autoSelect?: boolean;
   comingSoon?: boolean;
+  allowRepositoryPreview?: boolean;
 }
 
 export interface SecurityGoal {
@@ -159,6 +160,12 @@ export const securityGoals = [
         id: "guest-user-policies",
         name: "Guest user policies",
         description: "Protect access for guests and external users.",
+        platformIds: ["conditional-access"],
+      },
+      {
+        id: "global-secure-access-policies",
+        name: "Global Secure Access Policies",
+        description: "Explore policies for secure access to internet and private resources.",
         platformIds: ["conditional-access"],
       },
       {
@@ -347,6 +354,14 @@ export const securityGoals = [
         platformIds: ["ios-ipados", "android"],
       },
       {
+        id: "on-premises-apps",
+        name: "On-premises app protection",
+        description: "Explore the Conditional Access repository for upcoming on-premises app protection.",
+        platformIds: ["conditional-access"],
+        comingSoon: true,
+        allowRepositoryPreview: true,
+      },
+      {
         id: "cloud-apps",
         name: "Cloud apps",
         description: "Explore policies for Windows, Windows Server, macOS, and Conditional Access.",
@@ -437,9 +452,13 @@ export function getConditionalAccessCategoryLicenseNote(
   );
   const needsAgent365 = selected.some((option) => option.id === "agent-policies") &&
     !eligibleLicenseIds.includes("e7");
-  const needsEntraP2 = selected.some((option) => option.id !== "agent-policies") &&
+  const needsGlobalSecureAccess = selected.some((option) => option.id === "global-secure-access-policies") &&
+    !eligibleLicenseIds.includes("e7");
+  const needsEntraP2 = selected.some((option) =>
+    option.id !== "agent-policies" && option.id !== "global-secure-access-policies",
+  ) &&
     !hasEntraIdP2(eligibleLicenseIds);
-  if (!needsAgent365 && !needsEntraP2) return undefined;
+  if (!needsAgent365 && !needsEntraP2 && !needsGlobalSecureAccess) return undefined;
   const suiteAddOns = [
     ...(eligibleLicenseIds.some((id) => id.startsWith("business-premium"))
       ? ["Microsoft Defender Suite for Business Premium"]
@@ -456,10 +475,25 @@ export function getConditionalAccessCategoryLicenseNote(
       ? [`Some of these policies require Microsoft Entra ID P2. Add the Microsoft Entra ID P2 add-on, or get it with ${suiteAddOns.join(" or ")}.`]
       : []),
     ...(needsAgent365 ? [AGENT_POLICY_NOTE] : []),
+    ...(needsGlobalSecureAccess
+      ? ["Some Global Secure Access policies may require Global Secure Access Internet Access or Private Access licenses. These are also included in Microsoft Entra Suite, which is included in Microsoft 365 E7."]
+      : []),
   ];
   return {
     title: "Conditional Access licensing prerequisites",
     message: messages.join(" "),
+    includePlanComparisons: true,
+  };
+}
+
+export function getOnPremisesAppLicenseNote(
+  licenseIds: readonly License["id"][],
+): { title: string; message: string; includePlanComparisons: boolean } | undefined {
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (eligibleLicenseIds.length === 0 || eligibleLicenseIds.includes("e7")) return undefined;
+  return {
+    title: "On-premises app protection licensing prerequisites",
+    message: "On-premises app protection requires a Global Secure Access Private Access license. Private Access is also included in Microsoft Entra Suite or Microsoft 365 E7.",
     includePlanComparisons: true,
   };
 }
@@ -470,7 +504,7 @@ export function isSecurityGoalOptionAvailable(
   licenseIds: readonly License["id"][],
 ): boolean {
   const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
-  if (option?.comingSoon) return false;
+  if (option?.comingSoon && !option.allowRepositoryPreview) return false;
   if (
     goalId === "endpoint-protection" &&
     option?.endpointFeature === "defender"
@@ -647,6 +681,9 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "app-protection" && optionId === "on-premises-apps") {
+    return getOnPremisesAppLicenseNote(licenseIds) ? "limited" : "full";
+  }
   if (goalId === "conditional-access") {
     return getConditionalAccessCategoryLicenseNote(
       optionId ? [optionId] : getSecurityGoalOptions(goalId).map((option) => option.id),
@@ -738,7 +775,8 @@ export function getSolutionPlatformIds(
   optionIds: readonly string[],
 ): Platform["id"][] {
   const selectedOptions = getSecurityGoalOptions(goalId).filter((option) =>
-    !option.comingSoon && (option.autoSelect || optionIds.includes(option.id)),
+    (!option.comingSoon || option.allowRepositoryPreview) &&
+    (option.autoSelect || optionIds.includes(option.id)),
   );
   return [...new Set(selectedOptions.flatMap((option) => option.platformIds))];
 }

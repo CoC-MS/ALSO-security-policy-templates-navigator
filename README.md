@@ -6,6 +6,8 @@ In step 2, choose **Conditional Access** to select Administrator, Internal user,
 
 Policy-selection previews show short descriptions and experience/Coming badges only. Licensing prerequisites appear on the final repository results, not on the previews.
 
+Global Secure Access Policies recommend Conditional Access and show Limited experience unless Microsoft 365 E7 is selected. Final results explain Internet Access/Private Access licensing and inclusion in Entra Suite and E7. App protection also offers an **On-premises app protection** repository preview marked **Coming**; its final result explains the Private Access prerequisite and does not imply those templates are already available. Both use the full disclaimer and both comparison links.
+
 Conditional Access guidance and experience badges follow the selected licenses. Microsoft 365 E7 provides the full experience for all available categories; Microsoft 365 E5 provides the full experience except for Agent policies, which require Agent 365. Business Premium, E3, F1, and F3 without Defender Suite show the Entra ID P2 prerequisite and the corresponding Defender Suite add-on (Defender Suite FLW for F1/F3) on the final recommendation. Every result disclaimer includes both Enterprise and SMB comparison links, including server, Agent 365, and Workload ID notices.
 
 **Disclaimer:** Licensing prerequisites and feature availability listed on this page may be incorrect, incomplete, or outdated. We strongly recommend verifying all licensing information against the latest official Microsoft licensing documentation before making any purchasing or deployment decisions.

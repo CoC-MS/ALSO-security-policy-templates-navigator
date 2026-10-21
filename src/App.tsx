@@ -17,6 +17,7 @@ import {
 import {
   getSolutionPlatformIds,
   getConditionalAccessCategoryLicenseNote,
+  getOnPremisesAppLicenseNote,
   getDataSecurityLicenseNote,
   getEndpointFeatureLicenseNote,
   getSecurityGoalOptions,
@@ -325,7 +326,7 @@ function App() {
   const selectedOptions = selectedGoals.flatMap((goal) =>
     getSecurityGoalOptions(goal.id)
       .filter((option) =>
-        !option.comingSoon &&
+        (!option.comingSoon || option.allowRepositoryPreview) &&
         (isAutoSelectedOption(option) ||
         selectedOptionIds.includes(`${goal.id}:${option.id}`)),
       )
@@ -978,16 +979,32 @@ function App() {
                     sourcePlatform.id === "conditional-access" &&
                     platformSelections.length === 1 &&
                     platformSelections[0].selectionId === "app-protection:cloud-apps";
-                  const conditionalAccessCategoriesOnly =
+                  const hasOnPremisesAppSelection = sourcePlatform.id === "conditional-access" &&
+                    platformSelections.some((option) =>
+                      option.selectionId === "app-protection:on-premises-apps",
+                    );
+                  const onPremisesAppsOnly = hasOnPremisesAppSelection &&
+                    platformSelections.length === 1;
+                  const onPremisesAppLicenseNote = hasOnPremisesAppSelection
+                    ? getOnPremisesAppLicenseNote(eligibleLicenseIds)
+                    : undefined;
+                  const categorySpecificLicensingOnly =
                     platformSelections.length > 0 &&
                     platformSelections.every((option) =>
-                      option.selectionId.startsWith("conditional-access:"),
+                      option.selectionId.startsWith("conditional-access:") ||
+                      option.selectionId === "app-protection:on-premises-apps",
                     );
-                  const limitedExperienceNote = conditionalAccessCategoriesOnly
-                    ? getConditionalAccessCategoryLicenseNote(
-                        platformSelections.map((option) => option.id),
-                        eligibleLicenseIds,
-                      )
+                  const conditionalAccessCategoryLicenseNote =
+                    getConditionalAccessCategoryLicenseNote(
+                      platformSelections.filter((option) =>
+                        option.selectionId.startsWith("conditional-access:"),
+                      ).map((option) => option.id),
+                      eligibleLicenseIds,
+                    );
+                  const limitedExperienceNote = onPremisesAppsOnly
+                    ? undefined
+                    : categorySpecificLicensingOnly
+                    ? conditionalAccessCategoryLicenseNote
                     : getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
                       sourcePlatform.id,
@@ -1067,6 +1084,11 @@ function App() {
                         <p className="recommendation-reasons">
                           Recommended for: {solutionNames.join(", ")}
                         </p>
+                        {hasOnPremisesAppSelection && (
+                          <p className="recommended-policy-note">
+                            On-premises app protection templates are coming soon. Explore the Conditional Access repository for currently available policies.
+                          </p>
+                        )}
                         {policyIds.length > 0 && (
                           <div className="recommended-policy-list">
                             <p>
@@ -1109,6 +1131,18 @@ function App() {
                           <aside className="license-requirement-note">
                             <strong>Data Security licensing prerequisites</strong>
                             <p>{dataSecurityLicenseNote}</p>
+                          </aside>
+                        )}
+                        {onPremisesAppLicenseNote && (
+                          <aside className="license-requirement-note">
+                            <strong>{onPremisesAppLicenseNote.title}</strong>
+                            <p>{onPremisesAppLicenseNote.message}</p>
+                          </aside>
+                        )}
+                        {!categorySpecificLicensingOnly && conditionalAccessCategoryLicenseNote && (
+                          <aside className="license-requirement-note">
+                            <strong>{conditionalAccessCategoryLicenseNote.title}</strong>
+                            <p>{conditionalAccessCategoryLicenseNote.message}</p>
                           </aside>
                         )}
                         {endpointFeatureNotes.map((note) => (

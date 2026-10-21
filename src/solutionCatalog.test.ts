@@ -3,6 +3,7 @@ import { licenses } from "./catalog";
 import {
   getDataSecurityLicenseNote,
   getConditionalAccessCategoryLicenseNote,
+  getOnPremisesAppLicenseNote,
   getEndpointFeatureLicenseNote,
   getRecommendedPolicyIds,
   getSecurityGoalOptions,
@@ -18,7 +19,10 @@ describe("security goal recommendations", () => {
     for (const option of getSecurityGoalOptions("conditional-access")) {
       if (option.comingSoon) continue;
       const note = getConditionalAccessCategoryLicenseNote([option.id], ["e3"]);
-      if (option.id === "agent-policies") {
+      if (option.id === "global-secure-access-policies") {
+        expect(note?.message).toContain("Internet Access or Private Access");
+        expect(note?.message).not.toContain("Entra ID P2");
+      } else if (option.id === "agent-policies") {
         expect(note?.message).toContain("Agent 365 add-on");
         expect(note?.message).not.toContain("Entra ID P2");
       } else {
@@ -52,12 +56,13 @@ describe("security goal recommendations", () => {
       const includesP2 = licenseId === "e5" || licenseId === "e7" || licenseId.includes("defender");
       for (const option of getSecurityGoalOptions("conditional-access").filter((item) => !item.comingSoon)) {
         const note = getConditionalAccessCategoryLicenseNote([option.id], [licenseId]);
-        const needsAddOn = option.id === "agent-policies" ? licenseId !== "e7" : !includesP2;
+        const needsAddOn = option.id === "agent-policies" || option.id === "global-secure-access-policies"
+          ? licenseId !== "e7" : !includesP2;
         expect(Boolean(note)).toBe(needsAddOn);
         expect(getSecurityGoalOptionExperience(
           "conditional-access", [licenseId], ["conditional-access"], option.id,
         )).toBe(needsAddOn ? "limited" : "full");
-        if (note && option.id !== "agent-policies") {
+        if (note && option.id !== "agent-policies" && option.id !== "global-secure-access-policies") {
           expect(note.message).toContain(licenseId.startsWith("f")
             ? "Microsoft Defender Suite FLW"
             : licenseId.startsWith("business-premium")
@@ -125,7 +130,7 @@ describe("security goal recommendations", () => {
       );
   });
 
-  it("offers the six Conditional Access categories in the requested order", () => {
+  it("offers the Conditional Access categories in the requested order", () => {
     const options = getSecurityGoalOptions("conditional-access");
     expect(options.map((option) => option.name)).toEqual([
       "Administrator policies",
@@ -133,13 +138,14 @@ describe("security goal recommendations", () => {
       "Service Account policies",
       "Agent policies",
       "Guest user policies",
+      "Global Secure Access Policies",
       "Service principal policies",
     ]);
     expect(options.every((option) =>
       option.platformIds.length === 1 && option.platformIds[0] === "conditional-access",
     )).toBe(true);
     expect(getSolutionPlatformIds("conditional-access", [])).toEqual([]);
-    for (const option of options.slice(0, 5)) {
+    for (const option of options.filter((item) => !item.comingSoon)) {
       expect(option.autoSelect).not.toBe(true);
       expect(isSecurityGoalOptionAvailable("conditional-access", option.id, ["e3"])).toBe(true);
       expect(getSolutionPlatformIds("conditional-access", [option.id])).toEqual(["conditional-access"]);
@@ -147,6 +153,47 @@ describe("security goal recommendations", () => {
     expect(getSolutionPlatformIds(
       "conditional-access", options.map((option) => option.id),
     )).toEqual(["conditional-access"]);
+  });
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "maps GSA and upcoming on-premises app protection to Conditional Access for %s",
+    (licenseId) => {
+      const gsaId = "global-secure-access-policies";
+      const onPremises = getSecurityGoalOptions("app-protection").find(
+        (option) => option.id === "on-premises-apps",
+      )!;
+      expect(onPremises.comingSoon).toBe(true);
+      expect(onPremises.allowRepositoryPreview).toBe(true);
+      expect(isSecurityGoalOptionAvailable("app-protection", onPremises.id, [licenseId])).toBe(true);
+      expect(getSolutionPlatformIds("app-protection", [onPremises.id])).toEqual(["conditional-access"]);
+      expect(getSolutionPlatformIds("conditional-access", [gsaId])).toEqual(["conditional-access"]);
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["conditional-access"], onPremises.id,
+      )).toBe(licenseId === "e7" ? "full" : "limited");
+      const gsaNote = getConditionalAccessCategoryLicenseNote([gsaId], [licenseId]);
+      const privateNote = getOnPremisesAppLicenseNote([licenseId]);
+      if (licenseId === "e7") {
+        expect(gsaNote).toBeUndefined();
+        expect(privateNote).toBeUndefined();
+      } else {
+        expect(gsaNote?.message).toContain("Internet Access or Private Access");
+        expect(gsaNote?.message).toContain("Microsoft Entra Suite");
+        expect(gsaNote?.message).toContain("Microsoft 365 E7");
+        expect(privateNote?.message).toContain("Global Secure Access Private Access");
+        expect(privateNote?.message).toContain("Microsoft Entra Suite or Microsoft 365 E7");
+      }
+    },
+  );
+
+  it("uses E7 entitlements for mixed selections and ignores empty on-premises licensing input", () => {
+    expect(getOnPremisesAppLicenseNote(["e3", "e7"])).toBeUndefined();
+    expect(getOnPremisesAppLicenseNote([])).toBeUndefined();
+    const note = getConditionalAccessCategoryLicenseNote([
+      "global-secure-access-policies", "agent-policies", "internal-user-policies",
+    ], ["e3"]);
+    expect(note?.message).toContain("Internet Access or Private Access");
+    expect(note?.message).toContain("Agent 365");
+    expect(note?.message).toContain("Entra ID P2");
   });
 
   it("keeps upcoming service principal policies out of recommendations", () => {
