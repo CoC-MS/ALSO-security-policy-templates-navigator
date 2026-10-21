@@ -539,12 +539,18 @@ function App() {
             </span>
           </a>
           <div className="header-actions">
+            <a
+              className="button secondary issue-link"
+              href={import.meta.env.BASE_URL}
+            >
+              Home
+            </a>
             <button
               className="button secondary issue-link"
               type="button"
               onClick={showOverview}
             >
-              Overview
+              View all policies
             </button>
             <button
               className="button secondary issue-link"
