@@ -16,6 +16,7 @@ describe("security goal recommendations", () => {
     expect(securityGoals.map((goal) => goal.name)).toEqual([
       "Attack protection",
       "Administrator protection",
+      "Conditional Access",
       "Endpoint protection",
       "AI and Agent Security",
       "Data Security",
@@ -50,6 +51,42 @@ describe("security goal recommendations", () => {
       .toBe(
         "CA106 requires Microsoft Entra ID Plan 2. These recommended policies are a good starting point, but implementing them does not guarantee full protection.",
       );
+  });
+
+  it("offers the six Conditional Access categories in the requested order", () => {
+    const options = getSecurityGoalOptions("conditional-access");
+    expect(options.map((option) => option.name)).toEqual([
+      "Administrator policies",
+      "Internal user policies",
+      "Service Account policies",
+      "Agent policies",
+      "Guest user policies",
+      "Service principal policies",
+    ]);
+    expect(options.every((option) =>
+      option.platformIds.length === 1 && option.platformIds[0] === "conditional-access",
+    )).toBe(true);
+    expect(getSolutionPlatformIds("conditional-access", [])).toEqual([]);
+    for (const option of options.slice(0, 5)) {
+      expect(option.autoSelect).not.toBe(true);
+      expect(isSecurityGoalOptionAvailable("conditional-access", option.id, ["e3"])).toBe(true);
+      expect(getSolutionPlatformIds("conditional-access", [option.id])).toEqual(["conditional-access"]);
+    }
+    expect(getSolutionPlatformIds(
+      "conditional-access", options.map((option) => option.id),
+    )).toEqual(["conditional-access"]);
+  });
+
+  it("keeps upcoming service principal policies out of recommendations", () => {
+    const option = getSecurityGoalOptions("conditional-access").find(
+      (item) => item.id === "service-principal-policies",
+    )!;
+    expect(option.comingSoon).toBe(true);
+    for (const license of ["business-premium", "e3", "e5", "e7"] as const) {
+      expect(isSecurityGoalOptionAvailable("conditional-access", option.id, [license])).toBe(false);
+    }
+    expect(getSolutionPlatformIds("conditional-access", [option.id])).toEqual([]);
+    expect(getRecommendedPolicyIds("conditional-access", [option.id], "conditional-access")).toEqual([]);
   });
 
   it("supports selecting multiple security goals and deselecting one", () => {

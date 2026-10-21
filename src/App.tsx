@@ -324,8 +324,9 @@ function App() {
   const selectedOptions = selectedGoals.flatMap((goal) =>
     getSecurityGoalOptions(goal.id)
       .filter((option) =>
-        isAutoSelectedOption(option) ||
-        selectedOptionIds.includes(`${goal.id}:${option.id}`),
+        !option.comingSoon &&
+        (isAutoSelectedOption(option) ||
+        selectedOptionIds.includes(`${goal.id}:${option.id}`)),
       )
       .map((option) => ({
         ...option,
@@ -479,7 +480,10 @@ function App() {
         <span className="choice-details">
           <span className="choice-name">{option.name}</span>
           <span className="goal-description">{option.description}</span>
-          {!optionAvailable && (
+          {option.comingSoon && (
+            <span className="experience-badge coming-soon-badge">Coming</span>
+          )}
+          {!optionAvailable && !option.comingSoon && (
             <span className="goal-description">
               {featureNote ?? "Not included with the selected licenses."}
             </span>
@@ -814,7 +818,10 @@ function App() {
                   : selectedGoalIds.length === 1 &&
                     selectedGoalIds[0] === "data-protection"
                     ? "Choose Data Security categories"
-                    : "Choose the scenarios and platforms to include"}
+                    : selectedGoalIds.length === 1 &&
+                      selectedGoalIds[0] === "conditional-access"
+                      ? "Choose Conditional Access policy categories"
+                      : "Choose the scenarios and platforms to include"}
               </h1>
               <p className="intro">
                 {selectedGoalIds.length === 1 &&
@@ -823,7 +830,10 @@ function App() {
                   : selectedGoalIds.length === 1 &&
                     selectedGoalIds[0] === "data-protection"
                     ? "Select the Purview policy categories to include in your recommendations."
-                    : "Select one or more options under each goal. Select an option again to remove it. Recommendations will be matched to the licenses selected above."}
+                    : selectedGoalIds.length === 1 &&
+                      selectedGoalIds[0] === "conditional-access"
+                      ? "Select the policy categories to explore in the Conditional Access repository."
+                      : "Select one or more options under each goal. Select an option again to remove it. Recommendations will be matched to the licenses selected above."}
               </p>
               <div className="goal-option-sections">
                 {selectedGoals.filter((goal) =>

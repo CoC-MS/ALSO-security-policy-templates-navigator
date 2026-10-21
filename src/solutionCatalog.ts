@@ -17,6 +17,7 @@ export interface SolutionOption {
   recommendedPolicyNote?: string;
   hasPolicyLicensingPrerequisites?: boolean;
   autoSelect?: boolean;
+  comingSoon?: boolean;
 }
 
 export interface SecurityGoal {
@@ -118,6 +119,51 @@ export const securityGoals = [
         recommendedPolicyNote:
           `CA106 requires Microsoft Entra ID Plan 2. ${ATTACK_POLICY_NOTE}`,
         hasPolicyLicensingPrerequisites: true,
+      },
+    ],
+  },
+  {
+    id: "conditional-access",
+    name: "Conditional Access",
+    description: "Explore Conditional Access policies for users, administrators, service accounts, and agents.",
+    prompt: "Which Conditional Access policy categories do you need?",
+    options: [
+      {
+        id: "administrator-policies",
+        name: "Administrator policies",
+        description: "Protect administrator accounts and privileged access.",
+        platformIds: ["conditional-access"],
+      },
+      {
+        id: "internal-user-policies",
+        name: "Internal user policies",
+        description: "Protect access for internal users.",
+        platformIds: ["conditional-access"],
+      },
+      {
+        id: "service-account-policies",
+        name: "Service Account policies",
+        description: "Protect access for service accounts.",
+        platformIds: ["conditional-access"],
+      },
+      {
+        id: "agent-policies",
+        name: "Agent policies",
+        description: "Protect access for AI agents.",
+        platformIds: ["conditional-access"],
+      },
+      {
+        id: "guest-user-policies",
+        name: "Guest user policies",
+        description: "Protect access for guests and external users.",
+        platformIds: ["conditional-access"],
+      },
+      {
+        id: "service-principal-policies",
+        name: "Service principal policies",
+        description: "Conditional Access policies for service principals are coming soon.",
+        platformIds: ["conditional-access"],
+        comingSoon: true,
       },
     ],
   },
@@ -383,6 +429,7 @@ export function isSecurityGoalOptionAvailable(
   licenseIds: readonly License["id"][],
 ): boolean {
   const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
+  if (option?.comingSoon) return false;
   if (
     goalId === "endpoint-protection" &&
     option?.endpointFeature === "defender"
@@ -644,7 +691,7 @@ export function getSolutionPlatformIds(
   optionIds: readonly string[],
 ): Platform["id"][] {
   const selectedOptions = getSecurityGoalOptions(goalId).filter((option) =>
-    option.autoSelect || optionIds.includes(option.id),
+    !option.comingSoon && (option.autoSelect || optionIds.includes(option.id)),
   );
   return [...new Set(selectedOptions.flatMap((option) => option.platformIds))];
 }
@@ -658,6 +705,7 @@ export function getRecommendedPolicyIds(
   return [...new Set(
     getSecurityGoalOptions(goalId)
       .filter((option) =>
+        !option.comingSoon &&
         (option.autoSelect || optionIds.includes(option.id)) &&
         option.platformIds.includes(platformId),
       )
