@@ -29,6 +29,8 @@ import {
   getSecurityGoalOptionExperience,
   isSecurityGoalOptionAvailable,
   securityGoals,
+  securityGoalNavigation,
+  identityAndAccessGoalIds,
   toggleSecurityGoalSelection,
   type SecurityGoalId,
   type SolutionOption,
@@ -50,6 +52,7 @@ import {
 type Step =
   | "license"
   | "goal"
+  | "identity-and-access"
   | "focus"
   | "endpoint-categories"
   | "blocked"
@@ -154,6 +157,7 @@ function LicenseGrid({
 function StepIndicator({ step }: { step: Step }) {
   const goalActive =
     step === "goal" ||
+    step === "identity-and-access" ||
     step === "focus" ||
     step === "endpoint-categories" ||
     step === "result";
@@ -300,6 +304,7 @@ function App() {
   const [faqReturnStep, setFaqReturnStep] = useState<Step>("license");
   const [selectedLicenses, setSelectedLicenses] = useState<License[]>([]);
   const [selectedGoalIds, setSelectedGoalIds] = useState<SecurityGoalId[]>([]);
+  const [identityAndAccessSelected, setIdentityAndAccessSelected] = useState(false);
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -314,6 +319,11 @@ function App() {
   const selectedGoals = securityGoals.filter((goal) =>
     selectedGoalIds.includes(goal.id),
   );
+  const selectedNavigationCount = securityGoalNavigation.filter((goal) =>
+    goal.id === "identity-and-access"
+      ? identityAndAccessSelected
+      : selectedGoalIds.includes(goal.id),
+  ).length;
   const endpointProtectionGoal = securityGoals.find(
     (goal) => goal.id === "endpoint-protection",
   )!;
@@ -414,6 +424,7 @@ function App() {
     }
 
     setSelectedGoalIds([]);
+    setIdentityAndAccessSelected(false);
     setSelectedOptionIds([]);
     setStep("goal");
   }
@@ -510,6 +521,7 @@ function App() {
   function startOver() {
     setSelectedLicenses([]);
     setSelectedGoalIds([]);
+    setIdentityAndAccessSelected(false);
     setSelectedOptionIds([]);
     setStep("license");
   }
@@ -758,22 +770,42 @@ function App() {
               <h1 id="main-title" tabIndex={-1}>What security challenges are you trying to solve?</h1>
               <p className="intro">Select one or more security goals. Select a goal again to remove it. You can combine any goals before continuing.</p>
               <div className="card-grid goal-grid" aria-label="Security goals">
-                {securityGoals.map((goal, index) => (
+                {securityGoalNavigation.map((goal, index) => {
+                  const isIdentityGroup = goal.id === "identity-and-access";
+                  const selected = isIdentityGroup
+                    ? identityAndAccessSelected
+                    : selectedGoalIds.includes(goal.id);
+                  return (
                   <button
-                    className={`choice-card goal-card ${selectedGoalIds.includes(goal.id) ? "selected" : ""}`}
+                    className={`choice-card goal-card ${selected ? "selected" : ""}`}
                     type="button"
                     key={goal.id}
-                    aria-pressed={selectedGoalIds.includes(goal.id)}
-                    onClick={() => chooseGoal(goal.id)}
+                    aria-pressed={selected}
+                    onClick={() => {
+                      if (!isIdentityGroup) {
+                        chooseGoal(goal.id);
+                        return;
+                      }
+                      setIdentityAndAccessSelected(!identityAndAccessSelected);
+                      if (identityAndAccessSelected) {
+                        setSelectedGoalIds((current) => current.filter((id) =>
+                          !identityAndAccessGoalIds.includes(id),
+                        ));
+                        setSelectedOptionIds((current) => current.filter((id) =>
+                          !identityAndAccessGoalIds.some((goalId) => id.startsWith(`${goalId}:`)),
+                        ));
+                      }
+                    }}
                   >
                     <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
                     <span className="choice-details">
                       <span className="choice-name">{goal.name}</span>
                       <span className="goal-description">{goal.description}</span>
                     </span>
-                    <span className="choice-check" aria-hidden="true">{selectedGoalIds.includes(goal.id) ? "\u2713" : ""}</span>
+                    <span className="choice-check" aria-hidden="true">{selected ? "\u2713" : ""}</span>
                   </button>
-                ))}
+                  );
+                })}
               </div>
               <div className="actions platform-actions">
                 <div>
@@ -783,8 +815,12 @@ function App() {
                 <button
                   className="button primary"
                   type="button"
-                  disabled={selectedGoals.length === 0}
+                  disabled={selectedGoals.length === 0 && !identityAndAccessSelected}
                   onClick={() => {
+                    if (identityAndAccessSelected) {
+                      setStep("identity-and-access");
+                      return;
+                    }
                     if (selectedGoals.length === 0) return;
                     setStep(
                       selectedGoals.every((goal) =>
@@ -795,9 +831,47 @@ function App() {
                     );
                   }}
                 >
-                  {selectedGoals.length > 0
-                    ? `Continue with ${selectedGoals.length} security goal${selectedGoals.length === 1 ? "" : "s"}`
+                  {selectedGoals.length > 0 || identityAndAccessSelected
+                    ? `Continue with ${selectedNavigationCount} security goal${selectedNavigationCount === 1 ? "" : "s"}`
                     : "Select at least one security goal"} &rarr;
+                </button>
+              </div>
+            </section>
+          )}
+
+          {step === "identity-and-access" && (
+            <section aria-labelledby="main-title">
+              <div className="eyebrow">Identity and Access</div>
+              <h1 id="main-title" tabIndex={-1}>Choose Identity and Access policies</h1>
+              <p className="intro">Select Conditional Access, Administrator protection, or both. Their existing policy categories and recommendations are unchanged.</p>
+              <div className="card-grid goal-grid" aria-label="Identity and Access options">
+                {identityAndAccessGoalIds.map((id, index) => {
+                  const goal = securityGoals.find((item) => item.id === id)!;
+                  const selected = selectedGoalIds.includes(id);
+                  return (
+                    <button className={`choice-card goal-card ${selected ? "selected" : ""}`}
+                      type="button" key={id} aria-pressed={selected} onClick={() => chooseGoal(id)}>
+                      <span className="choice-icon" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="choice-details">
+                        <span className="choice-name">{goal.name}</span>
+                        <span className="goal-description">{goal.description}</span>
+                      </span>
+                      <span className="choice-check" aria-hidden="true">{selected ? "\u2713" : ""}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="actions platform-actions">
+                <div>
+                  <button className="button secondary" type="button" onClick={() => setStep("goal")}>&larr; Back</button>
+                  <button className="button text-button" type="button" onClick={startOver}>Start over</button>
+                </div>
+                <button className="button primary" type="button"
+                  disabled={!selectedGoalIds.some((id) => identityAndAccessGoalIds.includes(id))}
+                  onClick={() => setStep(selectedGoals.every((goal) =>
+                    goal.options.every(isAutoSelectedOption),
+                  ) ? "result" : "focus")}>
+                  Continue with selected policies &rarr;
                 </button>
               </div>
             </section>
@@ -854,7 +928,7 @@ function App() {
               </div>
               <div className="actions platform-actions">
                 <div>
-                  <button className="button secondary" type="button" onClick={() => setStep("goal")}>&larr; Back</button>
+                  <button className="button secondary" type="button" onClick={() => setStep(identityAndAccessSelected ? "identity-and-access" : "goal")}>&larr; Back</button>
                   <button className="button text-button" type="button" onClick={startOver}>Start over</button>
                 </div>
                 <button
@@ -1320,7 +1394,7 @@ function App() {
                           goal.options.some((option) => !isAutoSelectedOption(option)),
                       )
                         ? "focus"
-                        : "goal",
+                        : identityAndAccessSelected ? "identity-and-access" : "goal",
                     )
                   }
                 >

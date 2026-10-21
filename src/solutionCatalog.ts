@@ -373,6 +373,23 @@ export const securityGoals = [
 
 export type SecurityGoalId = (typeof securityGoals)[number]["id"];
 
+export const identityAndAccessGoalIds: readonly SecurityGoalId[] = [
+  "conditional-access",
+  "administrator-protection",
+];
+
+export const securityGoalNavigation = [
+  securityGoals[0],
+  {
+    id: "identity-and-access" as const,
+    name: "Identity and Access",
+    description: "Explore Conditional Access and administrator protection policies.",
+  },
+  ...securityGoals.filter((goal) =>
+    goal.id !== securityGoals[0].id && !identityAndAccessGoalIds.includes(goal.id),
+  ),
+];
+
 export function getLicensingPrerequisiteTitle(categoryNames: readonly string[]): string {
   const names = [...new Set(categoryNames)];
   return `${names.length > 0 ? names.join(", ") : "Selected policies"} licensing prerequisites`;

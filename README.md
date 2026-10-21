@@ -2,11 +2,13 @@
 
 An interactive guide that combines a customer's Microsoft 365 licenses to identify every ALSO security policy template repository that meets their prerequisites.
 
-In step 2, choose **Conditional Access** to select Administrator, Internal user, Service Account, Agent, or Guest user policies. These categories recommend the Conditional Access repository. Service principal policies are marked **Coming** and cannot yet be selected.
+In step 2, choose **Identity and Access**, then **Conditional Access** to select Administrator, Internal user, Service Account, Agent, or Guest user policies. These categories recommend the Conditional Access repository. Service principal policies are marked **Coming** and cannot yet be selected.
 
 Policy-selection previews show short descriptions and experience/Coming badges only. Licensing prerequisites appear on the final repository results, not on the previews.
 
 Final licensing-note headings use the selected category names (for example, **Retention licensing prerequisites**), across all security goals. Shared notes list the relevant selected categories once; repository names and licensing requirements are unchanged.
+
+**Identity and Access** groups **Conditional Access** and **Administrator protection** in a separate selection page. Either or both can be combined with other security goals; their policy categories, recommendations, and licensing behavior remain unchanged.
 
 Licensing prerequisite messages appear only for selected categories with Limited experience on that repository's platform. Full-experience categories do not show prerequisite messages or contribute to shared licensing headings. The licensing disclaimer and comparison links remain on every final repository card.
 

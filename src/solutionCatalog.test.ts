@@ -15,10 +15,26 @@ import {
   isSecurityGoalOptionAvailable,
   getSolutionPlatformIds,
   securityGoals,
+  securityGoalNavigation,
+  identityAndAccessGoalIds,
   toggleSecurityGoalSelection,
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it("groups the unchanged Conditional Access and Administrator protection goals under Identity and Access", () => {
+    expect(securityGoalNavigation.map((goal) => goal.name)).toEqual([
+      "Attack protection", "Identity and Access", "Endpoint protection",
+      "AI and Agent Security", "Data Security", "App protection",
+    ]);
+    expect(identityAndAccessGoalIds).toEqual(["conditional-access", "administrator-protection"]);
+    expect(getSecurityGoalOptions("conditional-access").map((option) => option.id)).toEqual([
+      "administrator-policies", "internal-user-policies", "service-account-policies",
+      "agent-policies", "guest-user-policies", "global-secure-access-policies",
+      "service-principal-policies",
+    ]);
+    expect(getSecurityGoalOptions("administrator-protection")[0].autoSelect).toBe(true);
+  });
+
   const selections = securityGoals.flatMap((goal) =>
     getSecurityGoalOptions(goal.id).map((option) => ({ ...option, goalId: goal.id })),
   );
