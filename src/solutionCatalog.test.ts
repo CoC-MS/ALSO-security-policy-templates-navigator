@@ -5,6 +5,7 @@ import {
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
   getDesktopAppLicenseNote,
+  getLicensingPrerequisiteTitle,
   getAdministratorProtectionLicenseNote,
   getEndpointFeatureLicenseNote,
   getRecommendedPolicyIds,
@@ -17,6 +18,19 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it("uses selected category names for licensing headings across every goal", () => {
+    for (const goal of securityGoals) {
+      for (const option of getSecurityGoalOptions(goal.id)) {
+        expect(getLicensingPrerequisiteTitle([option.name]))
+          .toBe(`${option.name} licensing prerequisites`);
+      }
+    }
+    expect(getLicensingPrerequisiteTitle(["Retention"])).toBe("Retention licensing prerequisites");
+    expect(getLicensingPrerequisiteTitle(["Retention", "Auto labelling", "Retention"]))
+      .toBe("Retention, Auto labelling licensing prerequisites");
+    expect(getLicensingPrerequisiteTitle([])).toBe("Selected policies licensing prerequisites");
+  });
+
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
     "uses app-specific Mobile and Desktop experience for %s",
     (licenseId) => {

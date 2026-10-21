@@ -373,6 +373,11 @@ export const securityGoals = [
 
 export type SecurityGoalId = (typeof securityGoals)[number]["id"];
 
+export function getLicensingPrerequisiteTitle(categoryNames: readonly string[]): string {
+  const names = [...new Set(categoryNames)];
+  return `${names.length > 0 ? names.join(", ") : "Selected policies"} licensing prerequisites`;
+}
+
 const endpointFullExperienceLicenseIds = new Set<License["id"]>([
   "e7",
   "e5",

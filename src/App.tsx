@@ -16,6 +16,7 @@ import {
 } from "./catalog";
 import {
   getSolutionPlatformIds,
+  getLicensingPrerequisiteTitle,
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
   getDesktopAppLicenseNote,
@@ -968,6 +969,11 @@ function App() {
                       platformId === sourcePlatform.id,
                     ),
                   );
+                  const licensingTitleFor = (
+                    matches: (option: (typeof platformSelections)[number]) => boolean = () => true,
+                  ) => getLicensingPrerequisiteTitle(
+                    platformSelections.filter(matches).map((option) => option.name),
+                  );
                   const attackProtectionOnly =
                     platformSelections.length > 0 &&
                     platformSelections.every((option) =>
@@ -1141,7 +1147,7 @@ function App() {
                         )}
                         {visibleLimitedExperienceNote && (
                           <aside className="license-requirement-note">
-                            <strong>{visibleLimitedExperienceNote.title}</strong>
+                            <strong>{licensingTitleFor()}</strong>
                             <p>{visibleLimitedExperienceNote.message}</p>
                             {visibleLimitedExperienceNote.message.includes("Agent 365") && (
                               <p>
@@ -1168,49 +1174,69 @@ function App() {
                         )}
                         {dataSecurityLicenseNote && (
                           <aside className="license-requirement-note">
-                            <strong>Data Security licensing prerequisites</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              option.selectionId.startsWith("data-protection:"),
+                            )}</strong>
                             <p>{dataSecurityLicenseNote}</p>
                           </aside>
                         )}
                         {onPremisesAppLicenseNote && (
                           <aside className="license-requirement-note">
-                            <strong>{onPremisesAppLicenseNote.title}</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              option.selectionId === "app-protection:on-premises-apps",
+                            )}</strong>
                             <p>{onPremisesAppLicenseNote.message}</p>
                           </aside>
                         )}
                         {!appProtectionOnly && desktopAppLicenseNote && (
                           <aside className="license-requirement-note">
-                            <strong>{desktopAppLicenseNote.title}</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              option.selectionId === "app-protection:desktop-apps",
+                            )}</strong>
                             <p>{desktopAppLicenseNote.message}</p>
                           </aside>
                         )}
                         {!administratorDeviceOnly && administratorLicenseNote && (
                           <aside className="license-requirement-note">
-                            <strong>{administratorLicenseNote.title}</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              option.selectionId.startsWith("administrator-protection:"),
+                            )}</strong>
                             <p>{administratorLicenseNote.message}</p>
                           </aside>
                         )}
                         {!categorySpecificLicensingOnly && conditionalAccessCategoryLicenseNote && (
                           <aside className="license-requirement-note">
-                            <strong>{conditionalAccessCategoryLicenseNote.title}</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              option.selectionId.startsWith("conditional-access:"),
+                            )}</strong>
                             <p>{conditionalAccessCategoryLicenseNote.message}</p>
                           </aside>
                         )}
                         {endpointFeatureNotes.map((note) => (
                           <aside className="license-requirement-note" key={note}>
-                            <strong>Endpoint category licensing note</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              getEndpointFeatureLicenseNote(
+                                option.endpointFeature,
+                                eligibleLicenseIds,
+                                option.platformIds[0],
+                              ) === note,
+                            )}</strong>
                             <p>{note}</p>
                           </aside>
                         ))}
                         {cloudAppsConditionalAccessLicenseNote && (
                           <aside className="license-requirement-note">
-                            <strong>{cloudAppsConditionalAccessLicenseNote.title}</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              option.selectionId === "app-protection:cloud-apps",
+                            )}</strong>
                             <p>{cloudAppsConditionalAccessLicenseNote.message}</p>
                           </aside>
                         )}
                         {needsOAuthAppsWorkloadIdLicense && (
                           <aside className="license-requirement-note">
-                            <strong>Microsoft Entra Workload ID Premium required for full experience</strong>
+                            <strong>{licensingTitleFor((option) =>
+                              option.selectionId === "app-protection:oauth-apps",
+                            )}</strong>
                             <p>
                               With the selected licenses, add Microsoft Entra Workload ID Premium licenses to unlock the full OAuth apps experience.{" "}
                               <a
@@ -1226,7 +1252,7 @@ function App() {
                         )}
                         {windowsServerNotes.map((note) => (
                           <aside className="license-requirement-note" key={note}>
-                            <strong>Additional server license required</strong>
+                            <strong>{licensingTitleFor()}</strong>
                             <p>{renderWindowsServerLicenseNote(note)}</p>
                           </aside>
                         ))}
