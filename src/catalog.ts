@@ -65,7 +65,7 @@ export const platforms = [
     name: "AI Security macOS",
     shortLabel: "AI",
     repository: "https://github.com/CoC-MS/ALSO-Microsoft-Security-MacOS",
-    repositoryLabel: "macOS",
+    repositoryLabel: "AI Security macOS",
     description: "This baseline delivers a hardened MacOS configuration that minimizes the risk of unauthorized third-party AI access while maintaining a productive user experience,",
     comingSoon: true,
   },

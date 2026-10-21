@@ -124,7 +124,8 @@ describe("repository routing", () => {
     expect(platforms).toHaveLength(12);
     const macAiSecurity = getPlatform("ai-security-macos");
     expect("comingSoon" in macAiSecurity && macAiSecurity.comingSoon).toBe(true);
-    expect(getPlatformRepositories(macAiSecurity)[0].name).toBe("macOS");
+    expect(getPlatformRepositories(macAiSecurity)[0].name).toBe("AI Security macOS");
+    expect(getPlatformRepositories(getPlatform("macos"))[0].name).toBe("macOS");
   });
 
   it("gives AI Security macOS the same license mapping as Windows AI Security", () => {
