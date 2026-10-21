@@ -4,6 +4,7 @@ import {
   getDataSecurityLicenseNote,
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
+  getDesktopAppLicenseNote,
   getEndpointFeatureLicenseNote,
   getRecommendedPolicyIds,
   getSecurityGoalOptions,
@@ -15,6 +16,41 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "uses app-specific Mobile and Desktop experience for %s",
+    (licenseId) => {
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["ios-ipados", "android"], "mobile-apps",
+      )).toBe("full");
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["macos"], "desktop-apps",
+      )).toBe("full");
+      const expected = licenseId === "e5" || licenseId === "e7" ? "full" : "limited";
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["windows-11"], "desktop-apps",
+      )).toBe(expected);
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["windows-11", "macos"], "desktop-apps",
+      )).toBe(expected);
+      expect(getDesktopAppLicenseNote([licenseId], "macos")).toBeUndefined();
+      const note = getDesktopAppLicenseNote([licenseId], "windows-11");
+      expect(Boolean(note)).toBe(expected === "limited");
+      if (note) expect(note.message).toContain("Microsoft Intune Suite add-on");
+    },
+  );
+
+  it("combines desktop app entitlements and rejects empty app licensing inputs", () => {
+    expect(getDesktopAppLicenseNote(["e3", "e5"], "windows-11")).toBeUndefined();
+    expect(getDesktopAppLicenseNote(["f1", "e7"], "windows-11")).toBeUndefined();
+    expect(getDesktopAppLicenseNote([], "windows-11")).toBeUndefined();
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", [], ["ios-ipados"], "mobile-apps",
+    )).toBe("limited");
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", [], ["windows-11"], "desktop-apps",
+    )).toBe("limited");
+  });
+
   it("states the correct prerequisite on every Conditional Access category", () => {
     for (const option of getSecurityGoalOptions("conditional-access")) {
       if (option.comingSoon) continue;

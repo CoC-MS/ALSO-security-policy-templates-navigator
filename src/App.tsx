@@ -18,6 +18,7 @@ import {
   getSolutionPlatformIds,
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
+  getDesktopAppLicenseNote,
   getDataSecurityLicenseNote,
   getEndpointFeatureLicenseNote,
   getSecurityGoalOptions,
@@ -988,6 +989,16 @@ function App() {
                   const onPremisesAppLicenseNote = hasOnPremisesAppSelection
                     ? getOnPremisesAppLicenseNote(eligibleLicenseIds)
                     : undefined;
+                  const appProtectionOnly = platformSelections.length > 0 &&
+                    platformSelections.every((option) =>
+                      option.selectionId === "app-protection:mobile-apps" ||
+                      option.selectionId === "app-protection:desktop-apps",
+                    );
+                  const desktopAppLicenseNote = platformSelections.some((option) =>
+                    option.selectionId === "app-protection:desktop-apps",
+                  )
+                    ? getDesktopAppLicenseNote(eligibleLicenseIds, sourcePlatform.id)
+                    : undefined;
                   const categorySpecificLicensingOnly =
                     platformSelections.length > 0 &&
                     platformSelections.every((option) =>
@@ -1001,7 +1012,9 @@ function App() {
                       ).map((option) => option.id),
                       eligibleLicenseIds,
                     );
-                  const limitedExperienceNote = onPremisesAppsOnly
+                  const limitedExperienceNote = appProtectionOnly
+                    ? desktopAppLicenseNote
+                    : onPremisesAppsOnly
                     ? undefined
                     : categorySpecificLicensingOnly
                     ? conditionalAccessCategoryLicenseNote
@@ -1137,6 +1150,12 @@ function App() {
                           <aside className="license-requirement-note">
                             <strong>{onPremisesAppLicenseNote.title}</strong>
                             <p>{onPremisesAppLicenseNote.message}</p>
+                          </aside>
+                        )}
+                        {!appProtectionOnly && desktopAppLicenseNote && (
+                          <aside className="license-requirement-note">
+                            <strong>{desktopAppLicenseNote.title}</strong>
+                            <p>{desktopAppLicenseNote.message}</p>
                           </aside>
                         )}
                         {!categorySpecificLicensingOnly && conditionalAccessCategoryLicenseNote && (

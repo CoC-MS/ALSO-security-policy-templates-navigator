@@ -486,6 +486,23 @@ export function getConditionalAccessCategoryLicenseNote(
   };
 }
 
+export function getDesktopAppLicenseNote(
+  licenseIds: readonly License["id"][],
+  platformId: Platform["id"],
+): { title: string; message: string; includePlanComparisons: boolean } | undefined {
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (
+    platformId !== "windows-11" ||
+    eligibleLicenseIds.length === 0 ||
+    eligibleLicenseIds.some((id) => id === "e5" || id === "e7")
+  ) return undefined;
+  return {
+    title: "Windows desktop app protection licensing prerequisites",
+    message: "Add the Microsoft Intune Suite add-on for the full Windows desktop app protection experience. Microsoft 365 E5 and Microsoft 365 E7 provide the full Windows experience without this additional add-on.",
+    includePlanComparisons: true,
+  };
+}
+
 export function getOnPremisesAppLicenseNote(
   licenseIds: readonly License["id"][],
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
@@ -681,6 +698,15 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "app-protection" && optionId === "mobile-apps") {
+    return licenseIds.some(isLicenseEligible) ? "full" : "limited";
+  }
+  if (goalId === "app-protection" && optionId === "desktop-apps") {
+    if (!licenseIds.some(isLicenseEligible)) return "limited";
+    return platformIds.some((platformId) =>
+      getDesktopAppLicenseNote(licenseIds, platformId),
+    ) ? "limited" : "full";
+  }
   if (goalId === "app-protection" && optionId === "on-premises-apps") {
     return getOnPremisesAppLicenseNote(licenseIds) ? "limited" : "full";
   }
