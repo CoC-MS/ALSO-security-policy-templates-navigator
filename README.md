@@ -8,6 +8,8 @@ Policy-selection previews show short descriptions and experience/Coming badges o
 
 Final licensing-note headings use the selected category names (for example, **Retention licensing prerequisites**), across all security goals. Shared notes list the relevant selected categories once; repository names and licensing requirements are unchanged.
 
+Licensing prerequisite messages appear only for selected categories with Limited experience on that repository's platform. Full-experience categories do not show prerequisite messages or contribute to shared licensing headings. The licensing disclaimer and comparison links remain on every final repository card.
+
 Administrator protection recommends Conditional Access, Windows, and macOS repositories. Its Windows result shows Limited experience and the Intune Suite add-on prerequisite unless Microsoft 365 E5/E7 is selected; the result notes Intune Suite's inclusion in E5/E7.
 
 Mobile app protection provides Full experience for every eligible license. Desktop app protection provides Full experience on macOS; Windows requires Microsoft 365 E5/E7 or the Microsoft Intune Suite add-on. Other Windows selections show Limited experience and name Intune Suite on the final repository result, without applying unrelated endpoint Defender requirements to app-only recommendations.

@@ -6,6 +6,7 @@ import {
   getOnPremisesAppLicenseNote,
   getDesktopAppLicenseNote,
   getLicensingPrerequisiteTitle,
+  getLimitedExperienceSelections,
   getAdministratorProtectionLicenseNote,
   getEndpointFeatureLicenseNote,
   getRecommendedPolicyIds,
@@ -18,6 +19,68 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  const selections = securityGoals.flatMap((goal) =>
+    getSecurityGoalOptions(goal.id).map((option) => ({ ...option, goalId: goal.id })),
+  );
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "only includes limited categories in prerequisite guidance for %s",
+    (licenseId) => {
+      for (const option of selections) {
+        for (const platformId of option.platformIds) {
+          const limited = getLimitedExperienceSelections([option], [licenseId], platformId);
+          const experience = getSecurityGoalOptionExperience(
+            option.goalId, [licenseId], [platformId], option.id,
+          );
+          expect(limited).toEqual(!option.children?.length && experience === "limited" ? [option] : []);
+        }
+      }
+    },
+  );
+
+  it("omits full Sensitivity labels while retaining limited Data Security categories", () => {
+    const data = selections.filter((option) => option.goalId === "data-protection");
+    for (const licenseId of ["business-premium", "e3", "f1", "f3"] as const) {
+      const limited = getLimitedExperienceSelections(data, [licenseId], "purview");
+      expect(limited.some((option) => option.id === "sensitivity-labels")).toBe(false);
+      expect(limited.some((option) => option.id === "auto-labeling")).toBe(true);
+    }
+    expect(getLimitedExperienceSelections(data, ["e5"], "purview")).toEqual([]);
+    expect(getLimitedExperienceSelections(data, ["e7"], "purview")).toEqual([]);
+  });
+
+  it("scopes prerequisite guidance to each repository and removes fully licensed selections", () => {
+    const apps = selections.filter((option) =>
+      option.goalId === "app-protection" &&
+      (option.id === "mobile-apps" || option.id === "desktop-apps"),
+    );
+    expect(getLimitedExperienceSelections(apps, ["business-premium"], "macos")).toEqual([]);
+    expect(getLimitedExperienceSelections(apps, ["business-premium"], "windows-11")
+      .map((option) => option.id)).toEqual(["desktop-apps"]);
+    expect(getLimitedExperienceSelections(apps, ["e3", "e7"], "windows-11")).toEqual([]);
+    const ca = selections.filter((option) =>
+      option.goalId === "conditional-access" && !option.comingSoon,
+    );
+    expect(getLimitedExperienceSelections(ca, ["e5"], "conditional-access")
+      .map((option) => option.id)).toEqual(["agent-policies", "global-secure-access-policies"]);
+    expect(getLimitedExperienceSelections(ca, ["e7"], "conditional-access")).toEqual([]);
+  });
+
+  it("does not treat endpoint platform navigation as a limited policy selection", () => {
+    const endpoint = selections.filter((option) => option.goalId === "endpoint-protection");
+    const windows = endpoint.filter((option) =>
+      option.children?.length || option.id === "windows-encryption",
+    );
+    expect(getLimitedExperienceSelections(windows, ["business-premium"], "windows-11")).toEqual([]);
+    const mixed = endpoint.filter((option) =>
+      option.children?.length ||
+      option.id === "windows-encryption" ||
+      option.id === "windows-antivirus",
+    );
+    expect(getLimitedExperienceSelections(mixed, ["business-premium"], "windows-11")
+      .map((option) => option.id)).toEqual(["windows-antivirus"]);
+  });
+
   it("uses selected category names for licensing headings across every goal", () => {
     for (const goal of securityGoals) {
       for (const option of getSecurityGoalOptions(goal.id)) {

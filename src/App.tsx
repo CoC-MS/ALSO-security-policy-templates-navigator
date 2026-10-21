@@ -17,6 +17,7 @@ import {
 import {
   getSolutionPlatformIds,
   getLicensingPrerequisiteTitle,
+  getLimitedExperienceSelections,
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
   getDesktopAppLicenseNote,
@@ -335,6 +336,7 @@ function App() {
       )
       .map((option) => ({
         ...option,
+        goalId: goal.id,
         selectionId: `${goal.id}:${option.id}`,
       })),
   );
@@ -969,10 +971,15 @@ function App() {
                       platformId === sourcePlatform.id,
                     ),
                   );
+                  const limitedSelections = getLimitedExperienceSelections(
+                    platformSelections,
+                    eligibleLicenseIds,
+                    sourcePlatform.id,
+                  );
                   const licensingTitleFor = (
                     matches: (option: (typeof platformSelections)[number]) => boolean = () => true,
                   ) => getLicensingPrerequisiteTitle(
-                    platformSelections.filter(matches).map((option) => option.name),
+                    limitedSelections.filter(matches).map((option) => option.name),
                   );
                   const attackProtectionOnly =
                     platformSelections.length > 0 &&
@@ -1032,7 +1039,7 @@ function App() {
                     );
                   const conditionalAccessCategoryLicenseNote =
                     getConditionalAccessCategoryLicenseNote(
-                      platformSelections.filter((option) =>
+                      limitedSelections.filter((option) =>
                         option.selectionId.startsWith("conditional-access:"),
                       ).map((option) => option.id),
                       eligibleLicenseIds,
@@ -1055,14 +1062,15 @@ function App() {
                       },
                     );
                   const cloudAppsConditionalAccessLicenseNote =
-                    sourcePlatform.id === "conditional-access" && cloudAppsOnly
+                    sourcePlatform.id === "conditional-access" && cloudAppsOnly &&
+                    limitedSelections.length > 0
                       ? getCloudAppsConditionalAccessLicenseNote(eligibleLicenseIds)
                       : undefined;
-                  const dataSecuritySelection = selectedOptions.some((option) =>
+                  const dataSecuritySelection = limitedSelections.some((option) =>
                     option.selectionId.startsWith("data-protection:") &&
                     option.platformIds.some((platformId) => platformId === "purview"),
                   );
-                  const otherPurviewSelection = selectedOptions.some((option) =>
+                  const otherPurviewSelection = limitedSelections.some((option) =>
                     !option.selectionId.startsWith("data-protection:") &&
                     option.platformIds.some((platformId) => platformId === "purview"),
                   );
@@ -1072,7 +1080,7 @@ function App() {
                       : undefined;
                   const endpointFeatureNotes = sourcePlatform.id !== "purview"
                     ? [...new Set(
-                      platformSelections
+                      limitedSelections
                         .map((option) =>
                           getEndpointFeatureLicenseNote(
                             option.endpointFeature,
@@ -1085,14 +1093,18 @@ function App() {
                     : [];
                   const needsOAuthAppsWorkloadIdLicense =
                     sourcePlatform.id === "conditional-access" &&
-                    solutionNames.includes("OAuth apps") &&
+                    limitedSelections.some((option) =>
+                      option.selectionId === "app-protection:oauth-apps",
+                    ) &&
                     requiresWorkloadIdPremiumForOAuthApps(eligibleLicenseIds);
                   const windowsServerNotes =
-                    sourcePlatform.id === "windows-servers" ||
-                    sourcePlatform.id === "linux-server"
+                    limitedSelections.length > 0 &&
+                    (sourcePlatform.id === "windows-servers" ||
+                    sourcePlatform.id === "linux-server")
                       ? getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
                       : [];
                   const visibleLimitedExperienceNote =
+                    limitedSelections.length > 0 &&
                     endpointFeatureNotes.length === 0 &&
                     !(sourcePlatform.id === "purview" &&
                       dataSecuritySelection &&

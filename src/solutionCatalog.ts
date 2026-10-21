@@ -790,6 +790,23 @@ export function getSecurityGoalOptionExperience(
     : "full";
 }
 
+export function getLimitedExperienceSelections<T extends SolutionOption & { goalId: SecurityGoalId }>(
+  selections: readonly T[],
+  licenseIds: readonly License["id"][],
+  platformId: Platform["id"],
+): T[] {
+  return selections.filter((option) =>
+    !option.children?.length &&
+    option.platformIds.includes(platformId) &&
+    getSecurityGoalOptionExperience(
+      option.goalId,
+      licenseIds,
+      [platformId],
+      option.id,
+    ) === "limited",
+  );
+}
+
 export function toggleSecurityGoalSelection(
   selected: readonly SecurityGoalId[],
   goalId: SecurityGoalId,
