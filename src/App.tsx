@@ -19,6 +19,7 @@ import {
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
   getDesktopAppLicenseNote,
+  getAdministratorProtectionLicenseNote,
   getDataSecurityLicenseNote,
   getEndpointFeatureLicenseNote,
   getSecurityGoalOptions,
@@ -994,6 +995,18 @@ function App() {
                       option.selectionId === "app-protection:mobile-apps" ||
                       option.selectionId === "app-protection:desktop-apps",
                     );
+                  const administratorDeviceSelection =
+                    (sourcePlatform.id === "windows-11" || sourcePlatform.id === "macos") &&
+                    platformSelections.some((option) =>
+                      option.selectionId.startsWith("administrator-protection:"),
+                    );
+                  const administratorDeviceOnly = administratorDeviceSelection &&
+                    platformSelections.every((option) =>
+                      option.selectionId.startsWith("administrator-protection:"),
+                    );
+                  const administratorLicenseNote = administratorDeviceSelection
+                    ? getAdministratorProtectionLicenseNote(eligibleLicenseIds, sourcePlatform.id)
+                    : undefined;
                   const desktopAppLicenseNote = platformSelections.some((option) =>
                     option.selectionId === "app-protection:desktop-apps",
                   )
@@ -1012,7 +1025,9 @@ function App() {
                       ).map((option) => option.id),
                       eligibleLicenseIds,
                     );
-                  const limitedExperienceNote = appProtectionOnly
+                  const limitedExperienceNote = administratorDeviceOnly
+                    ? administratorLicenseNote
+                    : appProtectionOnly
                     ? desktopAppLicenseNote
                     : onPremisesAppsOnly
                     ? undefined
@@ -1087,6 +1102,11 @@ function App() {
                         <span className="choice-icon" aria-hidden="true">{sourcePlatform.shortLabel}</span>
                         <div className="platform-title">
                           <h2>{repository.name}</h2>
+                          {administratorDeviceSelection && sourcePlatform.id === "windows-11" && (
+                            <span className={`experience-badge ${administratorLicenseNote ? "limited" : "full"}`}>
+                              {administratorLicenseNote ? "Limited experience" : "Full experience"}
+                            </span>
+                          )}
                           {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
                         </div>
                         <RepositoryDetails
@@ -1156,6 +1176,12 @@ function App() {
                           <aside className="license-requirement-note">
                             <strong>{desktopAppLicenseNote.title}</strong>
                             <p>{desktopAppLicenseNote.message}</p>
+                          </aside>
+                        )}
+                        {!administratorDeviceOnly && administratorLicenseNote && (
+                          <aside className="license-requirement-note">
+                            <strong>{administratorLicenseNote.title}</strong>
+                            <p>{administratorLicenseNote.message}</p>
                           </aside>
                         )}
                         {!categorySpecificLicensingOnly && conditionalAccessCategoryLicenseNote && (

@@ -99,14 +99,14 @@ export const securityGoals = [
   {
     id: "administrator-protection",
     name: "Administrator protection",
-    description: "Strengthen protection for administrator accounts with Conditional Access policies.",
+    description: "Strengthen administrator protection with Conditional Access, Windows, and macOS policies.",
     prompt: "Explore recommended administrator protection policies",
     options: [
       {
         id: "administrator-protection-policies",
         name: "Administrator protection policies",
-        description: "Review Conditional Access policies designed to protect administrator accounts and privileged access.",
-        platformIds: ["conditional-access"],
+        description: "Review Conditional Access, Windows, and macOS policies for administrator accounts and privileged access.",
+        platformIds: ["conditional-access", "windows-11", "macos"],
         autoSelect: true,
         recommendedPolicyIds: [
           "CA100",
@@ -490,6 +490,21 @@ export function getDesktopAppLicenseNote(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
+  return getWindowsIntuneSuiteLicenseNote(licenseIds, platformId, "desktop app protection");
+}
+
+export function getAdministratorProtectionLicenseNote(
+  licenseIds: readonly License["id"][],
+  platformId: Platform["id"],
+): { title: string; message: string; includePlanComparisons: boolean } | undefined {
+  return getWindowsIntuneSuiteLicenseNote(licenseIds, platformId, "administrator protection");
+}
+
+function getWindowsIntuneSuiteLicenseNote(
+  licenseIds: readonly License["id"][],
+  platformId: Platform["id"],
+  scenario: string,
+): { title: string; message: string; includePlanComparisons: boolean } | undefined {
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
   if (
     platformId !== "windows-11" ||
@@ -497,8 +512,8 @@ export function getDesktopAppLicenseNote(
     eligibleLicenseIds.some((id) => id === "e5" || id === "e7")
   ) return undefined;
   return {
-    title: "Windows desktop app protection licensing prerequisites",
-    message: "Add the Microsoft Intune Suite add-on for the full Windows desktop app protection experience. Microsoft 365 E5 and Microsoft 365 E7 provide the full Windows experience without this additional add-on.",
+    title: `Limited Windows ${scenario} experience`,
+    message: `Add the Microsoft Intune Suite add-on for the full Windows ${scenario} experience. Microsoft Intune Suite is included in Microsoft 365 E5 and Microsoft 365 E7, which provide the full experience.`,
     includePlanComparisons: true,
   };
 }
@@ -698,6 +713,10 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "administrator-protection" &&
+    platformIds.some((platformId) => getAdministratorProtectionLicenseNote(licenseIds, platformId))) {
+    return "limited";
+  }
   if (goalId === "app-protection" && optionId === "mobile-apps") {
     return licenseIds.some(isLicenseEligible) ? "full" : "limited";
   }

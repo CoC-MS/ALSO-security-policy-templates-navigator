@@ -6,6 +6,8 @@ In step 2, choose **Conditional Access** to select Administrator, Internal user,
 
 Policy-selection previews show short descriptions and experience/Coming badges only. Licensing prerequisites appear on the final repository results, not on the previews.
 
+Administrator protection recommends Conditional Access, Windows, and macOS repositories. Its Windows result shows Limited experience and the Intune Suite add-on prerequisite unless Microsoft 365 E5/E7 is selected; the result notes Intune Suite's inclusion in E5/E7.
+
 Mobile app protection provides Full experience for every eligible license. Desktop app protection provides Full experience on macOS; Windows requires Microsoft 365 E5/E7 or the Microsoft Intune Suite add-on. Other Windows selections show Limited experience and name Intune Suite on the final repository result, without applying unrelated endpoint Defender requirements to app-only recommendations.
 
 Global Secure Access Policies recommend Conditional Access and show Limited experience unless Microsoft 365 E7 is selected. Final results explain Internet Access/Private Access licensing and inclusion in Entra Suite and E7. App protection also offers an **On-premises app protection** repository preview marked **Coming**; its final result explains the Private Access prerequisite and does not imply those templates are already available. Both use the full disclaimer and both comparison links.

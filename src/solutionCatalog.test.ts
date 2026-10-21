@@ -5,6 +5,7 @@ import {
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
   getDesktopAppLicenseNote,
+  getAdministratorProtectionLicenseNote,
   getEndpointFeatureLicenseNote,
   getRecommendedPolicyIds,
   getSecurityGoalOptions,
@@ -137,7 +138,7 @@ describe("security goal recommendations", () => {
     ]);
 
     expect(getSolutionPlatformIds("administrator-protection", []))
-      .toEqual(["conditional-access"]);
+      .toEqual(["conditional-access", "windows-11", "macos"]);
     expect(
       getRecommendedPolicyIds(
         "administrator-protection",
@@ -165,6 +166,23 @@ describe("security goal recommendations", () => {
         "CA106 requires Microsoft Entra ID Plan 2. These recommended policies are a good starting point, but implementing them does not guarantee full protection.",
       );
   });
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "uses Intune Suite prerequisites for Windows administrator protection with %s",
+    (licenseId) => {
+      const note = getAdministratorProtectionLicenseNote([licenseId], "windows-11");
+      expect(Boolean(note)).toBe(licenseId !== "e5" && licenseId !== "e7");
+      if (note) {
+        expect(note.title).toContain("Limited Windows administrator protection");
+        expect(note.message).toContain("Microsoft Intune Suite add-on");
+        expect(note.message).toContain("included in Microsoft 365 E5 and Microsoft 365 E7");
+      }
+      expect(getAdministratorProtectionLicenseNote([licenseId], "macos")).toBeUndefined();
+      expect(getAdministratorProtectionLicenseNote([licenseId], "conditional-access")).toBeUndefined();
+      expect(getRecommendedPolicyIds("administrator-protection", [], "windows-11")).toEqual([]);
+      expect(getRecommendedPolicyIds("administrator-protection", [], "macos")).toEqual([]);
+    },
+  );
 
   it("offers the Conditional Access categories in the requested order", () => {
     const options = getSecurityGoalOptions("conditional-access");
