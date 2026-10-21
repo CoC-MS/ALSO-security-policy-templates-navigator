@@ -1,6 +1,7 @@
 import {
   getPlatform,
   getPlatformExperienceForLicenses,
+  hasEntraIdP2,
   isLicenseEligible,
   type License,
   type Platform,
@@ -18,7 +19,6 @@ export interface SolutionOption {
   hasPolicyLicensingPrerequisites?: boolean;
   autoSelect?: boolean;
   comingSoon?: boolean;
-  licensingNote?: string;
 }
 
 export interface SecurityGoal {
@@ -31,8 +31,6 @@ export interface SecurityGoal {
 
 const ATTACK_POLICY_NOTE =
   "These recommended policies are a good starting point, but implementing them does not guarantee full protection.";
-const ENTRA_P2_POLICY_NOTE =
-  "Some of these policies require the Microsoft Entra ID P2 add-on to work.";
 const AGENT_POLICY_NOTE =
   "Agent policies require the Agent 365 add-on. Agent 365 is also included in Microsoft 365 E7.";
 
@@ -136,42 +134,36 @@ export const securityGoals = [
       {
         id: "administrator-policies",
         name: "Administrator policies",
-        licensingNote: ENTRA_P2_POLICY_NOTE,
         description: "Protect administrator accounts and privileged access.",
         platformIds: ["conditional-access"],
       },
       {
         id: "internal-user-policies",
         name: "Internal user policies",
-        licensingNote: ENTRA_P2_POLICY_NOTE,
         description: "Protect access for internal users.",
         platformIds: ["conditional-access"],
       },
       {
         id: "service-account-policies",
         name: "Service Account policies",
-        licensingNote: ENTRA_P2_POLICY_NOTE,
         description: "Protect access for service accounts.",
         platformIds: ["conditional-access"],
       },
       {
         id: "agent-policies",
         name: "Agent policies",
-        licensingNote: AGENT_POLICY_NOTE,
         description: "Protect access for AI agents.",
         platformIds: ["conditional-access"],
       },
       {
         id: "guest-user-policies",
         name: "Guest user policies",
-        licensingNote: ENTRA_P2_POLICY_NOTE,
         description: "Protect access for guests and external users.",
         platformIds: ["conditional-access"],
       },
       {
         id: "service-principal-policies",
         name: "Service principal policies",
-        licensingNote: ENTRA_P2_POLICY_NOTE,
         description: "Conditional Access policies for service principals are coming soon.",
         platformIds: ["conditional-access"],
         comingSoon: true,
@@ -436,16 +428,39 @@ const f1LicenseIds = new Set<License["id"]>([
 
 export function getConditionalAccessCategoryLicenseNote(
   optionIds: readonly string[],
+  licenseIds: readonly License["id"][],
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (eligibleLicenseIds.length === 0) return undefined;
   const selected = getSecurityGoalOptions("conditional-access").filter(
     (option) => !option.comingSoon && optionIds.includes(option.id),
   );
-  if (selected.length === 0) return undefined;
-  const messages = [...new Set(selected.map((option) => option.licensingNote))];
+  const needsAgent365 = selected.some((option) => option.id === "agent-policies") &&
+    !eligibleLicenseIds.includes("e7");
+  const needsEntraP2 = selected.some((option) => option.id !== "agent-policies") &&
+    !hasEntraIdP2(eligibleLicenseIds);
+  if (!needsAgent365 && !needsEntraP2) return undefined;
+  const suiteAddOns = [
+    ...(eligibleLicenseIds.some((id) => id.startsWith("business-premium"))
+      ? ["Microsoft Defender Suite for Business Premium"]
+      : []),
+    ...(eligibleLicenseIds.some((id) => id.startsWith("e3"))
+      ? ["Microsoft Defender Suite for Microsoft 365 E3"]
+      : []),
+    ...(eligibleLicenseIds.some((id) => id.startsWith("f1") || id.startsWith("f3"))
+      ? ["Microsoft Defender Suite FLW for Microsoft 365 F1/F3"]
+      : []),
+  ];
+  const messages = [
+    ...(needsEntraP2
+      ? [`Some of these policies require Microsoft Entra ID P2. Add the Microsoft Entra ID P2 add-on, or get it with ${suiteAddOns.join(" or ")}.`]
+      : []),
+    ...(needsAgent365 ? [AGENT_POLICY_NOTE] : []),
+  ];
   return {
     title: "Conditional Access licensing prerequisites",
     message: messages.join(" "),
-    includePlanComparisons: selected.some((option) => option.id !== "agent-policies"),
+    includePlanComparisons: true,
   };
 }
 
@@ -632,6 +647,12 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "conditional-access") {
+    return getConditionalAccessCategoryLicenseNote(
+      optionId ? [optionId] : getSecurityGoalOptions(goalId).map((option) => option.id),
+      licenseIds,
+    ) ? "limited" : "full";
+  }
   if (
     goalId === "data-protection" &&
     optionId === "sensitivity-labels" &&

@@ -467,6 +467,9 @@ function App() {
       eligibleLicenseIds,
       option.platformIds[0],
     );
+    const categoryLicensingNote = goalId === "conditional-access"
+      ? getConditionalAccessCategoryLicenseNote([option.id], eligibleLicenseIds)
+      : undefined;
 
     return (
       <button
@@ -481,8 +484,8 @@ function App() {
         <span className="choice-details">
           <span className="choice-name">{option.name}</span>
           <span className="goal-description">{option.description}</span>
-          {option.licensingNote && (
-            <span className="goal-description">{option.licensingNote}</span>
+          {categoryLicensingNote && (
+            <span className="goal-description">{categoryLicensingNote.message}</span>
           )}
           {option.comingSoon && (
             <span className="experience-badge coming-soon-badge">Coming</span>
@@ -992,16 +995,17 @@ function App() {
                     sourcePlatform.id === "conditional-access" &&
                     platformSelections.length === 1 &&
                     platformSelections[0].selectionId === "app-protection:cloud-apps";
-                  const limitedExperienceNote =
-                    (platformSelections.length > 0 &&
+                  const conditionalAccessCategoriesOnly =
+                    platformSelections.length > 0 &&
                     platformSelections.every((option) =>
                       option.selectionId.startsWith("conditional-access:"),
-                    )
-                      ? getConditionalAccessCategoryLicenseNote(
+                    );
+                  const limitedExperienceNote = conditionalAccessCategoriesOnly
+                    ? getConditionalAccessCategoryLicenseNote(
                         platformSelections.map((option) => option.id),
+                        eligibleLicenseIds,
                       )
-                      : undefined) ??
-                    getLimitedExperienceNoteForLicenses(
+                    : getLimitedExperienceNoteForLicenses(
                       eligibleLicenseIds,
                       sourcePlatform.id,
                       {
@@ -1158,17 +1162,7 @@ function App() {
                             <p>{renderWindowsServerLicenseNote(note)}</p>
                           </aside>
                         ))}
-                        <LicensingDisclaimer
-                          limitedExperienceNote={visibleLimitedExperienceNote}
-                          dataSecurityNote={dataSecurityLicenseNote}
-                          endpointNotes={endpointFeatureNotes}
-                          cloudAppsNote={cloudAppsConditionalAccessLicenseNote}
-                          needsWorkloadIdLicense={needsOAuthAppsWorkloadIdLicense}
-                          serverNotes={windowsServerNotes}
-                          hasPolicyLicensingPrerequisites={platformSelections.some(
-                            (option) => option.hasPolicyLicensingPrerequisites,
-                          )}
-                        />
+                        <LicensingDisclaimer />
                         <div className="repository-links">
                           {comingSoon ? (
                             <button className="button primary repository-link" type="button" disabled>

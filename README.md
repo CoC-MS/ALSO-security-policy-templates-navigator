@@ -4,7 +4,7 @@ An interactive guide that combines a customer's Microsoft 365 licenses to identi
 
 In step 2, choose **Conditional Access** to select Administrator, Internal user, Service Account, Agent, or Guest user policies. These categories recommend the Conditional Access repository. Service principal policies are marked **Coming** and cannot yet be selected.
 
-Agent policies state the Agent 365 prerequisite; the other categories note that some policies require Microsoft Entra ID P2. The selected prerequisites are also shown with the final repository recommendation.
+Conditional Access guidance and experience badges follow the selected licenses. Microsoft 365 E7 provides the full experience for all available categories; Microsoft 365 E5 provides the full experience except for Agent policies, which require Agent 365. Business Premium, E3, F1, and F3 without Defender Suite show the Entra ID P2 prerequisite and the corresponding Defender Suite add-on (Defender Suite FLW for F1/F3). These prerequisites also appear on the final recommendation. Every result disclaimer includes both Enterprise and SMB comparison links, including server, Agent 365, and Workload ID notices.
 
 **Disclaimer:** Licensing prerequisites and feature availability listed on this page may be incorrect, incomplete, or outdated. We strongly recommend verifying all licensing information against the latest official Microsoft licensing documentation before making any purchasing or deployment decisions.
 

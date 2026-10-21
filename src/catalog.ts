@@ -296,6 +296,10 @@ const entraIdP2LicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
+export function hasEntraIdP2(licenseIds: readonly License["id"][]): boolean {
+  return licenseIds.some((licenseId) => entraIdP2LicenseIds.has(licenseId));
+}
+
 const fullPurviewExperienceLicenseIds = new Set<License["id"]>([
   "e7",
   "e5",

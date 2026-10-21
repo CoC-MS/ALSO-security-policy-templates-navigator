@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { licenses } from "./catalog";
 import {
   getDataSecurityLicenseNote,
   getConditionalAccessCategoryLicenseNote,
@@ -15,14 +16,15 @@ import {
 describe("security goal recommendations", () => {
   it("states the correct prerequisite on every Conditional Access category", () => {
     for (const option of getSecurityGoalOptions("conditional-access")) {
+      if (option.comingSoon) continue;
+      const note = getConditionalAccessCategoryLicenseNote([option.id], ["e3"]);
       if (option.id === "agent-policies") {
-        expect(option.licensingNote).toContain("Agent 365 add-on");
-        expect(option.licensingNote).not.toContain("Entra ID P2");
+        expect(note?.message).toContain("Agent 365 add-on");
+        expect(note?.message).not.toContain("Entra ID P2");
       } else {
-        expect(option.licensingNote).toBe(
-          "Some of these policies require the Microsoft Entra ID P2 add-on to work.",
-        );
-        expect(option.licensingNote).not.toContain("Agent 365");
+        expect(note?.message).toContain("Some of these policies require Microsoft Entra ID P2");
+        expect(note?.message).toContain("Microsoft Defender Suite for Microsoft 365 E3");
+        expect(note?.message).not.toContain("Agent 365");
       }
     }
   });
@@ -30,18 +32,56 @@ describe("security goal recommendations", () => {
   it("uses category-specific prerequisites on final results without unrelated Agent upselling", () => {
     const users = getConditionalAccessCategoryLicenseNote([
       "administrator-policies", "internal-user-policies", "guest-user-policies",
-    ]);
-    expect(users?.message).toBe("Some of these policies require the Microsoft Entra ID P2 add-on to work.");
+    ], ["e3"]);
+    expect(users?.message).toContain("Microsoft Entra ID P2 add-on");
     expect(users?.includePlanComparisons).toBe(true);
-    const agents = getConditionalAccessCategoryLicenseNote(["agent-policies"]);
+    const agents = getConditionalAccessCategoryLicenseNote(["agent-policies"], ["e5"]);
     expect(agents?.message).toContain("Agent 365 add-on");
-    expect(agents?.includePlanComparisons).toBe(false);
-    const mixed = getConditionalAccessCategoryLicenseNote(["agent-policies", "internal-user-policies"]);
+    expect(agents?.includePlanComparisons).toBe(true);
+    const mixed = getConditionalAccessCategoryLicenseNote(["agent-policies", "internal-user-policies"], ["e3"]);
     expect(mixed?.message).toContain("Agent 365 add-on");
     expect(mixed?.message).toContain("Entra ID P2 add-on");
     expect(mixed?.includePlanComparisons).toBe(true);
-    expect(getConditionalAccessCategoryLicenseNote(["service-principal-policies"])).toBeUndefined();
-    expect(getConditionalAccessCategoryLicenseNote([])).toBeUndefined();
+    expect(getConditionalAccessCategoryLicenseNote(["service-principal-policies"], ["e3"])).toBeUndefined();
+    expect(getConditionalAccessCategoryLicenseNote([], ["e3"])).toBeUndefined();
+  });
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "matches Conditional Access prerequisites and badges to %s",
+    (licenseId) => {
+      const includesP2 = licenseId === "e5" || licenseId === "e7" || licenseId.includes("defender");
+      for (const option of getSecurityGoalOptions("conditional-access").filter((item) => !item.comingSoon)) {
+        const note = getConditionalAccessCategoryLicenseNote([option.id], [licenseId]);
+        const needsAddOn = option.id === "agent-policies" ? licenseId !== "e7" : !includesP2;
+        expect(Boolean(note)).toBe(needsAddOn);
+        expect(getSecurityGoalOptionExperience(
+          "conditional-access", [licenseId], ["conditional-access"], option.id,
+        )).toBe(needsAddOn ? "limited" : "full");
+        if (note && option.id !== "agent-policies") {
+          expect(note.message).toContain(licenseId.startsWith("f")
+            ? "Microsoft Defender Suite FLW"
+            : licenseId.startsWith("business-premium")
+              ? "Microsoft Defender Suite for Business Premium"
+              : "Microsoft Defender Suite for Microsoft 365 E3");
+        }
+      }
+    },
+  );
+
+  it("combines license entitlements without unnecessary P2 or Agent notices", () => {
+    expect(getConditionalAccessCategoryLicenseNote(
+      ["internal-user-policies"], ["f1", "e5"],
+    )).toBeUndefined();
+    expect(getConditionalAccessCategoryLicenseNote(
+      ["agent-policies", "internal-user-policies"], ["e3", "e7"],
+    )).toBeUndefined();
+    const note = getConditionalAccessCategoryLicenseNote(
+      ["internal-user-policies"], ["f1", "business-premium", "e3"],
+    );
+    expect(note?.message).toContain("Microsoft Defender Suite FLW");
+    expect(note?.message).toContain("Microsoft Defender Suite for Business Premium");
+    expect(note?.message).toContain("Microsoft Defender Suite for Microsoft 365 E3");
+    expect(getConditionalAccessCategoryLicenseNote(["internal-user-policies"], [])).toBeUndefined();
   });
 
   it("includes administrator protection with the requested Conditional Access policies", () => {
