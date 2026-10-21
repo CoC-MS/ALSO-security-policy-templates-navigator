@@ -165,7 +165,7 @@ export const securityGoals = [
       {
         id: "global-secure-access-policies",
         name: "Global Secure Access Policies",
-        description: "Explore policies for secure access to internet and private resources.",
+        description: "Explore policies for secure access to Microsoft cloud services, internet, and private resources.",
         platformIds: ["conditional-access"],
       },
       {
