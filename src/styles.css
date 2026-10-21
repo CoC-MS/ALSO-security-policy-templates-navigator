@@ -586,6 +586,11 @@ h1 {
   place-items: center;
 }
 
+.license-badge {
+  width: 3.75rem;
+  white-space: nowrap;
+}
+
 .choice-name {
   font-size: 0.94rem;
   font-weight: 650;

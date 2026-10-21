@@ -138,6 +138,14 @@ export const platforms = [
 export type License = (typeof licenses)[number];
 export type Platform = (typeof platforms)[number];
 
+export function getLicenseBadgeLabel(license: License): string {
+  return license.name.split(" + ")[0]
+    .replace("Microsoft 365", "M365")
+    .replace("Business Premium", "BP")
+    .replace("Business Standard", "BS")
+    .replace("Business Basic", "BB");
+}
+
 export function isLicenseEligible(licenseId: License["id"]): boolean {
   return licenses.find((license) => license.id === licenseId)?.eligible ?? false;
 }

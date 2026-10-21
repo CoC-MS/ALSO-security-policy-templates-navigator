@@ -4,6 +4,8 @@ An interactive guide that combines a customer's Microsoft 365 licenses to identi
 
 In step 2, choose **Identity and Access**, then **Conditional Access** to select Administrator, Internal user, Service Account, Agent, or Guest user policies. These categories recommend the Conditional Access repository. Service principal policies are marked **Coming** and cannot yet be selected.
 
+License-selection badges identify the base plan (M365 E7/E5/E3/F3/F1, BP for Business Premium, BS for Business Standard, BB for Business Basic), without add-on names. Full license and add-on names remain on the cards.
+
 Policy-selection previews show short descriptions and experience/Coming badges only. Licensing prerequisites appear on the final repository results, not on the previews.
 
 Final licensing-note headings use the selected category names (for example, **Retention licensing prerequisites**), across all security goals. Shared notes list the relevant selected categories once; repository names and licensing requirements are unchanged.

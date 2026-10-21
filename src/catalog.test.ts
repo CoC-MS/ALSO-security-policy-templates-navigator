@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   enterpriseLicenses,
+  getLicenseBadgeLabel,
   getLimitedExperienceNoteForLicenses,
   getPlatformExperienceForLicenses,
   getPlatform,
@@ -21,6 +22,17 @@ import {
 } from "./catalog";
 
 describe("license catalog", () => {
+  it("labels every license badge with only its base plan", () => {
+    expect(licenses.map(getLicenseBadgeLabel)).toEqual([
+      "M365 E7", "M365 E5",
+      "M365 E3", "M365 E3", "M365 E3", "M365 E3",
+      "M365 F3", "M365 F3", "M365 F3", "M365 F3",
+      "M365 F1", "M365 F1", "M365 F1", "M365 F1",
+      "M365 BP", "M365 BP", "M365 BP", "M365 BP",
+      "M365 BS", "M365 BB",
+    ]);
+  });
+
   it("requires Workload ID Premium for OAuth apps on every eligible license except E7", () => {
     for (const license of licenses.filter(
       (candidate) => candidate.eligible && candidate.id !== "e7",

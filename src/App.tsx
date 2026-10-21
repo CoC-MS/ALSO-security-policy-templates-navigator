@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import {
   getPlatform,
+  getLicenseBadgeLabel,
   getLimitedExperienceNoteForLicenses,
   getCloudAppsConditionalAccessLicenseNote,
   requiresWorkloadIdPremiumForOAuthApps,
@@ -144,7 +145,7 @@ function LicenseGrid({
             aria-pressed={isSelected}
             onClick={() => onToggle(license)}
           >
-            <span className="choice-icon" aria-hidden="true">M365</span>
+            <span className="choice-icon license-badge" aria-hidden="true">{getLicenseBadgeLabel(license)}</span>
             <span className="choice-name">{license.name}</span>
             <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
           </button>
