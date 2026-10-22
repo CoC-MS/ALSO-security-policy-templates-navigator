@@ -49,6 +49,7 @@ import {
   AiSecurityLicenseActions,
   shouldShowAiSecurityLicenseActions,
 } from "./AiSecurityLicenseActions";
+import { AttackProtectionExplorer } from "./AttackProtectionExplorer";
 
 type Step =
   | "license"
@@ -930,6 +931,9 @@ function App() {
                   </section>
                 ))}
               </div>
+              {selectedGoalIds.includes("attack-protection") && (
+                <AttackProtectionExplorer />
+              )}
               <div className="actions platform-actions">
                 <div>
                   <button className="button secondary" type="button" onClick={() => setStep(identityAndAccessSelected ? "identity-and-access" : "goal")}>&larr; Back</button>
