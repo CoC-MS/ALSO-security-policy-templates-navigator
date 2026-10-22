@@ -619,5 +619,511 @@
         "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
       }
     ]
+  },
+  {
+    "id": "conditional-access-admin-compliant-windows-device",
+    "scenarioId": "aitm-phishing",
+    "stepId": "token-reuse",
+    "controlId": "ca107-admin-windows-compliant-device",
+    "name": "CA107 compliant Windows device for administrators (disabled export)",
+    "effect": "supporting-hardening",
+    "rationale": "The Conditional Access export targets administrator roles on the Windows platform for all resources and requires the compliantDevice grant, so a sign-in or token request from an unmanaged Windows device would not satisfy the policy if it were enabled and matched.",
+    "limitation": "Supporting hardening only: the export is disabled, scoped to administrator roles, has excluded groups, and only matches the Windows device platform, which is derived from client-reported information. Equivalent macOS, iOS/Android, and unknown-platform policies are separate exports that are not mapped here. It does not revoke a session cookie already captured from a compliant device.",
+    "repositoryId": "conditional-access",
+    "evidence": [
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA107-Admins-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/platforms/includePlatforms"
+        },
+        "expectedValue": [
+          "windows"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA107-Admins-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/applications/includeApplications"
+        },
+        "expectedValue": [
+          "All"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA107-Admins-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/grantControls/builtInControls"
+        },
+        "expectedValue": [
+          "compliantDevice"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA107-Admins-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      }
+    ]
+  },
+  {
+    "id": "conditional-access-internal-compliant-windows-device",
+    "scenarioId": "aitm-phishing",
+    "stepId": "token-reuse",
+    "controlId": "ca205-internal-windows-compliant-device",
+    "name": "CA205 compliant Windows device for internal users (disabled export)",
+    "effect": "supporting-hardening",
+    "rationale": "The Conditional Access export targets an internal-users group on the Windows platform for all resources and requires the compliantDevice grant, raising the bar for replaying captured credentials or sessions from an attacker-controlled Windows device if enabled.",
+    "limitation": "Supporting hardening only: the export is disabled, targets a tenant-specific group, has excluded groups, and only matches the Windows device platform, which is derived from client-reported information. Other platforms require separate policies. It does not revoke a session already issued to a compliant device and is not tenant enforcement evidence.",
+    "repositoryId": "conditional-access",
+    "evidence": [
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA205-Internals-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/platforms/includePlatforms"
+        },
+        "expectedValue": [
+          "windows"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA205-Internals-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/applications/includeApplications"
+        },
+        "expectedValue": [
+          "All"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA205-Internals-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/grantControls/builtInControls"
+        },
+        "expectedValue": [
+          "compliantDevice"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA205-Internals-AllApps-Windows-Grant-RequireCompliantDevice.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-device-compliance"
+      }
+    ]
+  },
+  {
+    "id": "conditional-access-admin-session-lifetime",
+    "scenarioId": "aitm-phishing",
+    "stepId": "token-reuse",
+    "controlId": "ca102-ca103-admin-session-lifetime",
+    "name": "CA102/CA103 administrator sign-in frequency and non-persistent browser sessions (disabled exports)",
+    "effect": "supporting-hardening",
+    "rationale": "CA102 sets a 4-hour time-based sign-in frequency for primary and secondary authentication, and CA103 sets the persistent browser session mode to never for browser clients, limiting how long an administrator browser session remains usable.",
+    "limitation": "Supporting hardening only: both exports are disabled, scoped to administrator roles, and have excluded groups. Session lifetime limits do not prevent token capture and a stolen session can still be replayed until reauthentication is required.",
+    "repositoryId": "conditional-access",
+    "evidence": [
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA102-Admins-AllApps-AnyPlatform-Grant-RequireSigninFrequency4H.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/sessionControls/signInFrequency/value"
+        },
+        "expectedValue": 4,
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA102-Admins-AllApps-AnyPlatform-Grant-RequireSigninFrequency4H.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/sessionControls/signInFrequency/type"
+        },
+        "expectedValue": "hours",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA102-Admins-AllApps-AnyPlatform-Grant-RequireSigninFrequency4H.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA103-Admins-AllApps-AnyPlatform-Grant-DisablePersistentBrowser.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/sessionControls/persistentBrowser/mode"
+        },
+        "expectedValue": "never",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA103-Admins-AllApps-AnyPlatform-Grant-DisablePersistentBrowser.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      }
+    ]
+  },
+  {
+    "id": "conditional-access-internal-unmanaged-session-lifetime",
+    "scenarioId": "aitm-phishing",
+    "stepId": "token-reuse",
+    "controlId": "ca202-ca206-internal-unmanaged-session-lifetime",
+    "name": "CA202/CA206 internal-user unmanaged-device sign-in frequency and non-persistent browser sessions (disabled exports)",
+    "effect": "supporting-hardening",
+    "rationale": "CA202 sets a 12-hour sign-in frequency for Windows and macOS devices that are neither company-owned nor compliant, and CA206 sets the persistent browser session mode to never for browser clients on such devices.",
+    "limitation": "Supporting hardening only: both exports are disabled, target a tenant-specific group, have excluded groups, and use a device filter that excludes company-owned or compliant devices. Session lifetime limits do not prevent capture or immediate replay of a session.",
+    "repositoryId": "conditional-access",
+    "evidence": [
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA202-Internals-AllApps-UnmanagedWindowsAndMacOs-Grant-RequireSigninFrequency12H.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/sessionControls/signInFrequency/value"
+        },
+        "expectedValue": 12,
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA202-Internals-AllApps-UnmanagedWindowsAndMacOs-Grant-RequireSigninFrequency12H.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/devices/deviceFilter/rule"
+        },
+        "expectedValue": "device.deviceOwnership -eq \"Company\" -or device.isCompliant -eq True",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA202-Internals-AllApps-UnmanagedWindowsAndMacOs-Grant-RequireSigninFrequency12H.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA206-Internals-AllApps-AnyPlatform-Grant-DIsablePersistentBrowser.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/sessionControls/persistentBrowser/mode"
+        },
+        "expectedValue": "never",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA206-Internals-AllApps-AnyPlatform-Grant-DIsablePersistentBrowser.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+      }
+    ]
+  },
+  {
+    "id": "windows-edge-extension-blocklist",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "edge-extension-install-blocklist",
+    "name": "Microsoft Edge blocks installation of non-force-installed extensions",
+    "effect": "prevention",
+    "rationale": "The Windows Edge extensions policy enables the extension install blocklist with the wildcard value \"*\" and blocks external extensions, so users cannot install extensions other than those force-installed by policy.",
+    "limitation": "Applies to Microsoft Edge only and is a user-scoped policy. Force-installed extensions remain allowed and the separate allowlist setting is not configured. It does not stop infostealer executables outside the browser.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v1.0 – Windows – Microsoft Edge  -   Extensions   - U.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "user_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "user_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/extensioninstallblocklist"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v1.0 – Windows – Microsoft Edge  -   Extensions   - U.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "user_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~extensions_extensioninstallblocklist_extensioninstallblocklistdesc",
+          "valuePath": "simpleSettingCollectionValue.0.value"
+        },
+        "expectedValue": "*",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/extensioninstallblocklist"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v1.0 – Windows – Microsoft Edge  -   Extensions   - U.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "user_vendor_msft_policy_config_microsoft_edgev88~policy~microsoft_edge~extensions_blockexternalextensions",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "user_vendor_msft_policy_config_microsoft_edgev88~policy~microsoft_edge~extensions_blockexternalextensions_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/blockexternalextensions"
+      }
+    ]
+  },
+  {
+    "id": "windows-chrome-extension-allowlist",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "chrome-extension-install-allowlist",
+    "name": "Google Chrome blocks extensions except an allowlist",
+    "effect": "prevention",
+    "rationale": "The Windows Chrome extensions policy enables the extension install blocklist with \"*\", enables an explicit extension allowlist, and blocks external extensions.",
+    "limitation": "Applies to Google Chrome only and is a user-scoped policy. The allowlisted and force-installed extension IDs remain permitted and are not security-reviewed here. It does not stop infostealer executables outside the browser.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v1.0 – Windows – Google Chrome  -   Experience and Extensions - U.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_1",
+        "referenceUrl": "https://chromeenterprise.google/policies/#ExtensionInstallBlocklist"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v1.0 – Windows – Google Chrome  -   Experience and Extensions - U.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_extensioninstallblocklistdesc",
+          "valuePath": "simpleSettingCollectionValue.0.value"
+        },
+        "expectedValue": "*",
+        "referenceUrl": "https://chromeenterprise.google/policies/#ExtensionInstallBlocklist"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v1.0 – Windows – Google Chrome  -   Experience and Extensions - U.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallallowlist",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallallowlist_1",
+        "referenceUrl": "https://chromeenterprise.google/policies/#ExtensionInstallAllowlist"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v1.0 – Windows – Google Chrome  -   Experience and Extensions - U.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_blockexternalextensions",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_blockexternalextensions_1",
+        "referenceUrl": "https://chromeenterprise.google/policies/#BlockExternalExtensions"
+      }
+    ]
+  },
+  {
+    "id": "windows-app-control-enforced-follow-on",
+    "scenarioId": "clickfix",
+    "stepId": "follow-on-activity",
+    "controlId": "app-control-enforced-built-in-managed-installer",
+    "name": "Enforced App Control with built-in controls and managed-installer trust",
+    "effect": "prevention",
+    "rationale": "The assigned Windows Application Control export uses built-in controls, enables managed-installer trust, disables reputation-based trust, and disables audit mode, so untrusted executables dropped by a pasted command are not allowed to run.",
+    "limitation": "Microsoft-signed interpreters and Windows components remain trusted, so this does not stop the pasted command itself. Effectiveness depends on the managed-installer workflow and any supplemental policies.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – HI – Advanced – v3.4 - Windows -WDACAppControl- Only Allow Microsoft apps and Intune Apps - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_applicationcontrolv2_buildoptions",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_applicationcontrolv2_buildoptions_built_in_controls_selected",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/applicationcontrol-csp"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – HI – Advanced – v3.4 - Windows -WDACAppControl- Only Allow Microsoft apps and Intune Apps - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller_enabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/applicationcontrol-csp"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – HI – Advanced – v3.4 - Windows -WDACAppControl- Only Allow Microsoft apps and Intune Apps - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_applicationcontrolv2_trustappswithgoodreputation",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_applicationcontrolv2_trustappswithgoodreputation_disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/applicationcontrol-csp"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – HI – Advanced – v3.4 - Windows -WDACAppControl- Only Allow Microsoft apps and Intune Apps - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_applicationcontrolv2_auditmode",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_applicationcontrolv2_auditmode_disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/applicationcontrol-csp"
+      }
+    ]
+  },
+  {
+    "id": "windows-laps-follow-on",
+    "scenarioId": "clickfix",
+    "stepId": "follow-on-activity",
+    "controlId": "windows-laps-entra-backup",
+    "name": "Windows LAPS rotated local administrator password backed up to Microsoft Entra ID",
+    "effect": "supporting-hardening",
+    "rationale": "The Windows LAPS export backs the managed local administrator password up to Microsoft Entra ID, rotates it every 7 days, requires length 21 and complexity, and resets the password and signs out after use, which reduces reuse of a shared local administrator password after compromise.",
+    "limitation": "LAPS does not remove local administrator rights from users or stop payload execution. It does not protect against theft of credentials other than the managed local administrator account.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v3.1- Windows - LAPS - Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_laps_policies_backupdirectory",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_laps_policies_backupdirectory_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/laps-csp"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v3.1- Windows - LAPS - Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_laps_policies_passwordagedays_aad",
+          "valuePath": "simpleSettingValue.value"
+        },
+        "expectedValue": 7,
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/laps-csp"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v3.1- Windows - LAPS - Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_laps_policies_passwordlength",
+          "valuePath": "simpleSettingValue.value"
+        },
+        "expectedValue": 21,
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/laps-csp"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – MI – Basic – v3.1- Windows - LAPS - Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_laps_policies_postauthenticationactions",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_laps_policies_postauthenticationactions_3",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/laps-csp"
+      }
+    ]
+  },
+  {
+    "id": "windows-powershell-script-block-logging",
+    "scenarioId": "clickfix",
+    "stepId": "command-execution",
+    "controlId": "powershell-script-block-logging",
+    "name": "PowerShell script block logging",
+    "effect": "detection",
+    "rationale": "The Windows security hardening export enables PowerShell script block logging, which records processed script blocks for investigation of pasted PowerShell commands.",
+    "limitation": "Logging does not block execution. Invocation start/stop logging is disabled, and value depends on collecting and reviewing the events. Other interpreters are not covered.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – HI – Basic – v3.6- Windows - Device Security  -  Security Hardening) - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_windowspowershell_turnonpowershellscriptblocklogging",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_windowspowershell_turnonpowershellscriptblocklogging_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"
+      }
+    ]
+  },
+  {
+    "id": "conditional-access-global-mfa-cloud-deployment",
+    "scenarioId": "cryptojacking",
+    "stepId": "unauthorized-deployment",
+    "controlId": "ca000-global-mfa",
+    "name": "CA000 MFA for all users and resources (disabled export)",
+    "effect": "supporting-hardening",
+    "rationale": "Microsoft Threat Intelligence documented cryptomining VM deployment after phishing or password spraying compromised accounts without strong authentication. The CA000 export targets all users and all resources and requires the mfa grant.",
+    "limitation": "Supporting identity hygiene only: the export is disabled and excludes seven groups. MFA does not protect application secrets, service-principal credentials, or API keys, and is not an Azure Policy, budget, Defender for Cloud, or quota control.",
+    "repositoryId": "conditional-access",
+    "evidence": [
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA000-Global-AllApps-AnyPlatform-Grant-RequireMFA.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/users/includeUsers"
+        },
+        "expectedValue": [
+          "All"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-mfa-strength"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA000-Global-AllApps-AnyPlatform-Grant-RequireMFA.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/applications/includeApplications"
+        },
+        "expectedValue": [
+          "All"
+        ],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-mfa-strength"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA000-Global-AllApps-AnyPlatform-Grant-RequireMFA.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/grantControls/builtInControls"
+        },
+        "expectedValue": [
+          "mfa"
+        ],
+        "referenceUrl": "https://www.microsoft.com/en-us/security/blog/2023/12/12/threat-actors-misuse-oauth-applications-to-automate-financially-driven-attacks/"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA000-Global-AllApps-AnyPlatform-Grant-RequireMFA.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-all-users-mfa-strength"
+      }
+    ]
   }
 ]
