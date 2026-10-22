@@ -167,6 +167,7 @@ export const securityGoals = [
         name: "Global Secure Access Policies",
         description: "Explore policies for secure access to Microsoft cloud services, internet, and private resources.",
         platformIds: ["conditional-access"],
+        comingSoon: true,
       },
       {
         id: "service-principal-policies",
@@ -359,7 +360,6 @@ export const securityGoals = [
         description: "Explore the Conditional Access repository for upcoming on-premises app protection.",
         platformIds: ["conditional-access"],
         comingSoon: true,
-        allowRepositoryPreview: true,
       },
       {
         id: "cloud-apps",
