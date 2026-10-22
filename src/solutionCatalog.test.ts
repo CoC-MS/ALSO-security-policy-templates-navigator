@@ -21,9 +21,9 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
-  it("temporarily closes only Attack protection without removing its policies", () => {
+  it("opens Attack protection as a public preview without removing its policies", () => {
     expect(securityGoalNavigation.filter((goal) =>
-      "comingSoon" in goal && goal.comingSoon,
+      "publicPreview" in goal && goal.publicPreview,
     ).map((goal) => goal.id)).toEqual(["attack-protection"]);
     expect(getSecurityGoalOptions("attack-protection").length).toBeGreaterThan(0);
   });

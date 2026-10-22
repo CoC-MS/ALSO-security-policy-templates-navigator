@@ -379,7 +379,7 @@ export const identityAndAccessGoalIds: readonly SecurityGoalId[] = [
 ];
 
 export const securityGoalNavigation = [
-  { ...securityGoals[0], comingSoon: true },
+  { ...securityGoals[0], publicPreview: true },
   {
     id: "identity-and-access" as const,
     name: "Identity and Access",

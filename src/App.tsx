@@ -773,7 +773,7 @@ function App() {
               <p className="intro">Select one or more security goals. Select a goal again to remove it. You can combine any goals before continuing.</p>
               <div className="card-grid goal-grid" aria-label="Security goals">
                 {securityGoalNavigation.map((goal, index) => {
-                  const comingSoon = "comingSoon" in goal && goal.comingSoon;
+                  const publicPreview = "publicPreview" in goal && goal.publicPreview;
                   const isIdentityGroup = goal.id === "identity-and-access";
                   const selected = isIdentityGroup
                     ? identityAndAccessSelected
@@ -782,7 +782,6 @@ function App() {
                   <button
                     className={`choice-card goal-card ${selected ? "selected" : ""}`}
                     type="button"
-                    disabled={comingSoon}
                     key={goal.id}
                     aria-pressed={selected}
                     onClick={() => {
@@ -805,7 +804,7 @@ function App() {
                     <span className="choice-details">
                       <span className="choice-name">{goal.name}</span>
                       <span className="goal-description">{goal.description}</span>
-                      {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
+                      {publicPreview && <span className="experience-badge">Public preview</span>}
                     </span>
                     <span className="choice-check" aria-hidden="true">{selected ? "\u2713" : ""}</span>
                   </button>

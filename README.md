@@ -2,7 +2,7 @@
 
 An interactive guide that combines a customer's Microsoft 365 licenses to identify every ALSO security policy template repository that meets their prerequisites.
 
-Attack protection is temporarily unavailable and marked **Coming** in the security-goal menu while its content is being completed.
+Attack protection is available as a **Public preview**. Its coverage explorer shows reviewed policy-library evidence, not a customer environment assessment or proof of deployed protection.
 
 **Disclaimer:** Licensing prerequisites and feature availability listed on this page may be incorrect, incomplete, or outdated. We strongly recommend verifying all licensing information against the latest official Microsoft licensing documentation before making any purchasing or deployment decisions.
 
@@ -14,7 +14,7 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 ## Threat-informed policy coverage
 
-The Attack protection explorer is part of the existing **Attack protection** section. That section remains marked **Coming** and disabled; the explorer does not add a separate navigation item or change the release gate.
+The Attack protection explorer is part of the existing **Attack protection** section, marked **Public preview** and available for evaluation. The explorer does not add a separate navigation item.
 
 Coverage describes reviewed settings in the public ALSO policy libraries for AiTM phishing, device-code phishing, infostealer, ClickFix, LLMjacking, and cryptojacking. It is not a customer tenant assessment, deployment or assignment check, effectiveness measure, security score, or probability of protection. A policy template may be disabled, have exclusions, require specific licensing or platform prerequisites, and still need review and deployment. Scenario mapping is limited to the exact setting values and scope stated beside each source; general-purpose hardening is identified as supporting hardening, not scenario-specific prevention or detection. Missing mappings are explicit library-evidence gaps, not proof that no other protection exists.
 
