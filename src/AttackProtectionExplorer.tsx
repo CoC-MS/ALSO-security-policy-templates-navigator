@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   attackScenarios,
+  getInventoryFileCoverageStatus,
   getScenarioCoverage,
   parseAttackCoverageIndex,
   type AttackCoverageIndex,
@@ -248,6 +249,19 @@ export function AttackProtectionExplorer() {
                   {" · "}{step.distinctControlCount} control{step.distinctControlCount === 1 ? "" : "s"}
                 </span>
               </div>
+              <div className="coverage-techniques">
+                <p><strong>MITRE ATT&amp;CK context only</strong> — technique references describe behavior; they are not policy evidence or mitigation claims.</p>
+                <ul>
+                  {step.techniques.map((technique) => (
+                    <li key={`${technique.id}:${technique.relevance}`}>
+                      <a href={technique.url} target="_blank" rel="noopener noreferrer">
+                        {technique.id} · {technique.name}
+                      </a>
+                      <span>{technique.relevance}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
               {step.mappings.length > 0 ? (
                 <div className="coverage-controls">
                   {step.mappings.map((mapping) => (
@@ -294,24 +308,46 @@ export function AttackProtectionExplorer() {
               file.kind === "supporting" || file.kind === "script",
             ).length;
             const duplicateCount = source.files.filter((file) => file.duplicateOf).length;
+            const inventoryStatuses = source.files.reduce((counts, file) => {
+              const status = getInventoryFileCoverageStatus(
+                index.mappings,
+                source.id,
+                file,
+              );
+              counts[status] += 1;
+              return counts;
+            }, { mapped: 0, "not-mapped": 0, unsupported: 0 });
             return (
               <li key={source.id}>
                 <details>
                   <summary>
                     <a href={`${source.repositoryUrl}/tree/${source.commitSha}`} target="_blank" rel="noopener noreferrer">{source.name}</a>
-                    {" — "}{policyCount} policy JSON, {documentationCount} docs, {supportingCount} supporting files, {duplicateCount} duplicates; commit {source.commitSha.slice(0, 12)}
+                    {" — "}{policyCount} policy JSON, {documentationCount} docs, {supportingCount} supporting files, {duplicateCount} duplicates; {inventoryStatuses.mapped} with reviewed mappings, {inventoryStatuses["not-mapped"]} valid policy files not mapped, {inventoryStatuses.unsupported} unsupported files; commit {source.commitSha.slice(0, 12)}
                   </summary>
                   <ul>
                     {source.files.map((file) => {
                       const duplicateSource = file.duplicateOf
                         ? getSource(index, file.duplicateOf.repositoryId)
                         : undefined;
+                      const reviewStatus = getInventoryFileCoverageStatus(
+                        index.mappings,
+                        source.id,
+                        file,
+                      );
+                      const reviewStatusLabel = reviewStatus === "mapped"
+                        ? "Reviewed mapping"
+                        : reviewStatus === "not-mapped"
+                          ? "Not mapped"
+                          : "Unsupported";
                       return (
                         <li key={file.path}>
                           <a href={sourceFileUrl(source.repositoryUrl, source.commitSha, file.path)} target="_blank" rel="noopener noreferrer">
                             {file.path}
                           </a>
                           {" — "}{file.kind}; {file.parseStatus}
+                          ; <span className={`coverage-inventory-status ${reviewStatus}`} data-coverage-status={reviewStatus}>
+                            {reviewStatusLabel}
+                          </span>
                           {file.sha256 && <>; SHA-256 <code>{file.sha256}</code></>}
                           ; Git blob <code>{file.blobSha}</code>
                           {file.duplicateOf && (

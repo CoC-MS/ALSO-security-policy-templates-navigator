@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import generatedIndex from "../public/attack-policy-coverage.v1.json";
 import {
   attackScenarios,
+  configuredCoverageRepositories,
+  configuredCoverageSourceIds,
+  getInventoryFileCoverageStatus,
   getScenarioCoverage,
   isAttackCoverageIndex,
   parseAttackCoverageIndex,
@@ -27,6 +30,17 @@ const source: CoverageSource = {
     parseStatus: "valid",
   }],
 };
+
+const emptySources: CoverageSource[] = configuredCoverageSourceIds
+  .filter((id) => id !== source.id)
+  .map((id) => ({
+    ...source,
+    id,
+    name: id,
+    platform: id === "android" ? "Android" : id,
+    repositoryUrl: configuredCoverageRepositories[id],
+    files: [],
+  }));
 
 function makeMapping(
   id: string,
@@ -63,7 +77,10 @@ function makeIndex(
   return {
     schemaVersion: 1,
     generatedAt: "2026-10-22T12:00:00.000Z",
-    sources: [{ ...source, files: [...source.files] }],
+    sources: [{
+      ...source,
+      files: source.files.map((file) => ({ ...file })),
+    }, ...emptySources.map((item) => ({ ...item, files: [...item.files] }))],
     mappings,
   };
 }
@@ -86,7 +103,13 @@ describe("attack coverage index", () => {
   it("rejects malformed versions, evidence, hashes, references, and duplicates", () => {
     const invalidIndexes = [
       { ...makeIndex(), schemaVersion: 2 },
-      { ...makeIndex(), sources: [{ ...source, commitSha: "not-a-commit" }] },
+      { ...makeIndex(), sources: [{ ...source, commitSha: "not-a-commit" }, ...emptySources] },
+      { ...makeIndex(), sources: [] },
+      { ...makeIndex(), sources: emptySources },
+      {
+        ...makeIndex(),
+        sources: [{ ...source, repositoryUrl: "https://example.com/repository" }, ...emptySources],
+      },
       { ...makeIndex(), mappings: [makeMapping("dup", "phishing-link"), makeMapping("dup", "phishing-link")] },
       {
         ...makeIndex(),
@@ -101,6 +124,13 @@ describe("attack coverage index", () => {
             sourceUrl: "javascript:alert(1)",
           }],
         }],
+      },
+      {
+        ...makeIndex(),
+        sources: [{
+          ...source,
+          files: [{ ...source.files[0], parseStatus: "invalid" }],
+        }, ...emptySources],
       },
       {
         ...makeIndex(),
@@ -119,6 +149,16 @@ describe("attack coverage index", () => {
           evidence: [{
             ...makeMapping("unindexed-file", "phishing-link").evidence[0],
             path: "not-in-inventory.json",
+          }],
+        }],
+      },
+      {
+        ...makeIndex(),
+        mappings: [{
+          ...makeMapping("unsafe-path", "phishing-link"),
+          evidence: [{
+            ...makeMapping("unsafe-path", "phishing-link").evidence[0],
+            path: "../outside.json",
           }],
         }],
       },
@@ -168,9 +208,40 @@ describe("attack coverage index", () => {
     const index = makeIndex([settingIdMapping, arrayMapping, base64Mapping]);
     expect(isAttackCoverageIndex(index)).toBe(true);
   });
+
+  it("preserves invalid selector evidence without accepting it as verified", () => {
+    const mapping = makeMapping("ambiguous-setting", "phishing-link", "ambiguous", "invalid");
+    expect(isAttackCoverageIndex(makeIndex([mapping]))).toBe(true);
+    mapping.evidence[0].status = "verified";
+    const index = makeIndex([mapping]);
+    index.sources.find((item) => item.id === "windows")!.files[0].parseStatus = "invalid";
+    expect(isAttackCoverageIndex(index)).toBe(false);
+  });
 });
 
 describe("scenario coverage aggregation", () => {
+  it("labels inventory files as mapped, not mapped, or unsupported", () => {
+    const mappings = [makeMapping("mapped", "phishing-link")];
+    expect(getInventoryFileCoverageStatus(
+      mappings,
+      "windows",
+      source.files[0],
+    )).toBe("mapped");
+    expect(getInventoryFileCoverageStatus(
+      [],
+      "windows",
+      source.files[0],
+    )).toBe("not-mapped");
+    expect(getInventoryFileCoverageStatus([], "windows", {
+      ...source.files[0],
+      kind: "documentation",
+    })).toBe("unsupported");
+    expect(getInventoryFileCoverageStatus([], "windows", {
+      ...source.files[0],
+      parseStatus: "invalid",
+    })).toBe("unsupported");
+  });
+
   it("counts distinct verified controls and leaves unmapped steps explicit", () => {
     const index = makeIndex([
       makeMapping("first-evidence", "phishing-link", "shared-control"),
@@ -219,5 +290,19 @@ describe("scenario coverage aggregation", () => {
       "llmjacking",
       "cryptojacking",
     ]);
+  });
+
+  it("provides a verified MITRE ATT&CK context reference and boundary note for every step", () => {
+    for (const scenario of attackScenarios) {
+      for (const step of scenario.steps) {
+        expect(step.techniques.length).toBeGreaterThan(0);
+        for (const technique of step.techniques) {
+          expect(technique.url).toBe(
+            `https://attack.mitre.org/techniques/${technique.id.replace(".", "/")}/`,
+          );
+          expect(technique.relevance.length).toBeGreaterThan(20);
+        }
+      }
+    }
   });
 });

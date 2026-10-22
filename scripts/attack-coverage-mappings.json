@@ -35,12 +35,12 @@
   {
     "id": "windows-enhanced-phishing-notice",
     "scenarioId": "aitm-phishing",
-    "stepId": "phishing-link",
+    "stepId": "credential-or-session-capture",
     "controlId": "windows-enhanced-phishing-protection",
-    "name": "Windows reported-phishing notifications",
+    "name": "Windows enhanced phishing protection password-entry warning",
     "effect": "detection",
-    "rationale": "The exported Web Threat Defense setting enables notifications for reported malicious sites.",
-    "limitation": "This reports selected known phishing conditions; it does not block every phishing proxy or protect against intercepted session tokens.",
+    "rationale": "The enabled NotifyMalicious setting supports a narrow Windows Enhanced Phishing Protection notification condition when a work or school password is entered on a reported phishing site, including certain untrusted Microsoft sign-in or invalid-certificate cases.",
+    "limitation": "This is a conditional user notification tied to password entry, not a general site warning or a control that prevents AiTM proxying or session-token theft and replay.",
     "repositoryId": "windows",
     "evidence": [
       {
@@ -200,12 +200,12 @@
   {
     "id": "conditional-access-device-code-block",
     "scenarioId": "device-code-phishing",
-    "stepId": "authorization-prompt",
+    "stepId": "token-issuance",
     "controlId": "ca004-device-code-flow-block",
     "name": "CA004 device-code authentication-flow block (disabled export)",
     "effect": "prevention",
-    "rationale": "The Conditional Access export targets the device-code authentication transfer method and configures a block grant.",
-    "limitation": "The exported policy state is disabled and includes exclusions. This is a library policy design, not enforced tenant protection; review legitimate device-code dependencies, exclusions, and tenant-specific group references before enabling.",
+    "rationale": "The Conditional Access export targets device-code authentication and configures a block grant that, if enabled and applied to a matching sign-in, denies the flow before a token is issued.",
+    "limitation": "This does not prevent a lure or authorization prompt from being presented. The exported policy is disabled and includes exclusions; this is not enforced tenant protection. Review legitimate device-code dependencies, exclusions, and tenant-specific group references before enabling.",
     "repositoryId": "conditional-access",
     "evidence": [
       {
@@ -495,7 +495,7 @@
     "controlId": "macos-defender-antivirus-hardening",
     "name": "Defender for macOS definition and archive scanning",
     "effect": "supporting-hardening",
-    "rationale": "The macOS Defender export enables automatic definition updates, scanning after updates, and archive scanning.",
+    "rationale": "The macOS Defender export enables automatic definition updates and archive scanning, matching the two settings selected below.",
     "limitation": "The export's enforcement-level values are not interpreted here; these general scanning settings are not an infostealer-specific detector.",
     "repositoryId": "macos",
     "evidence": [

@@ -640,6 +640,36 @@ h1 {
   font-size: 1rem;
 }
 
+.coverage-techniques {
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.45rem;
+  background: var(--surface-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.coverage-techniques p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.coverage-techniques ul {
+  display: grid;
+  margin: 0.45rem 0 0;
+  padding-left: 1.15rem;
+  gap: 0.4rem;
+}
+
+.coverage-techniques li {
+  padding-left: 0.1rem;
+}
+
+.coverage-techniques li span {
+  display: block;
+  color: var(--text-muted);
+}
+
 .coverage-step-heading span,
 .coverage-effect {
   padding: 0.2rem 0.55rem;
@@ -770,6 +800,30 @@ h1 {
 .coverage-sources summary {
   font-weight: 700;
   cursor: pointer;
+}
+
+.coverage-inventory-status {
+  display: inline-block;
+  margin: 0.1rem 0.25rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.coverage-inventory-status.mapped {
+  background: #e5f6ef;
+  color: #17633d;
+}
+
+.coverage-inventory-status.not-mapped {
+  background: #fff4d6;
+  color: #7a4b00;
+}
+
+.coverage-inventory-status.unsupported {
+  background: var(--surface-muted);
+  color: var(--text-muted);
 }
 
 .choice-card {
