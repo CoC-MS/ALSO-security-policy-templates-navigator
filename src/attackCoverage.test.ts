@@ -111,7 +111,7 @@ describe("attack coverage index", () => {
   it("accepts the generated nine-repository snapshot with all reviewed evidence verified", () => {
     const index = parseAttackCoverageIndex(generatedIndex);
     expect(index.sources).toHaveLength(9);
-    expect(index.mappings).toHaveLength(19);
+    expect(index.mappings).toHaveLength(29);
     expect(index.mappings.flatMap((mapping) => mapping.evidence).every(
       (evidence) => evidence.status === "verified",
     )).toBe(true);
