@@ -379,7 +379,11 @@ export const identityAndAccessGoalIds: readonly SecurityGoalId[] = [
 ];
 
 export const securityGoalNavigation = [
-  { ...securityGoals[0], publicPreview: true },
+  {
+    ...securityGoals[0],
+    comingSoon: true,
+    repositoryUrl: "https://github.com/CoC-MS/CoC-MS-ALSO-Microsoft-Security-AttackPrevention",
+  },
   {
     id: "identity-and-access" as const,
     name: "Identity and Access",
@@ -388,7 +392,7 @@ export const securityGoalNavigation = [
   ...securityGoals.filter((goal) =>
     goal.id !== securityGoals[0].id && !identityAndAccessGoalIds.includes(goal.id),
   ),
-];
+] as const;
 
 export function getLicensingPrerequisiteTitle(categoryNames: readonly string[]): string {
   const names = [...new Set(categoryNames)];

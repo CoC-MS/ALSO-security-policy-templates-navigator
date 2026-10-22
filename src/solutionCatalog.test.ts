@@ -21,10 +21,13 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
-  it("opens Attack protection as a public preview without removing its policies", () => {
+  it("locks only Attack protection as Coming and links its new repository", () => {
     expect(securityGoalNavigation.filter((goal) =>
-      "publicPreview" in goal && goal.publicPreview,
+      "comingSoon" in goal && goal.comingSoon,
     ).map((goal) => goal.id)).toEqual(["attack-protection"]);
+    expect(securityGoalNavigation[0].repositoryUrl).toBe(
+      "https://github.com/CoC-MS/CoC-MS-ALSO-Microsoft-Security-AttackPrevention",
+    );
     expect(getSecurityGoalOptions("attack-protection").length).toBeGreaterThan(0);
   });
 

@@ -49,7 +49,6 @@ import {
   AiSecurityLicenseActions,
   shouldShowAiSecurityLicenseActions,
 } from "./AiSecurityLicenseActions";
-import { AttackProtectionExplorer } from "./AttackProtectionExplorer";
 
 type Step =
   | "license"
@@ -773,7 +772,7 @@ function App() {
               <p className="intro">Select one or more security goals. Select a goal again to remove it. You can combine any goals before continuing.</p>
               <div className="card-grid goal-grid" aria-label="Security goals">
                 {securityGoalNavigation.map((goal, index) => {
-                  const publicPreview = "publicPreview" in goal && goal.publicPreview;
+                  const comingSoon = "comingSoon" in goal && goal.comingSoon;
                   const isIdentityGroup = goal.id === "identity-and-access";
                   const selected = isIdentityGroup
                     ? identityAndAccessSelected
@@ -784,6 +783,7 @@ function App() {
                     type="button"
                     key={goal.id}
                     aria-pressed={selected}
+                    disabled={comingSoon}
                     onClick={() => {
                       if (!isIdentityGroup) {
                         chooseGoal(goal.id);
@@ -804,13 +804,19 @@ function App() {
                     <span className="choice-details">
                       <span className="choice-name">{goal.name}</span>
                       <span className="goal-description">{goal.description}</span>
-                      {publicPreview && <span className="experience-badge">Public preview</span>}
+                      {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
                     </span>
                     <span className="choice-check" aria-hidden="true">{selected ? "\u2713" : ""}</span>
                   </button>
                   );
                 })}
               </div>
+              <p className="intro">
+                Attack protection is coming.{" "}
+                <a href={securityGoalNavigation[0].repositoryUrl} target="_blank" rel="noopener noreferrer">
+                  Attack prevention repository
+                </a>
+              </p>
               <div className="actions platform-actions">
                 <div>
                   <button className="button secondary" type="button" onClick={() => setStep("license")}>&larr; Back</button>
@@ -937,9 +943,6 @@ function App() {
                   </section>
                 ))}
               </div>
-              {selectedGoalIds.includes("attack-protection") && (
-                <AttackProtectionExplorer />
-              )}
               <div className="actions platform-actions">
                 <div>
                   <button className="button secondary" type="button" onClick={() => setStep(identityAndAccessSelected ? "identity-and-access" : "goal")}>&larr; Back</button>
