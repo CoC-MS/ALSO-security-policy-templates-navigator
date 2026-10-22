@@ -13,6 +13,7 @@ import {
   resolveEvidenceValue,
   syncAttackCoverage,
   validateMappings,
+  validateCoverageIndex,
 } from "./sync-attack-coverage.mjs";
 
 const temporaryDirectories: string[] = [];
@@ -33,6 +34,25 @@ afterEach(async () => {
 });
 
 describe("attack coverage source inventory helpers", () => {
+  it("rejects false verification and source mismatches in generated evidence", async () => {
+    const original = JSON.parse(await readFile(
+      join(process.cwd(), "public", "attack-policy-coverage.v1.json"), "utf8",
+    ));
+    expect(() => validateCoverageIndex(original)).not.toThrow();
+    const changed = structuredClone(original);
+    changed.mappings[0].evidence[0].observedValue = "changed";
+    expect(() => validateCoverageIndex(changed)).toThrow("inconsistent verified evidence");
+    const invalid = structuredClone(original);
+    const mapping = invalid.mappings[0];
+    invalid.sources.find((source: { id: string }) => source.id === mapping.repositoryId)
+      .files.find((file: { path: string }) => file.path === mapping.evidence[0].path)
+      .parseStatus = "invalid";
+    expect(() => validateCoverageIndex(invalid)).toThrow("inconsistent verified evidence");
+    const wrongSource = structuredClone(original);
+    wrongSource.mappings[0].evidence[0].sourceUrl = "https://github.com/unrelated/source";
+    expect(() => validateCoverageIndex(wrongSource)).toThrow("does not match its source snapshot");
+  });
+
   it("decodes UTF-16LE BOM exports and classifies policy, docs, and scripts", () => {
     const text = '{"settings":[]}';
     const content = Buffer.from(text, "utf16le");

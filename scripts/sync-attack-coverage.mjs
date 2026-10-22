@@ -607,6 +607,7 @@ export function validateCoverageIndex(index, expectedSources = repositorySources
     }
   }
   assert(Array.isArray(index.mappings), "Coverage index mappings must be an array.");
+  validateMappings(index.mappings, expectedSources);
   const mappingIds = new Set();
   for (const mapping of index.mappings) {
     assert(isRecord(mapping), "Coverage index contains malformed mapping evidence.");
@@ -621,6 +622,27 @@ export function validateCoverageIndex(index, expectedSources = repositorySources
       assertHttpsUrl(evidence.sourceUrl, `Source link for mapping ${mapping.id}`);
       assertHttpsUrl(evidence.referenceUrl, `Reference link for mapping ${mapping.id}`);
       assert(evidence.fileSha256 === null || /^[a-f0-9]{64}$/i.test(evidence.fileSha256), `Mapping ${mapping.id} has an invalid source content hash.`);
+      const source = index.sources.find((item) => item.id === mapping.repositoryId);
+      const file = source.files.find((item) => item.path === evidence.path);
+      assert(
+        evidence.sourceUrl === sourcePathUrl(source.repositoryUrl, source.commitSha, evidence.path) &&
+        evidence.fileSha256 === (file?.sha256 ?? null),
+        `Mapping ${mapping.id} evidence does not match its source snapshot.`,
+      );
+      if (evidence.status === "verified") {
+        assert(
+          file?.parseStatus === "valid" &&
+          isDeepStrictEqual(evidence.expectedValue, evidence.observedValue),
+          `Mapping ${mapping.id} has inconsistent verified evidence.`,
+        );
+      }
+      if (evidence.status === "changed") {
+        assert(
+          file?.parseStatus === "valid" &&
+          !isDeepStrictEqual(evidence.expectedValue, evidence.observedValue),
+          `Mapping ${mapping.id} has inconsistent changed evidence.`,
+        );
+      }
     }
   }
   return index;
@@ -662,6 +684,9 @@ export async function syncAttackCoverage({
     repositories: inventory.length,
     files: inventory.reduce((count, source) => count + source.files.length, 0),
     mappings: index.mappings.length,
+    verifiedMappings: index.mappings.filter((mapping) =>
+      mapping.evidence.every((evidence) => evidence.status === "verified"),
+    ).length,
     generatedAt,
   };
 }
@@ -673,7 +698,7 @@ if (
   try {
     const result = await syncAttackCoverage();
     console.log(
-      `Synchronized ${result.files} source files from ${result.repositories} repositories and verified ${result.mappings} reviewed mappings.`,
+      `Synchronized ${result.files} source files from ${result.repositories} repositories: ${result.verifiedMappings}/${result.mappings} mappings verified; ${result.mappings - result.verifiedMappings} require review.`,
     );
   } catch (error) {
     console.error(`Attack policy inventory synchronization failed: ${error.message}`);
