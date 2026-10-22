@@ -34,6 +34,10 @@ jobs:
         run: npm run sync:metadata
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Refresh attack policy coverage inventory
+        run: npm run sync:coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Test
         run: npm test
       - name: Build

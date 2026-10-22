@@ -1,0 +1,623 @@
+[
+  {
+    "id": "windows-edge-smartscreen",
+    "scenarioId": "aitm-phishing",
+    "stepId": "phishing-link",
+    "controlId": "edge-smartscreen",
+    "name": "Microsoft Edge SmartScreen reputation checks",
+    "effect": "prevention",
+    "rationale": "The Windows Edge policy enables SmartScreen and prevents users from overriding its site and file warnings.",
+    "limitation": "This is reputation-based link and download protection. It does not establish phishing-resistant authentication, token binding, or protection from session replay through a valid sign-in endpoint.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – MI – BP – Basic – v1.0 – Windows – Microsoft Edge  -   Security  - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_smartscreenenabled",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_smartscreenenabled_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/smartscreenenabled"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – MI – BP – Basic – v1.0 – Windows – Microsoft Edge  -   Security  - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_preventsmartscreenpromptoverride",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_microsoft_edge~policy~microsoft_edge~smartscreen_preventsmartscreenpromptoverride_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/preventsmartscreenpromptoverride"
+      }
+    ]
+  },
+  {
+    "id": "windows-enhanced-phishing-notice",
+    "scenarioId": "aitm-phishing",
+    "stepId": "phishing-link",
+    "controlId": "windows-enhanced-phishing-protection",
+    "name": "Windows reported-phishing notifications",
+    "effect": "detection",
+    "rationale": "The exported Web Threat Defense setting enables notifications for reported malicious sites.",
+    "limitation": "This reports selected known phishing conditions; it does not block every phishing proxy or protect against intercepted session tokens.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – LI – Basic – v3.0 - Windows - Device Security  -  Enhanced Phishing Protection - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_webthreatdefense_notifymalicious",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_webthreatdefense_notifymalicious_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-webthreatdefense"
+      }
+    ]
+  },
+  {
+    "id": "macos-edge-smartscreen",
+    "scenarioId": "aitm-phishing",
+    "stepId": "phishing-link",
+    "controlId": "edge-smartscreen",
+    "name": "Microsoft Edge SmartScreen reputation checks",
+    "effect": "prevention",
+    "rationale": "The macOS Edge policy enables SmartScreen and prevents users from overriding its site and file warnings.",
+    "limitation": "This is reputation-based link and download protection. It does not establish phishing-resistant authentication, token binding, or protection from session replay through a valid sign-in endpoint.",
+    "repositoryId": "macos",
+    "evidence": [
+      {
+        "path": "ALSO_MACOS_BP/ALSO_MACOS_EDGE_POLICIES/SettingsCatalog/ALSO – MI – BP – Basic – v1.0– MacOS – Microsoft Edge  - Security - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "com.apple.managedclient.preferences_smartscreenenabled",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "com.apple.managedclient.preferences_smartscreenenabled_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/smartscreenenabled"
+      },
+      {
+        "path": "ALSO_MACOS_BP/ALSO_MACOS_EDGE_POLICIES/SettingsCatalog/ALSO – MI – BP – Basic – v1.0– MacOS – Microsoft Edge  - Security - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "com.apple.managedclient.preferences_preventsmartscreenpromptoverride",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "com.apple.managedclient.preferences_preventsmartscreenpromptoverride_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/preventsmartscreenpromptoverride"
+      }
+    ]
+  },
+  {
+    "id": "macos-password-reuse-warning",
+    "scenarioId": "aitm-phishing",
+    "stepId": "phishing-link",
+    "controlId": "edge-password-reuse-warning",
+    "name": "Edge password-reuse warning",
+    "effect": "detection",
+    "rationale": "The macOS Edge policy selects the password-reuse warning trigger and enables password monitoring.",
+    "limitation": "This is a user warning for password reuse in supported conditions, not an AiTM detector or a defense against session-token replay.",
+    "repositoryId": "macos",
+    "evidence": [
+      {
+        "path": "ALSO_MACOS_BP/ALSO_MACOS_EDGE_POLICIES/SettingsCatalog/ALSO – HI – BP – Basic – v1.0– MacOS – Microsoft Edge  - Password Management - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "com.apple.managedclient.preferences_passwordmonitorallowed",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "com.apple.managedclient.preferences_passwordmonitorallowed_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/passwordprotectionwarningtrigger"
+      },
+      {
+        "path": "ALSO_MACOS_BP/ALSO_MACOS_EDGE_POLICIES/SettingsCatalog/ALSO – HI – BP – Basic – v1.0– MacOS – Microsoft Edge  - Password Management - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "com.apple.managedclient.preferences_passwordprotectionwarningtrigger",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "com.apple.managedclient.preferences_passwordprotectionwarningtrigger_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/passwordprotectionwarningtrigger"
+      }
+    ]
+  },
+  {
+    "id": "ios-defender-web-protection",
+    "scenarioId": "aitm-phishing",
+    "stepId": "phishing-link",
+    "controlId": "defender-mobile-web-protection",
+    "name": "Defender iOS web protection",
+    "effect": "prevention",
+    "rationale": "The iOS Defender app-configuration policy enables WebProtection and Defender Network Protection.",
+    "limitation": "This supports web-threat protection on supported iOS/iPadOS configurations. It does not prevent AiTM session replay, protect every valid sign-in URL, or cover unsupported mobile web content filtering scenarios.",
+    "repositoryId": "ios-ipados",
+    "evidence": [
+      {
+        "path": "ALSO_IOS_BP/ALSO_IOS_MDE_AUTO_ONBOARDING/AppConfigurationManagedDevice/ALSO- MI- BP- Basic - App Configuration- [iOSiPadOS - Corp] - Defender Configuration - D.json",
+        "selector": {
+          "kind": "array-object-property",
+          "arrayPointer": "/settings",
+          "matchProperty": "appConfigKey",
+          "matchValue": "WebProtection",
+          "valueProperty": "appConfigKeyValue"
+        },
+        "expectedValue": "true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/ios-configure-features"
+      },
+      {
+        "path": "ALSO_IOS_BP/ALSO_IOS_MDE_AUTO_ONBOARDING/AppConfigurationManagedDevice/ALSO- MI- BP- Basic - App Configuration- [iOSiPadOS - Corp] - Defender Configuration - D.json",
+        "selector": {
+          "kind": "array-object-property",
+          "arrayPointer": "/settings",
+          "matchProperty": "appConfigKey",
+          "matchValue": "DefenderNetworkProtectionEnable",
+          "valueProperty": "appConfigKeyValue"
+        },
+        "expectedValue": "true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/ios-configure-features"
+      }
+    ]
+  },
+  {
+    "id": "android-defender-anti-phishing",
+    "scenarioId": "aitm-phishing",
+    "stepId": "phishing-link",
+    "controlId": "defender-mobile-web-protection",
+    "name": "Defender Android anti-phishing web protection",
+    "effect": "prevention",
+    "rationale": "The Android Defender app configuration enables the documented anti-phishing and VPN settings used for web protection.",
+    "limitation": "This BYOD/work-profile app setting does not prevent valid sign-in page abuse, AiTM session replay, or establish protection of a personal Android profile.",
+    "repositoryId": "android",
+    "evidence": [
+      {
+        "path": "Android/Full/AppConfigurationManagedDevice/[Android - BYOD] Microsoft Defender policy.json",
+        "selector": {
+          "kind": "base64-json-array-property",
+          "encodedValuePointer": "/payloadJson",
+          "arrayPointer": "/managedProperty",
+          "matchProperty": "key",
+          "matchValue": "antiphishing",
+          "valueProperty": "valueInteger"
+        },
+        "expectedValue": 1,
+        "referenceUrl": "https://learn.microsoft.com/en-us/intune/device-security/microsoft-defender/configure-web-protection-android"
+      },
+      {
+        "path": "Android/Full/AppConfigurationManagedDevice/[Android - BYOD] Microsoft Defender policy.json",
+        "selector": {
+          "kind": "base64-json-array-property",
+          "encodedValuePointer": "/payloadJson",
+          "arrayPointer": "/managedProperty",
+          "matchProperty": "key",
+          "matchValue": "vpn",
+          "valueProperty": "valueInteger"
+        },
+        "expectedValue": 1,
+        "referenceUrl": "https://learn.microsoft.com/en-us/intune/device-security/microsoft-defender/configure-web-protection-android"
+      }
+    ]
+  },
+  {
+    "id": "conditional-access-device-code-block",
+    "scenarioId": "device-code-phishing",
+    "stepId": "authorization-prompt",
+    "controlId": "ca004-device-code-flow-block",
+    "name": "CA004 device-code authentication-flow block (disabled export)",
+    "effect": "prevention",
+    "rationale": "The Conditional Access export targets the device-code authentication transfer method and configures a block grant.",
+    "limitation": "The exported policy state is disabled and includes exclusions. This is a library policy design, not enforced tenant protection; review legitimate device-code dependencies, exclusions, and tenant-specific group references before enabling.",
+    "repositoryId": "conditional-access",
+    "evidence": [
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA004-Global-AllApps-AnyPlatform-Block-AuthenticationFlowsAndDeviceCodeFlow.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/conditions/authenticationFlows/transferMethods"
+        },
+        "expectedValue": "deviceCodeFlow,authenticationTransfer",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-authentication-flows"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA004-Global-AllApps-AnyPlatform-Block-AuthenticationFlowsAndDeviceCodeFlow.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/grantControls/builtInControls"
+        },
+        "expectedValue": ["block"],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-authentication-flows"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA004-Global-AllApps-AnyPlatform-Block-AuthenticationFlowsAndDeviceCodeFlow.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-block-authentication-flows"
+      }
+    ]
+  },
+  {
+    "id": "conditional-access-phishing-resistant-mfa",
+    "scenarioId": "aitm-phishing",
+    "stepId": "credential-or-session-capture",
+    "controlId": "ca105-phishing-resistant-mfa",
+    "name": "CA105 phishing-resistant MFA for administrators (disabled export)",
+    "effect": "prevention",
+    "rationale": "The Conditional Access export selects a phishing-resistant authentication strength with Windows Hello for Business, FIDO2, and certificate-based MFA combinations.",
+    "limitation": "This disabled policy is scoped to administrator roles and does not provide token binding or guarantee protection from session replay. Review role coverage, exclusions, and tenant-specific targeting before enabling.",
+    "repositoryId": "conditional-access",
+    "evidence": [
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA105-Admins-AllApps-AnyPlatform-Grant-PhishingResistantMFA.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/grantControls/authenticationStrength/id"
+        },
+        "expectedValue": "00000000-0000-0000-0000-000000000004",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-strengths"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA105-Admins-AllApps-AnyPlatform-Grant-PhishingResistantMFA.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/grantControls/authenticationStrength/allowedCombinations"
+        },
+        "expectedValue": ["windowsHelloForBusiness", "fido2", "x509CertificateMultiFactor"],
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-strengths"
+      },
+      {
+        "path": "ALSO_CA_BP/ConditionalAccess/BP-ALSO-CA105-Admins-AllApps-AnyPlatform-Grant-PhishingResistantMFA.json",
+        "selector": {
+          "kind": "json-pointer",
+          "pointer": "/state"
+        },
+        "expectedValue": "disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-admin-phish-resistant-mfa"
+      }
+    ]
+  },
+  {
+    "id": "windows-asr-obfuscated-script-block",
+    "scenarioId": "clickfix",
+    "stepId": "command-execution",
+    "controlId": "asr-obfuscated-script-block",
+    "name": "Block potentially obfuscated scripts",
+    "effect": "prevention",
+    "rationale": "The Windows ASR export sets this specific rule to its documented block mode.",
+    "limitation": "This rule covers its defined obfuscated-script behavior only. It does not block every user-pasted command, interpreter path, or ClickFix variant.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – LI – Basic – v1.0 – Windows – ASR Rules  -  Security Recommendations Low impact Block Mode - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutionofpotentiallyobfuscatedscripts",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutionofpotentiallyobfuscatedscripts_block",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+      }
+    ]
+  },
+  {
+    "id": "windows-asr-downloaded-script-executable-block",
+    "scenarioId": "clickfix",
+    "stepId": "command-execution",
+    "controlId": "asr-downloaded-script-executable-block",
+    "name": "Block JavaScript or VBScript launching downloaded executables",
+    "effect": "prevention",
+    "rationale": "The Windows ASR export sets the downloaded-executable rule to its documented block mode.",
+    "limitation": "This covers the named JavaScript/VBScript-to-downloaded-executable behavior only; it is not a general command or paste-blocking control.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – LI – Basic – v1.0 – Windows – ASR Rules  -  Security Recommendations Low impact Block Mode - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockjavascriptorvbscriptfromlaunchingdownloadedexecutablecontent",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockjavascriptorvbscriptfromlaunchingdownloadedexecutablecontent_block",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+      }
+    ]
+  },
+  {
+    "id": "windows-asr-lsass-credential-theft-block",
+    "scenarioId": "infostealer",
+    "stepId": "collection",
+    "controlId": "asr-lsass-credential-theft-block",
+    "name": "Block credential theft from LSASS",
+    "effect": "prevention",
+    "rationale": "The Windows ASR export sets its LSASS credential-theft rule to block mode.",
+    "limitation": "This is limited to the rule's LSASS behavior. It does not establish protection from browser cookies, password-vault data, or session tokens.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/BP – ALSO – LI – Basic – v1.0 – Windows – ASR Rules  -  Security Recommendations Low impact Block Mode - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockcredentialstealingfromwindowslocalsecurityauthoritysubsystem",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockcredentialstealingfromwindowslocalsecurityauthoritysubsystem_block",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+      }
+    ]
+  },
+  {
+    "id": "windows-defender-malware-hardening",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "windows-defender-antivirus-hardening",
+    "name": "Defender Antivirus scanning and behavior monitoring",
+    "effect": "supporting-hardening",
+    "rationale": "The Windows Defender Antivirus export enables real-time, behavior, and cloud protection settings.",
+    "limitation": "These are general malware defenses, not an infostealer-specific detector or guarantee of malware removal.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – MI – BP – Basic – v1.0 - Windows - Defender Antivirus   -  AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – MI – BP – Basic – v1.0 - Windows - Defender Antivirus   -  AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_allowbehaviormonitoring",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_allowbehaviormonitoring_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – MI – BP – Basic – v1.0 - Windows - Defender Antivirus   -  AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_allowcloudprotection",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_allowcloudprotection_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      }
+    ]
+  },
+  {
+    "id": "windows-managed-installer-trust",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "managed-installer-application-control",
+    "name": "Require managed-installer trust for applications",
+    "effect": "supporting-hardening",
+    "rationale": "The Windows Application Control export enables managed-installer trust and disables audit mode.",
+    "limitation": "This trust policy is conditional on the managed-installer workflow and does not establish that every malicious executable or script is blocked.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – HI – BP – Advanced – v1.0 - Windows -WDACAppControl- Trust apps from managed installer only - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_applicationcontrolv2_trustappsfrommanagedinstaller_enabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/applicationcontrol-csp"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – HI – BP – Advanced – v1.0 - Windows -WDACAppControl- Trust apps from managed installer only - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_applicationcontrolv2_auditmode",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_applicationcontrolv2_auditmode_disabled",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/applicationcontrol-csp"
+      }
+    ]
+  },
+  {
+    "id": "linux-defender-malware-hardening",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "linux-defender-antivirus-hardening",
+    "name": "Linux Defender malware scanning hardening",
+    "effect": "supporting-hardening",
+    "rationale": "The Linux Defender export enables cloud service, definition updates, and archive scanning.",
+    "limitation": "These general endpoint settings are not infostealer-specific. The export has no assignments, and numeric enforcement-level aliases are not interpreted as blocking modes.",
+    "repositoryId": "linux",
+    "evidence": [
+      {
+        "path": "ALSO_LINUX_SERVER/SettingsCatalog/ALSO – MI – MDBS – Basic – v1.0 - Linux Server - Defender Antivirus - AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "linux_mdatp_managed_cloudservice_enabled",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "linux_mdatp_managed_cloudservice_enabled_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/linux-preferences"
+      },
+      {
+        "path": "ALSO_LINUX_SERVER/SettingsCatalog/ALSO – MI – MDBS – Basic – v1.0 - Linux Server - Defender Antivirus - AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "linux_mdatp_managed_cloudservice_automaticdefinitionupdateenabled",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "linux_mdatp_managed_cloudservice_automaticdefinitionupdateenabled_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/linux-preferences"
+      },
+      {
+        "path": "ALSO_LINUX_SERVER/SettingsCatalog/ALSO – MI – MDBS – Basic – v1.0 - Linux Server - Defender Antivirus - AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "linux_mdatp_managed_antivirusengine_scanarchives",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "linux_mdatp_managed_antivirusengine_scanarchives_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/linux-preferences"
+      }
+    ]
+  },
+  {
+    "id": "android-verify-apps-hardening",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "android-app-verification",
+    "name": "Android app verification requirement",
+    "effect": "supporting-hardening",
+    "rationale": "The Android Settings Catalog export sets the platform's verify-apps requirement to true.",
+    "limitation": "This generic app-integrity setting is not an infostealer detector and applies only to the supported enrollment/platform scope of the export.",
+    "repositoryId": "android",
+    "evidence": [
+      {
+        "path": "Android/Full/SettingsCatalog/BP – ALSO – LI – Basic – v1.0 – Android Enterprice – Device Restriction - Threat Scan - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "com.android.devicerestrictionpolicy.securityrequireverifyapps",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "com.android.devicerestrictionpolicy.securityrequireverifyapps_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/intune/device-configuration/templates/ref-device-restrictions-android-enterprise"
+      }
+    ]
+  },
+  {
+    "id": "macos-defender-malware-hardening",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "macos-defender-antivirus-hardening",
+    "name": "Defender for macOS definition and archive scanning",
+    "effect": "supporting-hardening",
+    "rationale": "The macOS Defender export enables automatic definition updates, scanning after updates, and archive scanning.",
+    "limitation": "The export's enforcement-level values are not interpreted here; these general scanning settings are not an infostealer-specific detector.",
+    "repositoryId": "macos",
+    "evidence": [
+      {
+        "path": "ALSO_MACOS_BP/ALSO_MACOS_MDCA_READY/SettingsCatalog/ ALSO – MI – BPE5 – Basic – v1.0– MacOS – Device Configuration - AV - Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "com.apple.managedclient.preferences_automaticdefinitionupdateenabled",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "com.apple.managedclient.preferences_automaticdefinitionupdateenabled_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/mac-preferences"
+      },
+      {
+        "path": "ALSO_MACOS_BP/ALSO_MACOS_MDCA_READY/SettingsCatalog/ ALSO – MI – BPE5 – Basic – v1.0– MacOS – Device Configuration - AV - Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "com.apple.managedclient.preferences_scanarchives",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "com.apple.managedclient.preferences_scanarchives_true",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/mac-preferences"
+      }
+    ]
+  },
+  {
+    "id": "windows-defender-pua-malware-hardening",
+    "scenarioId": "cryptojacking",
+    "stepId": "unauthorized-deployment",
+    "controlId": "windows-defender-antivirus-hardening",
+    "name": "Defender Antivirus real-time and PUA protection",
+    "effect": "supporting-hardening",
+    "rationale": "The Windows Defender Antivirus export enables real-time monitoring and PUA protection.",
+    "limitation": "These settings are generic malware hardening, not a cryptominer signature, mining detector, or cloud-compute abuse control.",
+    "repositoryId": "windows",
+    "evidence": [
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – MI – BP – Basic – v1.0 - Windows - Defender Antivirus   -  AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      },
+      {
+        "path": "Windows/Full/SettingsCatalog/ALSO – MI – BP – Basic – v1.0 - Windows - Defender Antivirus   -  AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_puaprotection",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_puaprotection_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      }
+    ]
+  },
+  {
+    "id": "windows-server-asr-audit-telemetry",
+    "scenarioId": "clickfix",
+    "stepId": "command-execution",
+    "controlId": "windows-server-asr-audit-telemetry",
+    "name": "Windows Server ASR script-behavior audit telemetry",
+    "effect": "detection",
+    "rationale": "The Windows Server ASR export configures the obfuscated-script and downloaded-executable rules in audit mode.",
+    "limitation": "Audit mode is telemetry, not blocking or an alert rule. The export does not establish assignment, observed events, or ClickFix-specific detection.",
+    "repositoryId": "windows-server",
+    "evidence": [
+      {
+        "path": "ALSO_WINDOWSSERVER_POLICIES/ALSO – LI – MDBS – Basic – v1.0 - Windows Server - Endpoint Security - ASR -  Configuration - Audit Mode- D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutionofpotentiallyobfuscatedscripts",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockexecutionofpotentiallyobfuscatedscripts_audit",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+      },
+      {
+        "path": "ALSO_WINDOWSSERVER_POLICIES/ALSO – LI – MDBS – Basic – v1.0 - Windows Server - Endpoint Security - ASR -  Configuration - Audit Mode- D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockjavascriptorvbscriptfromlaunchingdownloadedexecutablecontent",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_attacksurfacereductionrules_blockjavascriptorvbscriptfromlaunchingdownloadedexecutablecontent_audit",
+        "referenceUrl": "https://learn.microsoft.com/en-us/defender-endpoint/attack-surface-reduction-rules-reference"
+      }
+    ]
+  },
+  {
+    "id": "windows-server-defender-antivirus-hardening",
+    "scenarioId": "infostealer",
+    "stepId": "execution",
+    "controlId": "windows-server-defender-antivirus-hardening",
+    "name": "Windows Server Defender Antivirus scanning",
+    "effect": "supporting-hardening",
+    "rationale": "The Windows Server Antivirus export enables real-time monitoring and script scanning.",
+    "limitation": "These are generic endpoint malware settings, not infostealer-specific detection. Server OS, onboarding, assignment, and policy application remain prerequisites.",
+    "repositoryId": "windows-server",
+    "evidence": [
+      {
+        "path": "ALSO_WINDOWSSERVER_POLICIES/ALSO – MI – MDBS – Basic – v1.0 - Windows Server - Endpoint Security - Antivirus - AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_allowrealtimemonitoring_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      },
+      {
+        "path": "ALSO_WINDOWSSERVER_POLICIES/ALSO – MI – MDBS – Basic – v1.0 - Windows Server - Endpoint Security - Antivirus - AV Configuration - D.json",
+        "selector": {
+          "kind": "setting-id",
+          "id": "device_vendor_msft_policy_config_defender_allowscriptscanning",
+          "valuePath": "choiceSettingValue.value"
+        },
+        "expectedValue": "device_vendor_msft_policy_config_defender_allowscriptscanning_1",
+        "referenceUrl": "https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-defender"
+      }
+    ]
+  }
+]
