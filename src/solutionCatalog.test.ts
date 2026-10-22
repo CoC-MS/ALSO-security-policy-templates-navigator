@@ -21,6 +21,13 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it("temporarily closes only Attack protection without removing its policies", () => {
+    expect(securityGoalNavigation.filter((goal) =>
+      "comingSoon" in goal && goal.comingSoon,
+    ).map((goal) => goal.id)).toEqual(["attack-protection"]);
+    expect(getSecurityGoalOptions("attack-protection").length).toBeGreaterThan(0);
+  });
+
   it("groups the unchanged Conditional Access and Administrator protection goals under Identity and Access", () => {
     expect(securityGoalNavigation.map((goal) => goal.name)).toEqual([
       "Attack protection", "Identity and Access", "Endpoint protection",
