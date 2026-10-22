@@ -811,12 +811,6 @@ function App() {
                   );
                 })}
               </div>
-              <p className="intro">
-                Attack protection is coming.{" "}
-                <a href={securityGoalNavigation[0].repositoryUrl} target="_blank" rel="noopener noreferrer">
-                  Attack prevention repository
-                </a>
-              </p>
               <div className="actions platform-actions">
                 <div>
                   <button className="button secondary" type="button" onClick={() => setStep("license")}>&larr; Back</button>
