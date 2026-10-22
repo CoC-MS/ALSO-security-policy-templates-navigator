@@ -893,6 +893,9 @@ function App() {
               <div className="eyebrow">Your selected security goals</div>
               <h1 id="main-title" tabIndex={-1}>
                 {selectedGoalIds.length === 1 &&
+                selectedGoalIds[0] === "attack-protection"
+                  ? "Attack protection"
+                  : selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "endpoint-protection"
                   ? "Choose endpoint platforms"
                   : selectedGoalIds.length === 1 &&
@@ -905,6 +908,9 @@ function App() {
               </h1>
               <p className="intro">
                 {selectedGoalIds.length === 1 &&
+                selectedGoalIds[0] === "attack-protection"
+                  ? "Choose an attack scenario to find relevant policy templates."
+                  : selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "endpoint-protection"
                   ? "Select the operating systems you want to protect, then choose policy categories for each."
                   : selectedGoalIds.length === 1 &&
@@ -917,6 +923,7 @@ function App() {
               </p>
               <div className="goal-option-sections">
                 {selectedGoals.filter((goal) =>
+                  goal.id !== "attack-protection" &&
                   goal.options.some((option) => !isAutoSelectedOption(option)),
                 ).map((goal) => (
                   <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
@@ -938,7 +945,7 @@ function App() {
                   <button className="button secondary" type="button" onClick={() => setStep(identityAndAccessSelected ? "identity-and-access" : "goal")}>&larr; Back</button>
                   <button className="button text-button" type="button" onClick={startOver}>Start over</button>
                 </div>
-                <button
+                {selectedGoals.some((goal) => goal.id !== "attack-protection") && <button
                   className="button primary"
                   type="button"
                   disabled={
@@ -951,7 +958,7 @@ function App() {
                   {selectedGoalIds.includes("endpoint-protection")
                     ? "Choose endpoint policy categories"
                     : "View recommendations"} &rarr;
-                </button>
+                </button>}
               </div>
             </section>
           )}

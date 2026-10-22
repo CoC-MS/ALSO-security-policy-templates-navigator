@@ -6,6 +6,7 @@ import {
   configuredCoverageSourceIds,
   getInventoryFileCoverageStatus,
   getScenarioCoverage,
+  getScenarioPolicyLinks,
   isAttackCoverageIndex,
   parseAttackCoverageIndex,
   type AttackStepId,
@@ -86,6 +87,22 @@ function makeIndex(
 }
 
 describe("attack coverage index", () => {
+  it("lists each policy file once by its actual name and excludes unverified mappings", () => {
+    const index = makeIndex([
+      makeMapping("first", "phishing-link"),
+      makeMapping("second", "token-reuse"),
+      makeMapping("changed", "phishing-link", "changed", "changed"),
+    ]);
+    expect(getScenarioPolicyLinks(index, "aitm-phishing")).toEqual([{
+      name: "settings",
+      url: `${source.repositoryUrl}/blob/${source.commitSha}/settings.json`,
+    }]);
+    expect(getScenarioPolicyLinks(index, "llmjacking")).toEqual([]);
+    expect(getScenarioPolicyLinks(makeIndex([
+      makeMapping("changed", "phishing-link", "changed", "changed"),
+    ]), "aitm-phishing")).toEqual([]);
+  });
+
   it("accepts a well-formed versioned evidence index", () => {
     expect(isAttackCoverageIndex(makeIndex())).toBe(true);
     expect(parseAttackCoverageIndex(makeIndex()).schemaVersion).toBe(1);

@@ -516,6 +516,30 @@ h1 {
   line-height: 1.5;
 }
 
+.coverage-scenario {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 26rem;
+  font-weight: 650;
+}
+
+.coverage-scenario select {
+  width: 100%;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+
+.coverage-policy-list {
+  display: grid;
+  gap: 1rem;
+  padding-left: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
 .coverage-explorer {
   max-width: 1050px;
   margin: 2.5rem auto 0;

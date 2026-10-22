@@ -678,6 +678,22 @@ export function getVerifiedMappings(
   );
 }
 
+export function getScenarioPolicyLinks(
+  index: AttackCoverageIndex,
+  scenarioId: AttackScenarioId,
+): Array<{ name: string; url: string }> {
+  const links = new Map<string, { name: string; url: string }>();
+  for (const mapping of getVerifiedMappings(index, scenarioId)) {
+    for (const evidence of mapping.evidence) {
+      links.set(evidence.sourceUrl, {
+        name: evidence.path.split("/").pop()!.replace(/\.json$/i, ""),
+        url: evidence.sourceUrl,
+      });
+    }
+  }
+  return [...links.values()].sort((left, right) => left.name.localeCompare(right.name));
+}
+
 export interface ScenarioCoverageSummary {
   status: "mapped" | "partially-mapped" | "not-mapped";
   verifiedMappings: CoverageMapping[];
