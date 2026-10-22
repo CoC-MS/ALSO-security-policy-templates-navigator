@@ -27,6 +27,7 @@ const relevantExtensions = new Set([
   ".xml",
 ]);
 const policyFolders = new Set([
+  "also_windowsserver_policies",
   "appconfiguration",
   "appconfigurationmanageddevice",
   "applications",
@@ -40,9 +41,12 @@ const policyFolders = new Set([
 ]);
 const supportFolders = new Set([
   "assignmentfilters",
+  "authenticationcontext",
+  "authenticationcontexts",
   "build-manifest.json",
   "groups",
   "migrationtable.json",
+  "namedlocations",
 ]);
 
 export const repositorySources = [

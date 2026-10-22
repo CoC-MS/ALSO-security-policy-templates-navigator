@@ -59,6 +59,9 @@ describe("attack coverage source inventory helpers", () => {
     const bytes = Buffer.concat([Buffer.from([0xff, 0xfe]), content]);
     expect(decodeSourceText(bytes)).toBe(text);
     expect(classifySourceFile("SettingsCatalog/policy.json")).toBe("policy-json");
+    expect(classifySourceFile("ALSO_WINDOWSSERVER_POLICIES/Antivirus.json")).toBe("policy-json");
+    expect(classifySourceFile("ALSO_CA_E7/NamedLocations/location.json")).toBe("supporting");
+    expect(classifySourceFile("ALSO_CA_E7/AuthenticationContext/context.json")).toBe("supporting");
     expect(classifySourceFile("docs/public/overview.md")).toBe("documentation");
     expect(classifySourceFile("DeviceHealthScripts/check.ps1")).toBe("script");
     expect(classifySourceFile("MigrationTable.json")).toBe("supporting");
