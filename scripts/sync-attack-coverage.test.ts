@@ -51,6 +51,10 @@ describe("attack coverage source inventory helpers", () => {
     const wrongSource = structuredClone(original);
     wrongSource.mappings[0].evidence[0].sourceUrl = "https://github.com/unrelated/source";
     expect(() => validateCoverageIndex(wrongSource)).toThrow("does not match its source snapshot");
+    const needsReview = structuredClone(original);
+    needsReview.mappings[0].evidence[0].status = "invalid";
+    needsReview.mappings[0].evidence[0].observedValue = null;
+    expect(() => validateCoverageIndex(needsReview)).not.toThrow();
   });
 
   it("decodes UTF-16LE BOM exports and classifies policy, docs, and scripts", () => {
@@ -311,7 +315,7 @@ describe("attack coverage source inventory helpers", () => {
       now: () => new Date("2026-10-22T12:00:00.000Z"),
     });
     const index = JSON.parse(await readFile(result.outputPath, "utf8"));
-    expect(result).toMatchObject({ repositories: 9, files: 9, mappings: 0 });
+    expect(result).toMatchObject({ repositories: 9, files: 9, mappings: 0, verifiedMappings: 0 });
     expect(index.schemaVersion).toBe(1);
     expect(index.sources).toHaveLength(9);
     expect(index.sources[1].files[0].duplicateOf).toEqual({

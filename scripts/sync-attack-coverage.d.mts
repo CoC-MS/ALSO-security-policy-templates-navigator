@@ -112,5 +112,6 @@ export function syncAttackCoverage(options?: {
   repositories: number;
   files: number;
   mappings: number;
+  verifiedMappings: number;
   generatedAt: string;
 }>;
