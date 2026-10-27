@@ -50,6 +50,35 @@ describe("security goal recommendations", () => {
     },
   );
 
+  it.each(["business-premium", "business-premium-defender", "e3", "e3-defender", "f1", "f1-defender", "f3", "f3-defender"] as const)(
+    "lists the matching Purview upgrade and all advanced sensitivity-label features for %s",
+    (id) => {
+      const note = getDataSecurityLicenseNote([id], ["sensitivity-labels"]);
+      const suite = id.startsWith("business-premium")
+        ? "Microsoft Purview Suite for Business Premium"
+        : id.startsWith("e3")
+          ? "Microsoft Purview Suite for Microsoft 365 E3"
+          : "Microsoft Purview Suite FLW for Microsoft 365 F1/F3";
+      expect(note).toContain(`Add ${suite} to unlock`);
+      for (const feature of [
+        "automatic sensitivity labeling in Microsoft 365 apps",
+        "manual sensitivity labeling for Teams online meetings",
+        "automatic sensitivity labels in Exchange, SharePoint, and OneDrive",
+        "default sensitivity labels for SharePoint document libraries",
+        "Trainable Classifiers", "Exact Data Match (EDM)", "Named Entities", "contextual classifiers",
+      ]) {
+        expect(note).toContain(feature);
+      }
+    },
+  );
+
+  it.each(["business-premium-purview", "e3-purview", "f1-purview", "f3-purview", "e5", "e7"] as const)(
+    "does not recommend a redundant sensitivity-label upgrade for %s",
+    (id) => {
+      expect(getDataSecurityLicenseNote([id], ["sensitivity-labels"])).not.toContain("Add ");
+    },
+  );
+
   it.each(["business-premium", "business-premium-defender", "e3", "e3-defender"] as const)(
     "lists the exact included and upgrade-required DLP and retention features for %s",
     (id) => {

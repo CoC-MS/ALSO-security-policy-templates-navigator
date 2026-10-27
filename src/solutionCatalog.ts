@@ -736,13 +736,17 @@ export function getDataSecurityLicenseNote(
       ? ["Microsoft Purview Suite for Microsoft 365 E3"] : []),
     ...(!hasBusinessOrE3 ? ["Microsoft Purview Suite FLW for Microsoft 365 F1/F3"] : []),
   ].join(" or ");
-  const sensitivityLabelsNote = eligibleLicenseIds.some((id) =>
+  const hasSensitivityLabelsSuite = eligibleLicenseIds.some((id) =>
     dataSecurityFullExperienceLicenseIds.has(id) || flwPurviewSuiteLicenseIds.has(id),
+  );
+  const includedSensitivityLabels = eligibleLicenseIds.some((id) =>
+    id.startsWith("e3") || id.startsWith("f3"),
   )
+    ? "Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps, plus sensitivity labeling for containers in Microsoft 365, are included."
+    : "Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps are included.";
+  const sensitivityLabelsNote = hasSensitivityLabelsSuite
     ? "Limited experience. Verify the selected sensitivity-label and publishing settings against your selected license entitlement."
-    : eligibleLicenseIds.some((id) => id.startsWith("e3") || id.startsWith("f3"))
-      ? "Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps, plus sensitivity labeling for containers in Microsoft 365, are included."
-      : "Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps are included.";
+    : `${includedSensitivityLabels} Add ${addOns} to unlock automatic sensitivity labeling in Microsoft 365 apps; manual sensitivity labeling for Teams online meetings; automatic sensitivity labels in Exchange, SharePoint, and OneDrive; default sensitivity labels for SharePoint document libraries; and sensitivity labels based on advanced classifiers (for example, Trainable Classifiers, Exact Data Match (EDM), Named Entities, and contextual classifiers).`;
   const details: Record<string, string> = {
     "sensitivity-labels": sensitivityLabelsNote,
     "dlp": hasBusinessOrE3
