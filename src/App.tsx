@@ -21,7 +21,6 @@ import {
   getLimitedExperienceSelections,
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
-  getDesktopAppLicenseNote,
   getAdministratorProtectionLicenseNote,
   getDataSecurityLicenseNote,
   getEndpointFeatureLicenseNote,
@@ -866,6 +865,10 @@ function App() {
                 {identityAndAccessGoalIds.map((id, index) => {
                   const goal = securityGoals.find((item) => item.id === id)!;
                   const selected = selectedGoalIds.includes(id);
+                  const experience = getSecurityGoalOptionExperience(
+                    id, eligibleLicenseIds,
+                    [...new Set(getSecurityGoalOptions(id).flatMap((option) => option.platformIds))],
+                  );
                   return (
                     <button className={`choice-card goal-card ${selected ? "selected" : ""}`}
                       type="button" key={id} aria-pressed={selected} onClick={() => chooseGoal(id)}>
@@ -873,6 +876,9 @@ function App() {
                       <span className="choice-details">
                         <span className="choice-name">{goal.name}</span>
                         <span className="goal-description">{goal.description}</span>
+                        <span className={`experience-badge ${experience}`}>
+                          {experience === "full" ? "Full experience" : "Limited experience"}
+                        </span>
                       </span>
                       <span className="choice-check" aria-hidden="true">{selected ? "\u2713" : ""}</span>
                     </button>
@@ -1128,10 +1134,12 @@ function App() {
                   const administratorLicenseNote = administratorDeviceSelection
                     ? getAdministratorProtectionLicenseNote(eligibleLicenseIds, sourcePlatform.id)
                     : undefined;
-                  const desktopAppLicenseNote = platformSelections.some((option) =>
-                    option.selectionId === "app-protection:desktop-apps",
-                  )
-                    ? getDesktopAppLicenseNote(eligibleLicenseIds, sourcePlatform.id)
+                  const cloudAppSelections = limitedSelections.filter((option) =>
+                    option.selectionId === "app-protection:cloud-apps" ||
+                    option.selectionId === "app-protection:oauth-apps",
+                  );
+                  const cloudAppLicenseNote = cloudAppSelections.length > 0
+                    ? getCloudAppsConditionalAccessLicenseNote(eligibleLicenseIds)
                     : undefined;
                   const categorySpecificLicensingOnly =
                     platformSelections.length > 0 &&
@@ -1149,7 +1157,7 @@ function App() {
                   const limitedExperienceNote = administratorDeviceOnly
                     ? administratorLicenseNote
                     : appProtectionOnly
-                    ? desktopAppLicenseNote
+                    ? undefined
                     : onPremisesAppsOnly
                     ? undefined
                     : categorySpecificLicensingOnly
@@ -1167,11 +1175,6 @@ function App() {
                           !oauthAppsOnly && !cloudAppsOnly && !attackProtectionOnly,
                       },
                     );
-                  const cloudAppsConditionalAccessLicenseNote =
-                    sourcePlatform.id === "conditional-access" && cloudAppsOnly &&
-                    limitedSelections.length > 0
-                      ? getCloudAppsConditionalAccessLicenseNote(eligibleLicenseIds)
-                      : undefined;
                   const dataSecuritySelection = limitedSelections.some((option) =>
                     option.selectionId.startsWith("data-protection:") &&
                     option.platformIds.some((platformId) => platformId === "purview"),
@@ -1212,6 +1215,7 @@ function App() {
                   const endpointFeatureNotes = sourcePlatform.id !== "purview"
                     ? [...new Set(
                       endpointNoteSelections
+                      .filter((option) => option.selectionId.startsWith("endpoint-protection:"))
                         .filter((option) => !option.platformIds.some((id) =>
                           id === "windows-servers" || id === "linux-server",
                         ))
@@ -1239,6 +1243,11 @@ function App() {
                   const visibleLimitedExperienceNote =
                     limitedSelections.length > 0 &&
                     endpointFeatureNotes.length === 0 &&
+                    (!cloudAppLicenseNote ||
+                      (sourcePlatform.id === "conditional-access" &&
+                        platformSelections.some((option) =>
+                          option.selectionId.startsWith("administrator-protection:"),
+                        ))) &&
                     !(sourcePlatform.id === "purview" &&
                       dataSecuritySelection &&
                       !otherPurviewSelection &&
@@ -1344,14 +1353,6 @@ function App() {
                             <p>{onPremisesAppLicenseNote.message}</p>
                           </aside>
                         )}
-                        {!appProtectionOnly && desktopAppLicenseNote && (
-                          <aside className="license-requirement-note">
-                            <strong>{licensingTitleFor((option) =>
-                              option.selectionId === "app-protection:desktop-apps",
-                            )}</strong>
-                            <p>{desktopAppLicenseNote.message}</p>
-                          </aside>
-                        )}
                         {!administratorDeviceOnly && administratorLicenseNote && (
                           <aside className="license-requirement-note">
                             <strong>{licensingTitleFor((option) =>
@@ -1384,12 +1385,13 @@ function App() {
                             </p>
                           </aside>
                         ))}
-                        {cloudAppsConditionalAccessLicenseNote && (
+                        {cloudAppLicenseNote && (
                           <aside className="license-requirement-note">
                             <strong>{licensingTitleFor((option) =>
-                              option.selectionId === "app-protection:cloud-apps",
+                              option.selectionId === "app-protection:cloud-apps" ||
+                              option.selectionId === "app-protection:oauth-apps",
                             )}</strong>
-                            <p>{cloudAppsConditionalAccessLicenseNote.message}</p>
+                            <p>{cloudAppLicenseNote.message}</p>
                           </aside>
                         )}
                         {needsOAuthAppsWorkloadIdLicense && (

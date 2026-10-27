@@ -45,18 +45,24 @@ describe("license catalog", () => {
     expect(requiresWorkloadIdPremiumForOAuthApps([])).toBe(false);
   });
 
-  it("shows the Cloud apps Defender Suite requirement only when Entra ID P2 is not included", () => {
+  it("shows Cloud apps restrictions only without Defender for Cloud Apps entitlement", () => {
     expect(getCloudAppsConditionalAccessLicenseNote(["business-premium"]))
       .toMatchObject({
-        title: "Microsoft Defender Suite required for full Conditional Access experience",
-        message: expect.stringContaining("add the Microsoft Defender Suite add-on"),
+        title: "Cloud apps with limited experience",
+        message: expect.stringContaining("Microsoft Defender for Cloud Apps is required"),
       });
     expect(
       getCloudAppsConditionalAccessLicenseNote(["f3"])?.message,
-    ).toContain("Microsoft Defender Suite FLW add-on");
+    ).toContain("Microsoft Defender Suite FLW");
 
     for (const licenseId of ["e7", "e5", "e3-defender", "business-premium-defender"] as const) {
       expect(getCloudAppsConditionalAccessLicenseNote([licenseId])).toBeUndefined();
+    }
+    for (const id of ["business-premium", "e3", "f1", "f3", "e3-purview", "f1-purview"] as const) {
+      const note = getCloudAppsConditionalAccessLicenseNote([id]);
+      expect(note?.message).toContain("Microsoft Defender for Cloud Apps is required");
+      expect(note?.message).toContain("Custom Network Indicators and Web Content Filtering");
+      expect(note?.message).not.toContain("Agent 365");
     }
   });
 

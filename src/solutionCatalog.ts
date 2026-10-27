@@ -2,6 +2,8 @@ import {
   getPlatform,
   getPlatformExperienceForLicenses,
   hasEntraIdP2,
+  getCloudAppsConditionalAccessLicenseNote,
+  requiresWorkloadIdPremiumForOAuthApps,
   isLicenseEligible,
   type License,
   type Platform,
@@ -339,8 +341,8 @@ export const securityGoals = [
       {
         id: "oauth-apps",
         name: "OAuth apps",
-        description: "Explore Conditional Access policies for OAuth app protection.",
-        platformIds: ["conditional-access"],
+        description: "Explore Windows, Windows Server, macOS, and Conditional Access policies for OAuth app protection.",
+        platformIds: ["windows-11", "windows-servers", "macos", "conditional-access"],
       },
       {
         id: "desktop-apps",
@@ -514,13 +516,6 @@ export function getConditionalAccessCategoryLicenseNote(
     message: messages.join(" "),
     includePlanComparisons: true,
   };
-}
-
-export function getDesktopAppLicenseNote(
-  licenseIds: readonly License["id"][],
-  platformId: Platform["id"],
-): { title: string; message: string; includePlanComparisons: boolean } | undefined {
-  return getWindowsIntuneSuiteLicenseNote(licenseIds, platformId, "desktop app protection");
 }
 
 export function getAdministratorProtectionLicenseNote(
@@ -785,18 +780,26 @@ export function getSecurityGoalOptionExperience(
     licenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id))) {
     return "full";
   }
-  if (goalId === "administrator-protection" &&
-    platformIds.some((platformId) => getAdministratorProtectionLicenseNote(licenseIds, platformId))) {
-    return "limited";
+  if (goalId === "administrator-protection") {
+    if (!licenseIds.some(isLicenseEligible)) return "limited";
+    return platformIds.some((id) =>
+      id === "conditional-access"
+        ? !hasEntraIdP2(licenseIds)
+        : Boolean(getAdministratorProtectionLicenseNote(licenseIds, id)),
+    ) ? "limited" : "full";
   }
   if (goalId === "app-protection" && optionId === "mobile-apps") {
     return licenseIds.some(isLicenseEligible) ? "full" : "limited";
   }
   if (goalId === "app-protection" && optionId === "desktop-apps") {
+    return licenseIds.some(isLicenseEligible) ? "full" : "limited";
+  }
+  if (goalId === "app-protection" && (optionId === "cloud-apps" || optionId === "oauth-apps")) {
     if (!licenseIds.some(isLicenseEligible)) return "limited";
-    return platformIds.some((platformId) =>
-      getDesktopAppLicenseNote(licenseIds, platformId),
-    ) ? "limited" : "full";
+    return getCloudAppsConditionalAccessLicenseNote(licenseIds) ||
+      (optionId === "oauth-apps" && platformIds.includes("conditional-access") &&
+        requiresWorkloadIdPremiumForOAuthApps(licenseIds))
+      ? "limited" : "full";
   }
   if (goalId === "app-protection" && optionId === "on-premises-apps") {
     return getOnPremisesAppLicenseNote(licenseIds) ? "limited" : "full";

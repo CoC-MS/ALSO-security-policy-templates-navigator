@@ -4,7 +4,6 @@ import {
   getDataSecurityLicenseNote,
   getConditionalAccessCategoryLicenseNote,
   getOnPremisesAppLicenseNote,
-  getDesktopAppLicenseNote,
   getLicensingPrerequisiteTitle,
   getLimitedExperienceSelections,
   getAdministratorProtectionLicenseNote,
@@ -21,6 +20,39 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "keeps macOS administrator protection full and scopes app entitlements for %s",
+    (id) => {
+      expect(getSecurityGoalOptionExperience(
+        "administrator-protection", [id], ["macos"], "administrator-protection-policies",
+      )).toBe("full");
+      const hasCloudApps = id === "e5" || id === "e7" || id.includes("defender");
+      for (const platform of ["windows-11", "windows-servers", "macos", "conditional-access"] as const) {
+        expect(getSecurityGoalOptionExperience(
+          "app-protection", [id], [platform], "cloud-apps",
+        )).toBe(hasCloudApps ? "full" : "limited");
+        expect(getSecurityGoalOptionExperience(
+          "app-protection", [id], [platform], "oauth-apps",
+        )).toBe(hasCloudApps && (platform !== "conditional-access" || id === "e7") ? "full" : "limited");
+      }
+      expect(getSecurityGoalOptionExperience(
+        "administrator-protection", [id], ["conditional-access", "windows-11", "macos"],
+      )).toBe(id === "e5" || id === "e7" ? "full" : "limited");
+      expect(getSecurityGoalOptionExperience(
+        "conditional-access", [id], ["conditional-access"],
+      )).toBe(id === "e7" ? "full" : "limited");
+    },
+  );
+
+  it("uses combined Cloud apps and Workload ID entitlements", () => {
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", ["business-premium", "e5"], ["macos"], "cloud-apps",
+    )).toBe("full");
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", ["f1", "e7"], ["conditional-access"], "oauth-apps",
+    )).toBe("full");
+  });
+
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
     "shows limited Sensitivity labels with scoped guidance for %s",
     (id) => {
@@ -243,7 +275,7 @@ describe("security goal recommendations", () => {
     );
     expect(getLimitedExperienceSelections(apps, ["business-premium"], "macos")).toEqual([]);
     expect(getLimitedExperienceSelections(apps, ["business-premium"], "windows-11")
-      .map((option) => option.id)).toEqual(["desktop-apps"]);
+      .map((option) => option.id)).toEqual([]);
     expect(getLimitedExperienceSelections(apps, ["e3", "e7"], "windows-11")).toEqual([]);
     const ca = selections.filter((option) =>
       option.goalId === "conditional-access" && !option.comingSoon,
@@ -292,24 +324,17 @@ describe("security goal recommendations", () => {
       expect(getSecurityGoalOptionExperience(
         "app-protection", [licenseId], ["macos"], "desktop-apps",
       )).toBe("full");
-      const expected = licenseId === "e5" || licenseId === "e7" ? "full" : "limited";
+      const expected = "full";
       expect(getSecurityGoalOptionExperience(
         "app-protection", [licenseId], ["windows-11"], "desktop-apps",
       )).toBe(expected);
       expect(getSecurityGoalOptionExperience(
         "app-protection", [licenseId], ["windows-11", "macos"], "desktop-apps",
       )).toBe(expected);
-      expect(getDesktopAppLicenseNote([licenseId], "macos")).toBeUndefined();
-      const note = getDesktopAppLicenseNote([licenseId], "windows-11");
-      expect(Boolean(note)).toBe(expected === "limited");
-      if (note) expect(note.message).toContain("Microsoft Intune Suite add-on");
     },
   );
 
   it("combines desktop app entitlements and rejects empty app licensing inputs", () => {
-    expect(getDesktopAppLicenseNote(["e3", "e5"], "windows-11")).toBeUndefined();
-    expect(getDesktopAppLicenseNote(["f1", "e7"], "windows-11")).toBeUndefined();
-    expect(getDesktopAppLicenseNote([], "windows-11")).toBeUndefined();
     expect(getSecurityGoalOptionExperience(
       "app-protection", [], ["ios-ipados"], "mobile-apps",
     )).toBe("limited");
@@ -1194,7 +1219,7 @@ describe("security goal recommendations", () => {
   });
 
   it.each([
-    ["oauth-apps", ["conditional-access"]],
+    ["oauth-apps", ["windows-11", "windows-servers", "macos", "conditional-access"]],
     ["desktop-apps", ["windows-11", "macos"]],
     ["mobile-apps", ["ios-ipados", "android"]],
     ["cloud-apps", ["windows-11", "windows-servers", "macos", "conditional-access"]],
@@ -1211,12 +1236,12 @@ describe("security goal recommendations", () => {
         "cloud-apps",
       ]),
     ).toEqual([
-      "conditional-access",
       "windows-11",
+      "windows-servers",
       "macos",
+      "conditional-access",
       "ios-ipados",
       "android",
-      "windows-servers",
     ]);
   });
 });

@@ -164,7 +164,7 @@ export function getCloudAppsConditionalAccessLicenseNote(
   if (
     eligibleLicenseIds.length === 0 ||
     eligibleLicenseIds.includes("e7") ||
-    eligibleLicenseIds.some((licenseId) => entraIdP2LicenseIds.has(licenseId))
+    eligibleLicenseIds.some((licenseId) => fullDefenderExperienceLicenseIds.has(licenseId))
   ) {
     return undefined;
   }
@@ -174,8 +174,8 @@ export function getCloudAppsConditionalAccessLicenseNote(
     (licenseId) => licenseId.startsWith("f1") || licenseId.startsWith("f3"),
   );
   return {
-    title: "Microsoft Defender Suite required for full Conditional Access experience",
-    message: `With ${selectedNames}, add the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on to unlock the full Conditional Access experience for Cloud apps.`,
+    title: "Cloud apps with limited experience",
+    message: `With ${selectedNames}, Microsoft Defender for Cloud Apps is required to unlock the full Cloud apps experience. It is also included in the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on. Defender for Business / Defender for Endpoint P1 can only manually control access using Custom Network Indicators and Web Content Filtering.`,
   };
 }
 

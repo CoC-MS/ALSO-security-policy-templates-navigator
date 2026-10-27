@@ -12,6 +12,8 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 ## Final recommendation experience
 
+The Identity and Access choice page also shows license-aware Full/Limited badges. macOS Administrator protection is Full for every eligible license, including Business Premium. Desktop and Mobile apps are Full for every eligible license. Cloud apps and OAuth apps use Defender for Cloud Apps entitlement (also included with qualifying Defender Suite licenses); base F1/F3/E3/Business Premium and Purview-only variants retain manual Custom Network Indicators/Web Content Filtering guidance. OAuth apps use the same repository scope as Cloud apps, with an additional Workload ID Premium requirement only on the Conditional Access repository (included with E7). Combined selections use their existing union-entitlement convention.
+
 Each final repository card shows a green Full experience badge when all selected categories for that repository are full, or a yellow Limited experience badge when any selected category is limited. Limitation-note headings use "<selected categories> with limited experience". Separate licensing prerequisites for full-experience server recommendations retain their prerequisite headings.
 
 ## Identity and Access limited-experience notes
