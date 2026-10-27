@@ -45,6 +45,7 @@ import {
 import { PolicyCounters } from "./PolicyCounters";
 import { Faq } from "./Faq";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
+import { BusinessLicensePrerequisites } from "./BusinessLicensePrerequisites";
 import {
   AiSecurityLicenseActions,
   shouldShowAiSecurityLicenseActions,
@@ -1029,6 +1030,7 @@ function App() {
                 <h1 id="main-title" tabIndex={-1}>A higher license is needed</h1>
                 <p>{selectedLicenses.map((license) => license.name).join(" and ")} {selectedLicenses.length === 1 ? "does" : "do"} not meet the minimum prerequisite for these security policy templates.</p>
                 <p>The minimum supported license is <strong>Microsoft 365 Business Premium</strong>. No applicable templates are available for your selected licenses.</p>
+                <BusinessLicensePrerequisites />
                 <button className="button primary" type="button" onClick={startOver}>&larr; Start over</button>
               </div>
             </section>
