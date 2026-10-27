@@ -21,6 +21,68 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(["business-premium", "business-premium-defender", "e3", "e3-defender"] as const)(
+    "lists the exact included and upgrade-required DLP and retention features for %s",
+    (id) => {
+      const dlp = getDataSecurityLicenseNote([id], ["dlp"]);
+      expect(dlp).toContain("DLP for emails and files is included");
+      expect(dlp).toContain("to unlock DLP for Teams chat");
+      expect(dlp).toContain(id.startsWith("business-premium")
+        ? "Microsoft Purview Suite for Business Premium"
+        : "Microsoft Purview Suite for Microsoft 365 E3");
+      const retention = getDataSecurityLicenseNote([id], ["retention"]);
+      expect(retention).toContain("Manual retention labels, basic organization-wide or location-wide retention policies, and Teams message retention policies are included");
+      expect(retention).toContain("rules-based automatic retention policies, machine-learning-based retention, and Records Management");
+      expect(retention).not.toMatch(/DLP|auto.labell|SIT/i);
+    },
+  );
+
+  it.each(["f1", "f1-defender", "f3", "f3-defender"] as const)(
+    "requires Purview Suite for frontline DLP and advanced retention for %s",
+    (id) => {
+      expect(getDataSecurityLicenseNote([id], ["dlp"]))
+        .toContain("No DLP features are included");
+      expect(getDataSecurityLicenseNote([id], ["dlp"]))
+        .toContain("Microsoft Purview Suite FLW");
+      const retention = getDataSecurityLicenseNote([id], ["retention"]);
+      expect(retention).toContain("Manual retention labels and Teams message retention policies are included");
+      expect(retention).toContain("All other retention capabilities");
+      expect(retention).toContain("require Microsoft Purview Suite FLW");
+      for (const category of ["dlp", "retention", "endpoint-dlp", "auto-labeling"]) {
+        expect(isSecurityGoalOptionAvailable("data-protection", category, [id])).toBe(true);
+        expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], category))
+          .toBe("limited");
+      }
+    },
+  );
+
+  it.each(["business-premium", "e3", "f1", "f3"] as const)(
+    "requires only the matching Purview upgrade for eDLP and auto labelling for %s",
+    (id) => {
+      const endpoint = getDataSecurityLicenseNote([id], ["endpoint-dlp"]);
+      const auto = getDataSecurityLicenseNote([id], ["auto-labeling"]);
+      expect(endpoint).toContain("not included with the selected base licenses");
+      expect(auto).toContain("not included with the selected base licenses");
+      expect(endpoint).toContain("Add Microsoft Purview Suite");
+      expect(auto).toContain("Add Microsoft Purview Suite");
+      expect(endpoint).not.toContain("Defender");
+      expect(auto).not.toMatch(/DLP|retention|sensitive information types/i);
+    },
+  );
+
+  it.each(["e3-purview", "business-premium-purview", "f1-purview", "f3-purview", "f1-defender-purview", "f3-defender-purview", "e5", "e7"] as const)(
+    "removes all covered feature upgrade notes for %s",
+    (id) => {
+      for (const category of ["dlp", "retention", "endpoint-dlp", "auto-labeling"]) {
+        expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], category))
+          .toBe("full");
+        expect(getDataSecurityLicenseNote([id], [category])).toBeUndefined();
+        expect(isSecurityGoalOptionAvailable("data-protection", category, [id])).toBe(true);
+      }
+      expect(getDataSecurityLicenseNote(["f1", id], ["dlp"])).toBeUndefined();
+    },
+  );
+
   it.each(["business-premium", "e3", "f3", "f3-purview"] as const)(
     "never mentions unselected Data Security categories for %s",
     (licenseId) => {
@@ -32,8 +94,7 @@ describe("security goal recommendations", () => {
       ] as const;
       for (const [id, unrelated] of categoryTerms) {
         const note = getDataSecurityLicenseNote([licenseId], [id]);
-        expect(note).toBeTruthy();
-        expect(note).not.toMatch(unrelated);
+        if (note) expect(note).not.toMatch(unrelated);
       }
     },
   );
@@ -48,7 +109,7 @@ describe("security goal recommendations", () => {
         } else {
           expect(note).toContain(`${option.name}:`);
           expect(note).not.toContain("undefined");
-          if (option.id === "retention" || option.id === "sensitive-information-types") {
+          if (option.id === "sensitive-information-types") {
             expect(note).toContain("table does not specify");
           }
         }
@@ -60,10 +121,9 @@ describe("security goal recommendations", () => {
     expect(getDataSecurityLicenseNote(["e5"], ["dlp"])).toBeUndefined();
     expect(getDataSecurityLicenseNote(["business-premium"], ["sensitivity-labels"])).toBeUndefined();
     expect(getDataSecurityLicenseNote(["e3"], [])).toBeUndefined();
-    expect(getDataSecurityLicenseNote(["f3-purview"], ["dlp"]))
-      .toContain("does not identify a separate restriction for this category");
+    expect(getDataSecurityLicenseNote(["f3-purview"], ["dlp"])).toBeUndefined();
     expect(getDataSecurityLicenseNote(["business-premium"], ["endpoint-dlp"]))
-      .toContain("Confirm both Purview and Defender entitlements");
+      .toContain("Add Microsoft Purview Suite for Business Premium");
   });
 
   it("locks only Attack protection as Coming and links its new repository", () => {
@@ -986,12 +1046,12 @@ describe("security goal recommendations", () => {
           option.platformIds,
         )).toBe("limited");
       }
-      expect(getDataSecurityLicenseNote([licenseId]))
-        .toContain("without the full DLP and auto-labelling experience");
+      expect(getDataSecurityLicenseNote([licenseId], ["dlp"]))
+        .toContain("DLP for emails and files is included");
     },
   );
 
-  it("limits FLW Purview experience and excludes eDLP", () => {
+  it("unlocks the user-specified Data Security features with FLW Purview Suite", () => {
     for (const licenseId of ["f1-purview", "f3-purview"] as const) {
       const options = securityGoals.find((goal) => goal.id === "data-protection")!.options;
       for (const option of options) {
@@ -999,26 +1059,27 @@ describe("security goal recommendations", () => {
           "data-protection",
           [licenseId],
           option.platformIds,
-        )).toBe("limited");
+          option.id,
+        )).toBe(["dlp", "endpoint-dlp", "retention", "auto-labeling"].includes(option.id)
+          ? "full" : "limited");
         expect(isSecurityGoalOptionAvailable(
           "data-protection",
           option.id,
           [licenseId],
-        )).toBe(option.id !== "endpoint-dlp");
+        )).toBe(true);
       }
     }
-    expect(getDataSecurityLicenseNote(["f3-purview"]))
-      .toContain("eDLP policies are not included");
+    expect(getDataSecurityLicenseNote(["f3-purview"], ["endpoint-dlp"])).toBeUndefined();
   });
 
-  it("limits F1 to Sensitivity labels without Purview Suite", () => {
+  it("shows F1 upgrade paths for DLP, retention, eDLP and auto labelling", () => {
     const options = securityGoals.find((goal) => goal.id === "data-protection")!.options;
     for (const option of options) {
       expect(isSecurityGoalOptionAvailable("data-protection", option.id, ["f1"]))
-        .toBe(option.id === "sensitivity-labels");
+        .toBe(option.id !== "sensitive-information-types");
     }
-    expect(getDataSecurityLicenseNote(["f1"]))
-      .toContain("Microsoft 365 F1 supports Sensitivity labels only.");
+    expect(getDataSecurityLicenseNote(["f1"], ["retention"]))
+      .toContain("Manual retention labels and Teams message retention policies are included");
     expect(getDataSecurityLicenseNote(["f1"]))
       .toContain("Add Microsoft Purview Suite FLW");
   });
@@ -1040,7 +1101,8 @@ describe("security goal recommendations", () => {
 
   it.each(["f3", "f3-defender"] as const)("names the FLW add-on missing from %s", (licenseId) => {
     expect(getDataSecurityLicenseNote([licenseId])).toContain("Add Microsoft Purview Suite FLW");
-    expect(getDataSecurityLicenseNote([licenseId])).toContain("eDLP policies are not included");
+    expect(getDataSecurityLicenseNote([licenseId], ["endpoint-dlp"]))
+      .toContain("Endpoint DLP (eDLP) is not included with the selected base licenses");
   });
 
   it("does not suggest another add-on when FLW Purview is already selected", () => {

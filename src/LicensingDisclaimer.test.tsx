@@ -16,7 +16,9 @@ describe("universal recommendation licensing disclaimer", () => {
     expect(html).toContain("Microsoft Enterprise Plan Comparison");
     expect(html).toContain("SMB licenses:");
     expect(html).toContain("Microsoft SMB Plan Comparison");
-    expect(html.split(`href="${expectedUrl}"`)).toHaveLength(3);
+    expect(html).toContain(`href="${expectedUrl}" target="_blank" rel="noopener noreferrer">Microsoft Enterprise Plan Comparison</a>`);
+    expect(html).toContain(`href="${expectedUrl.replace("Enterprise.pdf", "SMB.pdf")}" target="_blank" rel="noopener noreferrer">Microsoft SMB Plan Comparison</a>`);
+    expect(html.split(`href="${expectedUrl}"`)).toHaveLength(2);
     expect(html.match(/target="_blank" rel="noopener noreferrer"/g)).toHaveLength(2);
   });
 });

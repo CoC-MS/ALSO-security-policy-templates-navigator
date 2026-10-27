@@ -43,6 +43,9 @@ describe("Business license prerequisites", () => {
       html.match(
         /href="https:\/\/cdn-dynmedia-1\.microsoft\.com\/is\/content\/microsoftcorp\/microsoft\/bade\/documents\/products-and-services\/en-us\/education\/Modern-Work-Plan-Comparison-Enterprise\.pdf"/g,
       ),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
+    expect(html).toContain(
+      'href="https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/education/Modern-Work-Plan-Comparison-SMB.pdf"',
+    );
   });
 });

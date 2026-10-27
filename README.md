@@ -6,13 +6,21 @@ An interactive guide that combines a customer's Microsoft 365 licenses to identi
 
 Enterprise licenses: [Microsoft Enterprise Plan Comparison](https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/education/Modern-Work-Plan-Comparison-Enterprise.pdf)
 
-SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/education/Modern-Work-Plan-Comparison-Enterprise.pdf)
+SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/education/Modern-Work-Plan-Comparison-SMB.pdf)
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
 ## Data Security limited-experience notes
 
-Final Data Security cards explain only the selected limited categories and link to the [Purview licensing table](https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview#purview-licensing-guide), reviewed on 27 October 2026. DLP, SIT, auto-labelling, retention, and labels notes do not mention unselected categories. Qualifying Purview Suite add-ons are named where relevant. Only an eDLP selection receives the table's eDLP exclusion and additional Defender Suite prerequisite. Where the table does not define individual retention or SIT restrictions, the note explicitly asks for a setting-level licensing check rather than inventing unsupported limitations. Existing category availability and Full/Limited labels are unchanged; full categories do not receive limitation notes.
+Final Data Security cards explain only selected limited categories and link to the [Purview licensing guide](https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview#purview-licensing-guide). The following feature mapping reflects the user-directed licensing correction on 27 October 2026 and supersedes the older blanket frontline eDLP exclusion:
+
+| Category | Business Premium / Microsoft 365 E3 | Microsoft 365 F1 / F3 |
+| --- | --- | --- |
+| DLP | Email and file DLP included; Teams chat DLP requires the matching Purview Suite add-on. | No DLP included; Purview Suite FLW required. |
+| Retention | Manual retention labels, basic organization-wide or location-wide retention policies, and Teams message retention included. Rules-based automatic retention, machine-learning-based retention, and Records Management require Purview Suite. | Manual retention labels and Teams message retention included; all other retention capabilities require Purview Suite FLW. |
+| Endpoint DLP / Auto labelling | Not included in the base license; matching Purview Suite required. | Not included in the base license; Purview Suite FLW required. |
+
+Defender-only add-ons do not unlock these Purview capabilities. Matching Purview Suite licenses give Full experience for the four categories above; F1 selections remain available with prerequisite notes so users can see the required upgrade. Sensitivity-label and SIT rules are unchanged. Notes never include unrelated categories. Where no exact SIT restriction is supplied, the note requests a setting-level licensing check. Enterprise and SMB comparison links point to their respective PDFs.
 
 ## Endpoint limited-experience notes
 

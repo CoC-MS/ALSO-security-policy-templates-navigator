@@ -468,6 +468,10 @@ const flwPurviewSuiteLicenseIds = new Set<License["id"]>([
   "f3-defender-purview",
 ]);
 
+const purviewSuiteUnlockedCategoryIds = new Set([
+  "dlp", "endpoint-dlp", "retention", "auto-labeling",
+]);
+
 const f1LicenseIds = new Set<License["id"]>([
   "f1",
   "f1-defender",
@@ -618,22 +622,10 @@ export function isSecurityGoalOptionAvailable(
 
   if (
     optionId !== "sensitivity-labels" &&
+    !purviewSuiteUnlockedCategoryIds.has(optionId) &&
     eligibleLicenseIds.length > 0 &&
     eligibleLicenseIds.every((licenseId) => f1LicenseIds.has(licenseId)) &&
     !eligibleLicenseIds.some((licenseId) =>
-      flwPurviewSuiteLicenseIds.has(licenseId),
-    )
-  ) {
-    return false;
-  }
-
-  if (
-    optionId === "endpoint-dlp" &&
-    eligibleLicenseIds.length > 0 &&
-    eligibleLicenseIds.every((licenseId) =>
-      licenseId.startsWith("f1") || licenseId.startsWith("f3"),
-    ) &&
-    eligibleLicenseIds.some((licenseId) =>
       flwPurviewSuiteLicenseIds.has(licenseId),
     )
   ) {
@@ -734,98 +726,40 @@ export function getEndpointFeatureLicenseNote(
 
 export function getDataSecurityLicenseNote(
   licenseIds: readonly License["id"][],
-  optionIds?: readonly string[],
+  optionIds: readonly string[] = getSecurityGoalOptions("data-protection").map((option) => option.id),
 ): string | undefined {
-  if (optionIds) {
-    const limitedOptions = getSecurityGoalOptions("data-protection").filter((option) =>
-      optionIds.includes(option.id) &&
-      getSecurityGoalOptionExperience(
-        "data-protection", licenseIds, option.platformIds, option.id,
-      ) === "limited",
-    );
-    if (limitedOptions.length === 0) return undefined;
-    const details: Record<string, string> = {
-      "sensitivity-labels": "The Purview Suite FLW table classifies this package as limited; verify the selected label and publishing settings against your entitlement.",
-      "dlp": "The base BP/E3/F3 licensing tier does not include the full DLP experience. Review the selected policy locations and capabilities before deployment.",
-      "endpoint-dlp": "The full Endpoint DLP experience is not included in the base BP/E3/F3 tier. The Purview Suite FLW table excludes eDLP policies; its additional note calls for Defender Suite for the full frontline eDLP experience. Confirm both Purview and Defender entitlements before using endpoint policies.",
-      "retention": "The licensing table does not specify which retention settings are covered in the limited tier. Verify the selected retention and automatic-retention capabilities before deployment; a Limited label does not mean all retention is unavailable.",
-      "auto-labeling": "The base BP/E3/F3 tier does not include the full auto-labelling experience. Verify entitlement before enabling automatic classification and labelling.",
-      "sensitive-information-types": "The licensing table does not specify individual SIT entitlements in the limited tier. Verify the selected sensitive information types against your entitlement before deployment.",
-    };
-    const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
-    const frontlineOnly = eligibleLicenseIds.every((id) =>
-      id.startsWith("f1") || id.startsWith("f3"),
-    );
-    const frontlinePurview = frontlineOnly &&
-      eligibleLicenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id));
-    const addOns = [
-      ...(eligibleLicenseIds.some((id) => id.startsWith("business-premium"))
-        ? ["Microsoft Purview Suite for Business Premium"] : []),
-      ...(eligibleLicenseIds.some((id) => id.startsWith("e3"))
-        ? ["Microsoft Purview Suite for Microsoft 365 E3"] : []),
-      ...(frontlineOnly ? ["Microsoft Purview Suite FLW"] : []),
-    ];
-    const categoryNotes = limitedOptions.map((option) => {
-      const detail = frontlinePurview && option.id !== "endpoint-dlp"
-        ? "The Purview Suite FLW table does not identify a separate restriction for this category. Verify the selected settings against your entitlement."
-        : details[option.id];
-      const upgrade = !frontlinePurview &&
-        (option.id === "dlp" || option.id === "auto-labeling" || option.id === "endpoint-dlp")
-        ? ` Add ${addOns.join(" or ")} for additional ${option.name} capabilities.`
-        : "";
-      return `${option.name}: ${detail}${upgrade}`;
-    });
-    return categoryNotes.join(" ");
-  }
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
   if (eligibleLicenseIds.length === 0) return undefined;
-  if (
-    eligibleLicenseIds.some((licenseId) =>
-      dataSecurityFullExperienceLicenseIds.has(licenseId),
-    )
-  ) {
-    return undefined;
-  }
-
-  if (
-    eligibleLicenseIds.length > 0 &&
-    eligibleLicenseIds.every((licenseId) => f1LicenseIds.has(licenseId)) &&
-    !eligibleLicenseIds.some((licenseId) =>
-      flwPurviewSuiteLicenseIds.has(licenseId),
-    )
-  ) {
-    return "Microsoft 365 F1 supports Sensitivity labels only. Add Microsoft Purview Suite FLW for additional Data Security capabilities with limitations; eDLP policies are not included.";
-  }
-
-  if (
-    eligibleLicenseIds.length > 0 &&
-    eligibleLicenseIds.every((licenseId) =>
-      licenseId.startsWith("f1") || licenseId.startsWith("f3"),
-    ) &&
-    eligibleLicenseIds.some((licenseId) =>
-      flwPurviewSuiteLicenseIds.has(licenseId),
-    )
-  ) {
-    return "Microsoft Purview Suite FLW supports Data Security with limitations; eDLP policies are not included. The repository additionally requires Defender Suite for the full frontline eDLP experience; confirm the combined Purview and Defender entitlements before using endpoint policies.";
-  }
-
-  if (
-    eligibleLicenseIds.some((licenseId) =>
-      ["business-premium", "business-premium-defender", "e3", "e3-defender"].includes(licenseId),
-    )
-  ) {
-    const addOns = [
-      ...(eligibleLicenseIds.some((licenseId) => licenseId.startsWith("e3"))
-        ? ["Microsoft Purview Suite for Microsoft 365 E3"]
-        : []),
-      ...(eligibleLicenseIds.some((licenseId) => licenseId.startsWith("business-premium"))
-        ? ["Microsoft Purview Suite for Business Premium"]
-        : []),
-    ];
-    return `The selected licenses provide Data Security with limitations, without the full DLP and auto-labelling experience. Add ${addOns.join(" or ")} for the full Data Security experience.`;
-  }
-
-  return "The selected frontline licenses provide Data Security with limitations. Add Microsoft Purview Suite FLW for additional Data Security capabilities; eDLP policies are not included with this add-on.";
+  const limitedOptions = getSecurityGoalOptions("data-protection").filter((option) =>
+    optionIds.includes(option.id) &&
+    getSecurityGoalOptionExperience(
+      "data-protection", eligibleLicenseIds, option.platformIds, option.id,
+    ) === "limited",
+  );
+  if (limitedOptions.length === 0) return undefined;
+  const hasBusinessOrE3 = eligibleLicenseIds.some((id) =>
+    id.startsWith("business-premium") || id.startsWith("e3"),
+  );
+  const addOns = [
+    ...(eligibleLicenseIds.some((id) => id.startsWith("business-premium"))
+      ? ["Microsoft Purview Suite for Business Premium"] : []),
+    ...(eligibleLicenseIds.some((id) => id.startsWith("e3"))
+      ? ["Microsoft Purview Suite for Microsoft 365 E3"] : []),
+    ...(!hasBusinessOrE3 ? ["Microsoft Purview Suite FLW for Microsoft 365 F1/F3"] : []),
+  ].join(" or ");
+  const details: Record<string, string> = {
+    "sensitivity-labels": "Verify the selected sensitivity-label and publishing settings against your Purview Suite FLW entitlement.",
+    "dlp": hasBusinessOrE3
+      ? `DLP for emails and files is included. Add ${addOns} to unlock DLP for Teams chat.`
+      : `No DLP features are included with the selected base frontline licenses. Add ${addOns} to unlock all DLP features.`,
+    "retention": hasBusinessOrE3
+      ? `Manual retention labels, basic organization-wide or location-wide retention policies, and Teams message retention policies are included. Add ${addOns} to unlock rules-based automatic retention policies, machine-learning-based retention, and Records Management.`
+      : `Manual retention labels and Teams message retention policies are included. All other retention capabilities, including basic organization-wide or location-wide retention policies, rules-based automatic retention policies, machine-learning-based retention, and Records Management, require ${addOns}.`,
+    "endpoint-dlp": `Endpoint DLP (eDLP) is not included with the selected base licenses. Add ${addOns} to unlock Endpoint DLP.`,
+    "auto-labeling": `Auto labelling is not included with the selected base licenses. Add ${addOns} to unlock auto labelling.`,
+    "sensitive-information-types": "The licensing table does not specify individual SIT entitlements in the limited tier. Verify the selected sensitive information types against your entitlement before deployment.",
+  };
+  return limitedOptions.map((option) => `${option.name}: ${details[option.id]}`).join(" ");
 }
 
 export function getSecurityGoalOptionExperience(
@@ -834,6 +768,11 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "data-protection" && optionId &&
+    purviewSuiteUnlockedCategoryIds.has(optionId) &&
+    licenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id))) {
+    return "full";
+  }
   if (goalId === "administrator-protection" &&
     platformIds.some((platformId) => getAdministratorProtectionLicenseNote(licenseIds, platformId))) {
     return "limited";
