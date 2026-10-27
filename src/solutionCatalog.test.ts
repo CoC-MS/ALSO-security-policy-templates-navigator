@@ -270,10 +270,10 @@ describe("security goal recommendations", () => {
       .toContain("Add Microsoft Purview Suite for Business Premium");
   });
 
-  it("locks only Attack protection as Coming and links its new repository", () => {
+  it("unlocks Attack protection and retains its mapper repository", () => {
     expect(securityGoalNavigation.filter((goal) =>
       "comingSoon" in goal && goal.comingSoon,
-    ).map((goal) => goal.id)).toEqual(["attack-protection"]);
+    ).map((goal) => goal.id)).toEqual([]);
     expect(securityGoalNavigation[0].repositoryUrl).toBe(
       "https://github.com/CoC-MS/CoC-MS-ALSO-Microsoft-Security-AttackPrevention",
     );

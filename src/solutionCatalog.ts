@@ -385,7 +385,7 @@ export const identityAndAccessGoalIds: readonly SecurityGoalId[] = [
 export const securityGoalNavigation = [
   {
     ...securityGoals[0],
-    comingSoon: true,
+    comingSoon: false,
     repositoryUrl: "https://github.com/CoC-MS/CoC-MS-ALSO-Microsoft-Security-AttackPrevention",
   },
   {

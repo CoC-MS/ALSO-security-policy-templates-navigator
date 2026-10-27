@@ -44,6 +44,7 @@ import {
 import { PolicyCounters } from "./PolicyCounters";
 import { Faq } from "./Faq";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
+import { AttackProtectionRecommendation } from "./AttackProtectionRecommendation";
 import { BusinessLicensePrerequisites } from "./BusinessLicensePrerequisites";
 import {
   AiSecurityLicenseActions,
@@ -60,6 +61,18 @@ type Step =
   | "result"
   | "overview"
   | "faq";
+
+function ProfessionalServicesPanel() {
+  return (
+    <aside className="professional-services-panel" aria-labelledby="professional-services-heading">
+      <h2 id="professional-services-heading">Need implementation help or consulting?</h2>
+      <button className="professional-services-button" type="button" disabled>
+        Request Professional Services Help from ALSO CoE
+      </button>
+      <p>Coming soon</p>
+    </aside>
+  );
+}
 
 function renderWindowsServerLicenseNote(note: string) {
   const productTermsPrerequisite =
@@ -841,7 +854,7 @@ function App() {
                     if (selectedGoals.length === 0) return;
                     setStep(
                       selectedGoals.every((goal) =>
-                        goal.options.every(isAutoSelectedOption),
+                        goal.id === "attack-protection" || goal.options.every(isAutoSelectedOption),
                       )
                         ? "result"
                         : "focus",
@@ -893,7 +906,7 @@ function App() {
                 <button className="button primary" type="button"
                   disabled={!selectedGoalIds.some((id) => identityAndAccessGoalIds.includes(id))}
                   onClick={() => setStep(selectedGoals.every((goal) =>
-                    goal.options.every(isAutoSelectedOption),
+                    goal.id === "attack-protection" || goal.options.every(isAutoSelectedOption),
                   ) ? "result" : "focus")}>
                   Continue with selected policies &rarr;
                 </button>
@@ -929,7 +942,7 @@ function App() {
               <p className="intro">
                 {selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "attack-protection"
-                  ? "Choose an attack scenario to find relevant policy templates."
+                  ? "Explore the MITRE ATT&CK policy mapper using the licensing guidance for your selected Microsoft 365 plans."
                   : selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "endpoint-protection"
                   ? "Select the operating systems you want to protect, then choose policy categories for each."
@@ -1055,21 +1068,24 @@ function App() {
             </section>
           )}
 
-          {step === "result" && eligibleLicenses.length > 0 && selectedGoals.length > 0 && selectedOptions.length > 0 && (
+          {step === "result" && eligibleLicenses.length > 0 && selectedGoals.length > 0 && (selectedOptions.length > 0 || selectedGoalIds.includes("attack-protection")) && (
             <section className="result-wrap" aria-labelledby="main-title">
               <div className="result-heading">
                 <div className="eyebrow">{selectedGoals.map((goal) => goal.name).join(" + ")}</div>
                 <h1 id="main-title" tabIndex={-1}>Recommended security policy templates</h1>
-                <p>Based on <strong>{eligibleLicenses.map((license) => license.name).join(", ")}</strong> and the needs you selected, explore these ALSO repositories.</p>
+                <p>Based on <strong>{eligibleLicenses.map((license) => license.name).join(", ")}</strong> and the needs you selected, explore these ALSO {selectedGoalIds.includes("attack-protection") ? "policy resources" : "repositories"}.</p>
                 <div className="recommendation-context" aria-label="Selected needs">
                   {selectedOptions.map((option) => (
                     <span className="selection-pill" key={option.selectionId}>{option.name}</span>
                   ))}
                 </div>
               </div>
-              {recommendedRepositories.length > 0 ? (
+              {recommendedRepositories.length > 0 || selectedGoalIds.includes("attack-protection") ? (
                 <div className="result-recommendations-layout">
                   <div className="recommendation-grid result-recommendation-grid">
+                  {selectedGoalIds.includes("attack-protection") && (
+                    <AttackProtectionRecommendation licenseIds={eligibleLicenseIds} />
+                  )}
                   {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
                   const platformSelections = selectedOptions.filter((option) =>
@@ -1457,15 +1473,7 @@ function App() {
                   );
                   })}
                   </div>
-                  <aside className="professional-services-panel" aria-labelledby="professional-services-heading">
-                    <h2 id="professional-services-heading">
-                      Need implementation help or consulting?
-                    </h2>
-                    <button className="professional-services-button" type="button" disabled>
-                      Request Professional Services Help from ALSO CoE
-                    </button>
-                    <p>Coming soon</p>
-                  </aside>
+                  <ProfessionalServicesPanel />
                 </div>
               ) : (
                 <div className="result-card">
@@ -1482,6 +1490,7 @@ function App() {
                       selectedGoalIds.includes("endpoint-protection")
                         ? "endpoint-categories"
                         : selectedGoals.some((goal) =>
+                          goal.id !== "attack-protection" &&
                           goal.options.some((option) => !isAutoSelectedOption(option)),
                       )
                         ? "focus"
