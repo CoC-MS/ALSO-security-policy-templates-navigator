@@ -744,24 +744,38 @@ export function getDataSecurityLicenseNote(
       ) === "limited",
     );
     if (limitedOptions.length === 0) return undefined;
-    const licenseNote = getDataSecurityLicenseNote(licenseIds);
-    if (!licenseNote) return undefined;
     const details: Record<string, string> = {
       "sensitivity-labels": "The Purview Suite FLW table classifies this package as limited; verify the selected label and publishing settings against your entitlement.",
       "dlp": "The base BP/E3/F3 licensing tier does not include the full DLP experience. Review the selected policy locations and capabilities before deployment.",
       "endpoint-dlp": "The full Endpoint DLP experience is not included in the base BP/E3/F3 tier. The Purview Suite FLW table excludes eDLP policies; its additional note calls for Defender Suite for the full frontline eDLP experience. Confirm both Purview and Defender entitlements before using endpoint policies.",
       "retention": "The licensing table does not specify which retention settings are covered in the limited tier. Verify the selected retention and automatic-retention capabilities before deployment; a Limited label does not mean all retention is unavailable.",
       "auto-labeling": "The base BP/E3/F3 tier does not include the full auto-labelling experience. Verify entitlement before enabling automatic classification and labelling.",
-      "sensitive-information-types": "The licensing table does not specify individual SIT entitlements in the limited tier. Verify the selected sensitive information types and the DLP or labelling policies that use them.",
+      "sensitive-information-types": "The licensing table does not specify individual SIT entitlements in the limited tier. Verify the selected sensitive information types against your entitlement before deployment.",
     };
-    const frontlinePurview = licenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id));
+    const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+    const frontlineOnly = eligibleLicenseIds.every((id) =>
+      id.startsWith("f1") || id.startsWith("f3"),
+    );
+    const frontlinePurview = frontlineOnly &&
+      eligibleLicenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id));
+    const addOns = [
+      ...(eligibleLicenseIds.some((id) => id.startsWith("business-premium"))
+        ? ["Microsoft Purview Suite for Business Premium"] : []),
+      ...(eligibleLicenseIds.some((id) => id.startsWith("e3"))
+        ? ["Microsoft Purview Suite for Microsoft 365 E3"] : []),
+      ...(frontlineOnly ? ["Microsoft Purview Suite FLW"] : []),
+    ];
     const categoryNotes = limitedOptions.map((option) => {
       const detail = frontlinePurview && option.id !== "endpoint-dlp"
-        ? "The Purview Suite FLW table supports this package with limitations and excludes eDLP policies; it does not identify a separate restriction for this category. Verify the selected settings against your entitlement."
+        ? "The Purview Suite FLW table does not identify a separate restriction for this category. Verify the selected settings against your entitlement."
         : details[option.id];
-      return `${option.name}: ${detail}`;
+      const upgrade = !frontlinePurview &&
+        (option.id === "dlp" || option.id === "auto-labeling" || option.id === "endpoint-dlp")
+        ? ` Add ${addOns.join(" or ")} for additional ${option.name} capabilities.`
+        : "";
+      return `${option.name}: ${detail}${upgrade}`;
     });
-    return `${licenseNote} ${categoryNotes.join(" ")}`;
+    return categoryNotes.join(" ");
   }
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
   if (eligibleLicenseIds.length === 0) return undefined;

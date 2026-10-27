@@ -21,6 +21,23 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(["business-premium", "e3", "f3", "f3-purview"] as const)(
+    "never mentions unselected Data Security categories for %s",
+    (licenseId) => {
+      const categoryTerms = [
+        ["dlp", /Endpoint|eDLP|auto.labell|retention|sensitive information types|sensitivity labels/i],
+        ["sensitive-information-types", /DLP|auto.labell|retention|sensitivity labels/i],
+        ["auto-labeling", /DLP|retention|sensitive information types|sensitivity labels/i],
+        ["retention", /DLP|auto.labell|sensitive information types|sensitivity labels/i],
+      ] as const;
+      for (const [id, unrelated] of categoryTerms) {
+        const note = getDataSecurityLicenseNote([licenseId], [id]);
+        expect(note).toBeTruthy();
+        expect(note).not.toMatch(unrelated);
+      }
+    },
+  );
+
   it.each(["business-premium", "e3", "f3"] as const)(
     "scopes Data Security limitation details to selected categories for %s",
     (licenseId) => {
