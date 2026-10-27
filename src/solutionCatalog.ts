@@ -4,6 +4,7 @@ import {
   hasEntraIdP2,
   getCloudAppsConditionalAccessLicenseNote,
   requiresWorkloadIdPremiumForOAuthApps,
+  manualCloudAppsControlNote,
   isLicenseEligible,
   type License,
   type Platform,
@@ -666,14 +667,10 @@ export function getEndpointFeatureLicenseNote(
   );
   if (platformId && hasBusinessOrE3) {
     if (platformId === "windows-11") {
-      return `The Windows BP package supports your selected licenses, but does not provide the full E5-level policy experience. The Defender for Cloud Apps integration requires a separate Defender for Cloud Apps entitlement; it is not included just because the BP package is supported. ${intuneSuiteNote} ${upgradeNote}`;
+      return `The Windows BP package supports your selected licenses, but does not provide the full E5-level policy experience. The Defender for Cloud Apps integration requires a separate Defender for Cloud Apps entitlement; it is not included just because the BP package is supported. ${manualCloudAppsControlNote} ${intuneSuiteNote} ${upgradeNote}`;
     }
     if (platformId === "macos" || platformId === "ios-ipados" || platformId === "android") {
-      const customIndicatorsNote =
-        platformId === "macos" && eligibleLicenseIds.some((id) => id.startsWith("business-premium"))
-          ? " Business Premium uses the Custom Indicators and Web Content Filtering workflow instead of the Defender for Cloud Apps Cloud App Catalog."
-          : "";
-      return `The ${getPlatform(platformId).name} BP package supports your selected licenses with limitations: the full Defender for Cloud Apps experience is not included.${customIndicatorsNote} ${upgradeNote}`;
+      return `The ${getPlatform(platformId).name} BP package supports your selected licenses with limitations: the full Defender for Cloud Apps experience is not included. ${manualCloudAppsControlNote} ${upgradeNote}`;
     }
   }
 

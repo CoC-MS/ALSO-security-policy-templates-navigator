@@ -157,6 +157,9 @@ export function requiresWorkloadIdPremiumForOAuthApps(
   return eligibleLicenseIds.length > 0 && !eligibleLicenseIds.includes("e7");
 }
 
+export const manualCloudAppsControlNote =
+  "Defender for Business / Defender for Endpoint P1 can only manually control access using Custom Network Indicators and Web Content Filtering.";
+
 export function getCloudAppsConditionalAccessLicenseNote(
   licenseIds: readonly License["id"][],
 ): { title: string; message: string } | undefined {
@@ -173,9 +176,15 @@ export function getCloudAppsConditionalAccessLicenseNote(
   const usesFlwAddOns = eligibleLicenseIds.every(
     (licenseId) => licenseId.startsWith("f1") || licenseId.startsWith("f3"),
   );
+  const hasBusinessOrE3 = eligibleLicenseIds.some((id) =>
+    id.startsWith("business-premium") || id.startsWith("e3"),
+  );
+  const hasFrontline = eligibleLicenseIds.some((id) =>
+    id.startsWith("f1") || id.startsWith("f3"),
+  );
   return {
     title: "Cloud apps with limited experience",
-    message: `With ${selectedNames}, Microsoft Defender for Cloud Apps is required to unlock the full Cloud apps experience. It is also included in the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on. Defender for Business / Defender for Endpoint P1 can only manually control access using Custom Network Indicators and Web Content Filtering.`,
+    message: `With ${selectedNames}, Microsoft Defender for Cloud Apps is required to unlock the full Cloud apps experience. It is also included in the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${hasBusinessOrE3 ? ` For Business Premium and Microsoft 365 E3: ${manualCloudAppsControlNote}` : ""}${hasFrontline ? " Microsoft 365 F1 and F3 do not include Defender for Cloud Apps control. Add Microsoft Defender Suite FLW to unlock Cloud Apps control for these frontline licenses." : ""}`,
   };
 }
 

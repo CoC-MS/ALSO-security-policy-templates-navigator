@@ -869,12 +869,25 @@ describe("security goal recommendations", () => {
     },
   );
 
-  it("explains the macOS Custom Indicators alternative only for Business Premium", () => {
-    expect(getEndpointFeatureLicenseNote("defender", ["business-premium"], "macos"))
-      .toContain("Custom Indicators and Web Content Filtering workflow instead of");
-    expect(getEndpointFeatureLicenseNote("defender", ["e3"], "macos"))
-      .not.toContain("Custom Indicators");
-  });
+  it.each(["business-premium", "business-premium-purview", "e3", "e3-purview"] as const)(
+    "explains manual Cloud Apps control on limited client endpoint notes for %s",
+    (id) => {
+      for (const platform of ["windows-11", "macos", "ios-ipados", "android"] as const) {
+        expect(getEndpointFeatureLicenseNote("defender", [id], platform))
+          .toContain("Defender for Business / Defender for Endpoint P1 can only manually control access using Custom Network Indicators and Web Content Filtering.");
+      }
+    },
+  );
+
+  it.each(["f1", "f1-purview", "f3", "f3-purview", "e5", "e7", "e3-defender", "business-premium-defender"] as const)(
+    "does not advertise base BP/E3 manual Cloud Apps control on endpoints for %s",
+    (id) => {
+      for (const platform of ["windows-11", "macos", "ios-ipados", "android"] as const) {
+        expect(getEndpointFeatureLicenseNote("defender", [id], platform) ?? "")
+          .not.toContain("Custom Network Indicators");
+      }
+    },
+  );
 
   it.each(["f1", "f1-purview", "f3", "f3-purview"] as const)(
     "retains frontline limitations for Intune-only selections with %s",

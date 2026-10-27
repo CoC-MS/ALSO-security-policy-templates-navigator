@@ -61,9 +61,18 @@ describe("license catalog", () => {
     for (const id of ["business-premium", "e3", "f1", "f3", "e3-purview", "f1-purview"] as const) {
       const note = getCloudAppsConditionalAccessLicenseNote([id]);
       expect(note?.message).toContain("Microsoft Defender for Cloud Apps is required");
-      expect(note?.message).toContain("Custom Network Indicators and Web Content Filtering");
+      if (id.startsWith("f")) {
+        expect(note?.message).not.toContain("Custom Network Indicators");
+        expect(note?.message).not.toContain("Defender for Business");
+        expect(note?.message).toContain("Add Microsoft Defender Suite FLW to unlock Cloud Apps control");
+      } else {
+        expect(note?.message).toContain("Custom Network Indicators and Web Content Filtering");
+      }
       expect(note?.message).not.toContain("Agent 365");
     }
+    const mixed = getCloudAppsConditionalAccessLicenseNote(["business-premium", "f1"]);
+    expect(mixed?.message).toContain("For Business Premium and Microsoft 365 E3:");
+    expect(mixed?.message).toContain("Add Microsoft Defender Suite FLW");
   });
 
   it("blocks only Business Basic and Business Standard", () => {
