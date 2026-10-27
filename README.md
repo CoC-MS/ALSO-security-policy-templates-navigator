@@ -24,6 +24,8 @@ Identity and Access limited-experience notes identify Microsoft Entra ID P2 as t
 
 ## Data Security limited-experience notes
 
+Limited-experience Sensitive Information Types (SITs) notes explain that the Purview Suite add-on also unlocks sensitivity labels based on SITs, EDM (Exact Data Match), and Trainable Classifiers. The shared Data Security card retains its category-specific heading and Purview repository licensing-guide link.
+
 Final Data Security cards explain only selected limited categories and link to the [Purview licensing guide](https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview#purview-licensing-guide). The following feature mapping reflects the user-directed licensing correction on 27 October 2026 and supersedes the older blanket frontline eDLP exclusion:
 
 | Category | Business Premium / Microsoft 365 E3 | Microsoft 365 F1 / F3 |

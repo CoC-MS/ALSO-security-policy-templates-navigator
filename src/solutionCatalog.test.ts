@@ -20,6 +20,24 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(licenses.filter((license) => license.eligible))(
+    "shows the SIT upgrade message only for limited experience with $name",
+    ({ id }) => {
+      const optionId = "sensitive-information-types";
+      const limited = getSecurityGoalOptionExperience(
+        "data-protection", [id], ["purview"], optionId,
+      ) === "limited";
+      const note = getDataSecurityLicenseNote([id], [optionId]);
+      if (limited) {
+        expect(note).toBe("Sensitive Information Types (SITs): Requires the Purview Suite add-on, which also unlocks sensitivity labels based on SITs and other advanced classifiers, such as EDM (Exact Data Match) and Trainable Classifiers.");
+        expect(getLicensingPrerequisiteTitle(["Sensitive Information Types (SITs)"]))
+          .toBe("Sensitive Information Types (SITs) with limited experience");
+      } else {
+        expect(note).toBeUndefined();
+      }
+    },
+  );
+
   it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
     "mentions only the selected frontline plan in upgrade notes for %s",
     (id) => {
@@ -236,7 +254,7 @@ describe("security goal recommendations", () => {
     (licenseId) => {
       const categoryTerms = [
         ["dlp", /Endpoint|eDLP|auto.labell|retention|sensitive information types|sensitivity labels/i],
-        ["sensitive-information-types", /DLP|auto.labell|retention|sensitivity labels/i],
+        ["sensitive-information-types", /DLP|auto.labell|retention/i],
         ["auto-labeling", /DLP|retention|sensitive information types|sensitivity labels/i],
         ["retention", /DLP|auto.labell|sensitive information types|sensitivity labels/i],
       ] as const;
@@ -255,7 +273,9 @@ describe("security goal recommendations", () => {
         expect(note).toContain(`${option.name}:`);
         expect(note).not.toContain("undefined");
         if (option.id === "sensitive-information-types") {
-          expect(note).toContain("table does not specify");
+          expect(note).toContain("Requires the Purview Suite add-on");
+          expect(note).toContain("sensitivity labels based on SITs");
+          expect(note).toContain("EDM (Exact Data Match) and Trainable Classifiers");
         }
       }
     },

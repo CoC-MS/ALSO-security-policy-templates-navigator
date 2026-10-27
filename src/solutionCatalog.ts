@@ -700,7 +700,7 @@ export function getDataSecurityLicenseNote(
       : `Manual retention labels and Teams message retention policies are included. All other retention capabilities, including basic organization-wide or location-wide retention policies, rules-based automatic retention policies, machine-learning-based retention, and Records Management, require ${addOns}.`,
     "endpoint-dlp": `Endpoint DLP (eDLP) is not included with the selected base licenses. Add ${addOns} to unlock Endpoint DLP.`,
     "auto-labeling": `Auto labelling is not included with the selected base licenses. Add ${addOns} to unlock auto labelling.`,
-    "sensitive-information-types": "The licensing table does not specify individual SIT entitlements in the limited tier. Verify the selected sensitive information types against your entitlement before deployment.",
+    "sensitive-information-types": "Requires the Purview Suite add-on, which also unlocks sensitivity labels based on SITs and other advanced classifiers, such as EDM (Exact Data Match) and Trainable Classifiers.",
   };
   return limitedOptions.map((option) => `${option.name}: ${details[option.id]}`).join(" ");
 }
