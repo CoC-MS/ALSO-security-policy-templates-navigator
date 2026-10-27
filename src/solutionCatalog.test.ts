@@ -324,10 +324,10 @@ describe("security goal recommendations", () => {
         expect(note?.message).toContain("Internet Access or Private Access");
         expect(note?.message).not.toContain("Entra ID P2");
       } else if (option.id === "agent-policies") {
-        expect(note?.message).toContain("Agent 365 add-on");
+        expect(note?.message).toContain("Agent 365 license");
         expect(note?.message).not.toContain("Entra ID P2");
       } else {
-        expect(note?.message).toContain("Some of these policies require Microsoft Entra ID P2");
+        expect(note?.message).toContain("Microsoft Entra ID P2 add-on to unlock PIM authentication context, risky user policies, and risky sign-in policies");
         expect(note?.message).toContain("Microsoft Defender Suite for Microsoft 365 E3");
         expect(note?.message).not.toContain("Agent 365");
       }
@@ -341,15 +341,32 @@ describe("security goal recommendations", () => {
     expect(users?.message).toContain("Microsoft Entra ID P2 add-on");
     expect(users?.includePlanComparisons).toBe(true);
     const agents = getConditionalAccessCategoryLicenseNote(["agent-policies"], ["e5"]);
-    expect(agents?.message).toContain("Agent 365 add-on");
+    expect(agents?.message).toContain("Agent 365 license");
     expect(agents?.includePlanComparisons).toBe(true);
     const mixed = getConditionalAccessCategoryLicenseNote(["agent-policies", "internal-user-policies"], ["e3"]);
-    expect(mixed?.message).toContain("Agent 365 add-on");
+    expect(mixed?.message).toContain("Agent 365 license");
     expect(mixed?.message).toContain("Entra ID P2 add-on");
     expect(mixed?.includePlanComparisons).toBe(true);
     expect(getConditionalAccessCategoryLicenseNote(["service-principal-policies"], ["e3"])).toBeUndefined();
     expect(getConditionalAccessCategoryLicenseNote([], ["e3"])).toBeUndefined();
   });
+
+  it.each(["business-premium", "e3", "f1", "f3"] as const)(
+    "scopes Identity and Access unlock details to the selected categories for %s",
+    (id) => {
+      for (const category of ["administrator-policies", "internal-user-policies", "service-account-policies", "guest-user-policies"]) {
+        const note = getConditionalAccessCategoryLicenseNote([category], [id]);
+        expect(note?.message).toContain("Entra ID P2 add-on to unlock PIM authentication context, risky user policies, and risky sign-in policies");
+        expect(note?.message).not.toContain("Agent 365");
+      }
+      const agent = getConditionalAccessCategoryLicenseNote(["agent-policies"], [id]);
+      expect(agent?.message).toContain("Add an Agent 365 license to unlock all Agent policies");
+      expect(agent?.message).not.toMatch(/Entra ID P2|PIM|risky/);
+      expect(getConditionalAccessCategoryLicenseNote(
+        ["agent-policies", "internal-user-policies"], [id],
+      )?.message).toContain("PIM authentication context");
+    },
+  );
 
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
     "matches Conditional Access prerequisites and badges to %s",

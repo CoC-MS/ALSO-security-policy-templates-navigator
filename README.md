@@ -10,6 +10,10 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
+## Identity and Access limited-experience notes
+
+Identity and Access limited-experience notes identify Microsoft Entra ID P2 as the upgrade for PIM authentication context, risky user policies, and risky sign-in policies when P2 is missing. Agent 365 unlock guidance is shown only when the Agent policies category is selected; existing P2 and Microsoft 365 E7 entitlements suppress unnecessary upgrade notes. Windows administrator protection retains its separate Intune Suite requirements.
+
 ## Data Security limited-experience notes
 
 Final Data Security cards explain only selected limited categories and link to the [Purview licensing guide](https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview#purview-licensing-guide). The following feature mapping reflects the user-directed licensing correction on 27 October 2026 and supersedes the older blanket frontline eDLP exclusion:

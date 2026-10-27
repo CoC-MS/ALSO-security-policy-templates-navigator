@@ -33,7 +33,7 @@ export interface SecurityGoal {
 const ATTACK_POLICY_NOTE =
   "These recommended policies are a good starting point, but implementing them does not guarantee full protection.";
 const AGENT_POLICY_NOTE =
-  "Agent policies require the Agent 365 add-on. Agent 365 is also included in Microsoft 365 E7.";
+  "Add an Agent 365 license to unlock all Agent policies. Agent 365 is also included in Microsoft 365 E7.";
 
 export const securityGoals = [
   {
@@ -499,7 +499,7 @@ export function getConditionalAccessCategoryLicenseNote(
   ];
   const messages = [
     ...(needsEntraP2
-      ? [`Some of these policies require Microsoft Entra ID P2. Add the Microsoft Entra ID P2 add-on, or get it with ${suiteAddOns.join(" or ")}.`]
+      ? [`Add the Microsoft Entra ID P2 add-on to unlock PIM authentication context, risky user policies, and risky sign-in policies. Microsoft Entra ID P2 is also included with ${suiteAddOns.join(" or ")}.`]
       : []),
     ...(needsAgent365 ? [AGENT_POLICY_NOTE] : []),
     ...(needsGlobalSecureAccess

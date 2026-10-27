@@ -384,6 +384,7 @@ describe("Business Premium-only results", () => {
     )?.message;
 
     expect(message).toContain("add Microsoft Entra ID Plan 2");
+    expect(message).toContain("to unlock PIM authentication context, risky user policies, and risky sign-in policies");
     expect(message).toContain("included with the Microsoft Defender Suite add-on");
     expect(message).toContain(
       "An Agent 365 license is required for all Agent 365 policy templates",

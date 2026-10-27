@@ -1091,10 +1091,8 @@ function App() {
                       option.selectionId.startsWith("attack-protection:"),
                     );
                   const suppressAgent365Guidance = sourcePlatform.id === "conditional-access" &&
-                    platformSelections.length > 0 &&
-                    platformSelections.every((option) =>
-                      option.selectionId.startsWith("attack-protection:") ||
-                      option.selectionId === "app-protection:oauth-apps",
+                    !platformSelections.some((option) =>
+                      option.selectionId === "conditional-access:agent-policies",
                     );
                   const oauthAppsOnly =
                     sourcePlatform.id === "conditional-access" &&

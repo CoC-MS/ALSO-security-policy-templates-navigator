@@ -460,7 +460,7 @@ export function getLimitedExperienceNoteForLicenses(
       return {
         title: "Limited Conditional Access experience",
         includePlanComparisons: true,
-        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 for risky user and risky sign-in policy templates. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${includeAgent365Guidance ? " An Agent 365 license is required for all Agent 365 policy templates; Agent 365 is also included in Microsoft 365 E7." : ""}`,
+        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 (Entra ID P2) to unlock PIM authentication context, risky user policies, and risky sign-in policies. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${includeAgent365Guidance ? " An Agent 365 license is required for all Agent 365 policy templates; add an Agent 365 license to unlock all Agent policies. Agent 365 is also included in Microsoft 365 E7." : ""}`,
       };
     }
 
@@ -471,7 +471,7 @@ export function getLimitedExperienceNoteForLicenses(
     return {
       title: "Agent 365 license required for full Conditional Access experience",
       includePlanComparisons: false,
-      message: `With ${selectedNames}, add an Agent 365 license to unlock the full Conditional Access policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+      message: `With ${selectedNames}, add an Agent 365 license to unlock all Agent policies. Agent 365 is also included in Microsoft 365 E7.`,
     };
   }
 
