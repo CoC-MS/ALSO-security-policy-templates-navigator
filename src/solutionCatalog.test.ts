@@ -272,13 +272,15 @@ describe("security goal recommendations", () => {
     for (const goal of securityGoals) {
       for (const option of getSecurityGoalOptions(goal.id)) {
         expect(getLicensingPrerequisiteTitle([option.name]))
-          .toBe(`${option.name} licensing prerequisites`);
+          .toBe(`${option.name} with limited experience`);
       }
     }
-    expect(getLicensingPrerequisiteTitle(["Retention"])).toBe("Retention licensing prerequisites");
+    expect(getLicensingPrerequisiteTitle(["Retention"])).toBe("Retention with limited experience");
     expect(getLicensingPrerequisiteTitle(["Retention", "Auto labelling", "Retention"]))
-      .toBe("Retention, Auto labelling licensing prerequisites");
-    expect(getLicensingPrerequisiteTitle([])).toBe("Selected policies licensing prerequisites");
+      .toBe("Retention, Auto labelling with limited experience");
+    expect(getLicensingPrerequisiteTitle([])).toBe("Selected policies with limited experience");
+    expect(getLicensingPrerequisiteTitle(["Antivirus (AV)"], "full"))
+      .toBe("Antivirus (AV) licensing prerequisites");
   });
 
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(

@@ -1261,9 +1261,9 @@ function App() {
                         <span className="choice-icon" aria-hidden="true">{sourcePlatform.shortLabel}</span>
                         <div className="platform-title">
                           <h2>{repository.name}</h2>
-                          {administratorDeviceSelection && sourcePlatform.id === "windows-11" && !administratorLicenseNote && (
-                            <span className="experience-badge full">
-                              Full experience
+                          {!comingSoon && (
+                            <span className={`experience-badge ${limitedSelections.length > 0 ? "limited" : "full"}`}>
+                              {limitedSelections.length > 0 ? "Limited experience" : "Full experience"}
                             </span>
                           )}
                           {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
@@ -1418,6 +1418,10 @@ function App() {
                                 serverPlatformId !== undefined &&
                                 option.platformIds.includes(serverPlatformId),
                               ).map((option) => option.name),
+                              limitedSelections.some((option) =>
+                                serverPlatformId !== undefined &&
+                                option.platformIds.includes(serverPlatformId),
+                              ) ? "limited" : "full",
                             )}</strong>
                             <p>{renderWindowsServerLicenseNote(note)}</p>
                             <p>

@@ -394,9 +394,12 @@ export const securityGoalNavigation = [
   ),
 ] as const;
 
-export function getLicensingPrerequisiteTitle(categoryNames: readonly string[]): string {
+export function getLicensingPrerequisiteTitle(
+  categoryNames: readonly string[],
+  experience: "full" | "limited" = "limited",
+): string {
   const names = [...new Set(categoryNames)];
-  return `${names.length > 0 ? names.join(", ") : "Selected policies"} licensing prerequisites`;
+  return `${names.length > 0 ? names.join(", ") : "Selected policies"} ${experience === "limited" ? "with limited experience" : "licensing prerequisites"}`;
 }
 
 const endpointFullExperienceLicenseIds = new Set<License["id"]>([

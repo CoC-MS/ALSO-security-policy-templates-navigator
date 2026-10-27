@@ -10,9 +10,13 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
+## Final recommendation experience
+
+Each final repository card shows a green Full experience badge when all selected categories for that repository are full, or a yellow Limited experience badge when any selected category is limited. Limitation-note headings use "<selected categories> with limited experience". Separate licensing prerequisites for full-experience server recommendations retain their prerequisite headings.
+
 ## Identity and Access limited-experience notes
 
-Identity and Access limited-experience notes identify Microsoft Entra ID P2 as the upgrade for risky user policies and risky sign-in policies when P2 is missing. PIM authentication context is mentioned only for Administrator policies or Administrator protection selections. Agent 365 unlock guidance is shown only when the Agent policies category is selected; existing P2 and Microsoft 365 E7 entitlements suppress unnecessary upgrade notes. Windows administrator protection retains its separate Intune Suite requirements and explains the EPM (Endpoint Privilege Management) unlock without a Limited experience badge on its Windows 11 recommendation.
+Identity and Access limited-experience notes identify Microsoft Entra ID P2 as the upgrade for risky user policies and risky sign-in policies when P2 is missing. PIM authentication context is mentioned only for Administrator policies or Administrator protection selections. Agent 365 unlock guidance is shown only when the Agent policies category is selected; existing P2 and Microsoft 365 E7 entitlements suppress unnecessary upgrade notes. Windows administrator protection retains its separate Intune Suite requirements and explains the EPM (Endpoint Privilege Management) unlock. Its Windows 11 recommendation follows the shared experience-badge rule.
 
 ## Data Security limited-experience notes
 
