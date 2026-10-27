@@ -1,10 +1,16 @@
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
+import type { License } from "./catalog";
 
-export function BusinessLicensePrerequisites() {
+export function BusinessLicensePrerequisites({
+  licenses,
+}: {
+  licenses: readonly License[];
+}) {
   return (
     <>
       <p>
-        Microsoft 365 Business Standard and Microsoft 365 Business Basic do not
+        {licenses.map((license) => license.name).join(" and ")}{" "}
+        {licenses.length === 1 ? "does" : "do"} not
         include Microsoft Entra ID P1, Intune Plan 1, or Microsoft Defender for
         Business, which are the minimum prerequisites for using our templates.
       </p>

@@ -2,10 +2,15 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { BusinessLicensePrerequisites } from "./BusinessLicensePrerequisites";
 import { licensingDisclaimerText } from "./LicensingDisclaimer";
+import { smbLicenses } from "./catalog";
+
+const unsupportedLicenses = smbLicenses.filter((license) => !license.eligible);
 
 describe("Business license prerequisites", () => {
   it("explains the missing minimum prerequisites for both unsupported plans", () => {
-    const html = renderToStaticMarkup(<BusinessLicensePrerequisites />);
+    const html = renderToStaticMarkup(
+      <BusinessLicensePrerequisites licenses={unsupportedLicenses} />,
+    );
 
     expect(html).toContain("Microsoft 365 Business Standard");
     expect(html).toContain("Microsoft 365 Business Basic");
@@ -15,8 +20,21 @@ describe("Business license prerequisites", () => {
     expect(html).toContain("minimum prerequisites for using our templates");
   });
 
+  it.each(unsupportedLicenses)("mentions only the selected plan for $name", (license) => {
+    const html = renderToStaticMarkup(
+      <BusinessLicensePrerequisites licenses={[license]} />,
+    );
+
+    expect(html).toContain(`${license.name} does not`);
+    for (const other of unsupportedLicenses.filter((item) => item.id !== license.id)) {
+      expect(html).not.toContain(other.name);
+    }
+  });
+
   it("includes the shared disclaimer and both exact comparison links", () => {
-    const html = renderToStaticMarkup(<BusinessLicensePrerequisites />);
+    const html = renderToStaticMarkup(
+      <BusinessLicensePrerequisites licenses={unsupportedLicenses} />,
+    );
 
     expect(html).toContain(licensingDisclaimerText);
     expect(html).toContain("Microsoft Enterprise Plan Comparison");
