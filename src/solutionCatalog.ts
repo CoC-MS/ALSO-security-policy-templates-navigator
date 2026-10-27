@@ -433,6 +433,14 @@ const frontlineUnsupportedDefenderPlatforms = new Set<Platform["id"]>([
   "linux-server",
 ]);
 
+function isFullExperienceClientEndpointOption(option: SolutionOption | undefined): boolean {
+  return Boolean(option?.endpointFeature &&
+    !option.id.endsWith("-antivirus") &&
+    option.platformIds.every((id) =>
+      id === "windows-11" || id === "macos" || id === "ios-ipados" || id === "android",
+    ));
+}
+
 const dataSecurityFullExperienceLicenseIds = new Set<License["id"]>([
   "e7",
   "e5",
@@ -563,6 +571,10 @@ export function isSecurityGoalOptionAvailable(
 ): boolean {
   const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
   if (option?.comingSoon && !option.allowRepositoryPreview) return false;
+  if (goalId === "endpoint-protection" &&
+    isFullExperienceClientEndpointOption(option)) {
+    return licenseIds.some(isLicenseEligible);
+  }
   if (
     goalId === "endpoint-protection" &&
     option?.endpointFeature === "defender"
@@ -814,6 +826,9 @@ export function getSecurityGoalOptionExperience(
 
   if (goalId === "endpoint-protection" && optionId) {
     const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
+    if (isFullExperienceClientEndpointOption(option)) {
+      return licenseIds.some(isLicenseEligible) ? "full" : "limited";
+    }
     if (option?.endpointFeature === "intune") {
       return licenseIds.some((licenseId) =>
         endpointFullExperienceLicenseIds.has(licenseId) ||

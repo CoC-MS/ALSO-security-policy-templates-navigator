@@ -718,7 +718,54 @@ describe("security goal recommendations", () => {
     },
   );
 
-  it("applies F3's supported Defender subset and F1's Intune-only limitation", () => {
+  it.each(licenses.filter((license) => license.eligible))(
+    "limits only AV on client endpoint platforms for $name",
+    (license) => {
+      const options = getSecurityGoalOptions("endpoint-protection").filter((option) =>
+        option.endpointFeature &&
+        option.platformIds.every((id) =>
+          id === "windows-11" || id === "macos" || id === "ios-ipados" || id === "android",
+        ),
+      );
+      for (const option of options) {
+        const experience = getSecurityGoalOptionExperience(
+          "endpoint-protection", [license.id], option.platformIds, option.id,
+        );
+        if (!option.id.endsWith("-antivirus")) {
+          expect(experience).toBe("full");
+          expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [license.id]))
+            .toBe(true);
+          expect(getLimitedExperienceSelections(
+            [{ ...option, goalId: "endpoint-protection" as const }],
+            [license.id],
+            option.platformIds[0],
+          )).toEqual([]);
+        }
+      }
+    },
+  );
+
+  it("keeps server and Linux category experiences unchanged", () => {
+    for (const licenseId of ["business-premium", "e3", "f3", "f1"] as const) {
+      for (const [platform, id] of [
+        ["windows-servers", "server-antivirus"],
+        ["linux-server", "linux-server-antivirus"],
+        ["linux-desktop", "linux-desktop-antivirus"],
+      ] as const) {
+        expect(getSecurityGoalOptionExperience(
+          "endpoint-protection", [licenseId], [platform], id,
+        )).toBe("limited");
+      }
+    }
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", ["f1"], ["linux-desktop"], "linux-desktop-encryption",
+    )).toBe("limited");
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", ["business-premium"], ["linux-desktop"], "linux-desktop-encryption",
+    )).toBe("full");
+  });
+
+  it("applies F3's AV subset and F1's AV restriction without limiting other client categories", () => {
     for (const optionId of [
       "windows-antivirus",
       "windows-firewall",
@@ -731,13 +778,13 @@ describe("security goal recommendations", () => {
         ["f3"],
         ["windows-11"],
         optionId,
-      )).toBe("limited");
+      )).toBe(optionId === "windows-antivirus" ? "limited" : "full");
     }
     expect(isSecurityGoalOptionAvailable(
       "endpoint-protection",
       "macos-defender-onboarding",
       ["f3"],
-    )).toBe(false);
+    )).toBe(true);
     expect(getEndpointFeatureLicenseNote("defender", ["f3"]))
       .toContain("Defender Antimalware, Microsoft Defender Firewall, Exploit Guard");
 
@@ -756,7 +803,7 @@ describe("security goal recommendations", () => {
       ["f1"],
       ["ios-ipados"],
       "ios-app-protection",
-    )).toBe("limited");
+    )).toBe("full");
     expect(getEndpointFeatureLicenseNote("intune", ["f1"]))
       .toContain("Intune configuration settings only");
   });
@@ -782,7 +829,7 @@ describe("security goal recommendations", () => {
           "endpoint-protection",
           option.id,
           ["f3"],
-        )).toBe(false);
+        )).toBe(!option.id.endsWith("-antivirus"));
         const note = getEndpointFeatureLicenseNote(
           option.endpointFeature,
           ["f3"],
@@ -802,14 +849,14 @@ describe("security goal recommendations", () => {
           "endpoint-protection",
           onboardingId,
           ["f3"],
-        )).toBe(false);
+        )).toBe(true);
       }
       expect(getEndpointFeatureLicenseNote("defender", ["f3"], platformId))
         .toContain("Automated onboarding to Defender is not eligible");
     },
   );
 
-  it("disables all F1 Defender categories while retaining Defender Suite support", () => {
+  it("retains F1 AV restrictions and server/Linux rules while enabling other client categories", () => {
     const defenderOptions = getSecurityGoalOptions("endpoint-protection")
       .filter((option) => option.endpointFeature === "defender");
     for (const option of defenderOptions) {
@@ -817,7 +864,10 @@ describe("security goal recommendations", () => {
         "endpoint-protection",
         option.id,
         ["f1"],
-      )).toBe(false);
+      )).toBe(!option.id.endsWith("-antivirus") &&
+        option.platformIds.every((id) =>
+          id === "windows-11" || id === "macos" || id === "ios-ipados" || id === "android",
+        ));
       expect(getEndpointFeatureLicenseNote(
         option.endpointFeature,
         ["f1"],

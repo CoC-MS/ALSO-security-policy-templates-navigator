@@ -12,7 +12,7 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 ## Endpoint limited-experience notes
 
-Final recommendation cards show category-specific limitations before the licensing disclaimer, with links to the repository licensing guide. The mappings were reviewed against the repository tables on 27 October 2026:
+Final recommendation cards show category-specific limitations before the licensing disclaimer, with links to the repository licensing guide. On Windows, macOS, iOS/iPadOS, and Android, only Antivirus (AV) can show Limited experience and its limitation message; all other endpoint categories show Full experience. Existing AV eligibility restrictions remain in place. Windows Server, Linux Server, and Linux Desktop retain their previous rules and notes. The AV limitation mappings were reviewed against the repository tables on 27 October 2026:
 
 | Repository guide | License scope and limitation |
 | --- | --- |
@@ -22,4 +22,4 @@ Final recommendation cards show category-specific limitations before the licensi
 | [Linux](https://github.com/CoC-MS/ALSO-Microsoft-Security-Linux#linux-server-and-desktop-licensing-guide) | Desktop licensing lists E5-level entitlements, including qualifying Defender Suite/FLW add-ons. Server licensing remains separate. |
 | [Windows Server](https://github.com/CoC-MS/ALSO-Microsoft-Security-WindowsServer#windows-server-licensing-guide) | Server recommendations retain separate per-server/on-premises or Defender for Cloud prerequisites; a user Defender Suite entitlement does not replace server licensing. |
 
-Purview-only add-ons do not remove Defender limitations. Qualifying Defender Suite add-ons use the matching Business Premium, E3, or frontline (FLW) guidance. Existing category availability and Full/Limited badges are unchanged; notes are scoped to selected limited categories, with separate server prerequisites retained for endpoint server selections. Repository tables are guidance, not a substitute for current Microsoft licensing terms; review these mappings when the source guides change.
+Purview-only add-ons do not remove AV limitations. Qualifying Defender Suite add-ons use the matching Business Premium, E3, or frontline (FLW) guidance. Notes are scoped to selected limited categories, with separate server prerequisites retained for endpoint server selections. Full experience labels are Navigator category guidance, not a guarantee of entitlement to every repository setting. Repository tables are guidance, not a substitute for current Microsoft licensing terms; review these mappings when the source guides change.

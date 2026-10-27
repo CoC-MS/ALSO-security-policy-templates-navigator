@@ -1187,6 +1187,9 @@ function App() {
                     ...platformSelections.filter((option) =>
                       option.selectionId.startsWith("endpoint-protection:") &&
                       option.children?.length &&
+                      option.platformIds.some((id) =>
+                        id === "linux-desktop" || id === "linux-server" || id === "windows-servers",
+                      ) &&
                       !platformSelections.some((selection) =>
                         selection.endpointFeature &&
                         selection.platformIds.some((id) => option.platformIds.includes(id)),
