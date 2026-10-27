@@ -447,6 +447,8 @@ const dataSecurityFullExperienceLicenseIds = new Set<License["id"]>([
   "e3-defender-purview",
   "business-premium-purview",
   "business-premium-defender-purview",
+  "f1-defender-purview",
+  "f3-defender-purview",
 ]);
 
 const flwPurviewSuiteLicenseIds = new Set<License["id"]>([
@@ -698,7 +700,9 @@ export function getDataSecurityLicenseNote(
     "retention": hasBusinessOrE3
       ? `Manual retention labels, basic organization-wide or location-wide retention policies, and Teams message retention policies are included. Add ${addOns} to unlock rules-based automatic retention policies, machine-learning-based retention, and Records Management.`
       : `Manual retention labels and Teams message retention policies are included. All other retention capabilities, including basic organization-wide or location-wide retention policies, rules-based automatic retention policies, machine-learning-based retention, and Records Management, require ${addOns}.`,
-    "endpoint-dlp": `Endpoint DLP (eDLP) is not included with the selected base licenses. Add ${addOns} to unlock Endpoint DLP.`,
+    "endpoint-dlp": hasSensitivityLabelsSuite
+      ? `Add Microsoft Defender Suite FLW for ${getFrontlineLicenseNames(eligibleLicenseIds)} to unlock the Defender functionality required for Endpoint DLP (eDLP). Endpoint DLP will not work without this Defender functionality; Purview Suite alone is not sufficient.`
+      : `Endpoint DLP (eDLP) is not included with the selected base licenses. Add ${addOns} to unlock Endpoint DLP.`,
     "auto-labeling": `Auto labelling is not included with the selected base licenses. Add ${addOns} to unlock auto labelling.`,
     "sensitive-information-types": "Requires the Purview Suite add-on, which also unlocks sensitivity labels based on SITs and other advanced classifiers, such as EDM (Exact Data Match) and Trainable Classifiers.",
   };
@@ -712,7 +716,13 @@ export function getSecurityGoalOptionExperience(
   optionId?: string,
 ): "full" | "limited" {
   if (goalId === "data-protection" && optionId === "sensitivity-labels") {
-    return "limited";
+    return licenseIds.some((id) => dataSecurityFullExperienceLicenseIds.has(id))
+      ? "full" : "limited";
+  }
+  if (goalId === "data-protection" && optionId === "endpoint-dlp" &&
+    licenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id))) {
+    return licenseIds.some((id) => endpointFullExperienceLicenseIds.has(id) ||
+      dataSecurityFullExperienceLicenseIds.has(id)) ? "full" : "limited";
   }
   if (goalId === "data-protection" && optionId &&
     purviewSuiteUnlockedCategoryIds.has(optionId) &&

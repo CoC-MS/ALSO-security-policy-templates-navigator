@@ -20,6 +20,34 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(["e5", "e7", "e3-purview", "f1-defender-purview", "f3-defender-purview"] as const)(
+    "provides full experience for every Data Security category with %s",
+    (id) => {
+      for (const option of getSecurityGoalOptions("data-protection")) {
+        expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], option.id))
+          .toBe("full");
+        expect(getDataSecurityLicenseNote([id], [option.id])).toBeUndefined();
+      }
+    },
+  );
+
+  it.each(["f1-purview", "f3-purview"] as const)(
+    "requires Defender Suite FLW for eDLP with %s",
+    (id) => {
+      const note = getDataSecurityLicenseNote([id], ["endpoint-dlp"]);
+      expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], "endpoint-dlp"))
+        .toBe("limited");
+      expect(note).toContain(`Add Microsoft Defender Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`);
+      expect(note).toContain("Endpoint DLP will not work without this Defender functionality");
+      expect(note).not.toContain(id.startsWith("f1") ? "F3" : "F1");
+      expect(note).not.toContain("Add Microsoft Purview Suite");
+      const combined = [id, id.startsWith("f1") ? "f1-defender" : "f3-defender"] as const;
+      expect(getSecurityGoalOptionExperience("data-protection", combined, ["purview"], "endpoint-dlp"))
+        .toBe("full");
+      expect(getDataSecurityLicenseNote(combined, ["endpoint-dlp"])).toBeUndefined();
+    },
+  );
+
   it.each(licenses.filter((license) => license.eligible))(
     "shows the SIT upgrade message only for limited experience with $name",
     ({ id }) => {
@@ -130,14 +158,22 @@ describe("security goal recommendations", () => {
   });
 
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
-    "shows limited Sensitivity labels with scoped guidance for %s",
+    "matches Sensitivity labels experience and guidance to %s",
     (id) => {
+      const full = id === "e5" || id === "e7" ||
+        id === "e3-purview" || id === "e3-defender-purview" ||
+        id === "business-premium-purview" || id === "business-premium-defender-purview" ||
+        id === "f1-defender-purview" || id === "f3-defender-purview";
       expect(getSecurityGoalOptionExperience(
         "data-protection", [id], ["purview"], "sensitivity-labels",
-      )).toBe("limited");
+      )).toBe(full ? "full" : "limited");
       const note = getDataSecurityLicenseNote([id], ["sensitivity-labels"]);
-      expect(note).toContain("Sensitivity labels:");
-      expect(note).not.toMatch(/DLP|retention|auto.labell|SIT/);
+      if (full) {
+        expect(note).toBeUndefined();
+      } else {
+        expect(note).toContain("Sensitivity labels:");
+        expect(note).not.toMatch(/DLP|retention|auto.labell|SIT/);
+      }
     },
   );
 
@@ -183,7 +219,7 @@ describe("security goal recommendations", () => {
   it.each(["business-premium-purview", "e3-purview", "f1-purview", "f3-purview", "e5", "e7"] as const)(
     "does not recommend a redundant sensitivity-label upgrade for %s",
     (id) => {
-      expect(getDataSecurityLicenseNote([id], ["sensitivity-labels"])).not.toContain("Add ");
+      expect(getDataSecurityLicenseNote([id], ["sensitivity-labels"]) ?? "").not.toContain("Add ");
     },
   );
 
@@ -240,6 +276,13 @@ describe("security goal recommendations", () => {
     "removes all covered feature upgrade notes for %s",
     (id) => {
       for (const category of ["dlp", "retention", "endpoint-dlp", "auto-labeling"]) {
+        if (category === "endpoint-dlp" && (id === "f1-purview" || id === "f3-purview")) {
+          expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], category))
+            .toBe("limited");
+          expect(getDataSecurityLicenseNote([id], [category]))
+            .toContain("Purview Suite alone is not sufficient");
+          continue;
+        }
         expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], category))
           .toBe("full");
         expect(getDataSecurityLicenseNote([id], [category])).toBeUndefined();
@@ -342,7 +385,7 @@ describe("security goal recommendations", () => {
     }
     for (const id of ["e5", "e7"] as const) {
       expect(getLimitedExperienceSelections(data, [id], "purview").map((option) => option.id))
-        .toEqual(["sensitivity-labels"]);
+        .toEqual([]);
     }
   });
 
@@ -1228,9 +1271,9 @@ describe("security goal recommendations", () => {
         [licenseId],
         option.platformIds,
         option.id,
-      )).toBe(option.id === "sensitivity-labels" ? "limited" : "full");
+      )).toBe("full");
     }
-    expect(getDataSecurityLicenseNote([licenseId])).toContain("Sensitivity labels:");
+    expect(getDataSecurityLicenseNote([licenseId])).toBeUndefined();
   });
 
   it.each(["business-premium", "e3", "e3-defender"] as const)(
@@ -1258,7 +1301,7 @@ describe("security goal recommendations", () => {
           [licenseId],
           option.platformIds,
           option.id,
-        )).toBe(["dlp", "endpoint-dlp", "retention", "auto-labeling"].includes(option.id)
+        )).toBe(["dlp", "retention", "auto-labeling"].includes(option.id)
           ? "full" : "limited");
         expect(isSecurityGoalOptionAvailable(
           "data-protection",
@@ -1267,7 +1310,8 @@ describe("security goal recommendations", () => {
         )).toBe(true);
       }
     }
-    expect(getDataSecurityLicenseNote(["f3-purview"], ["endpoint-dlp"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["f3-purview"], ["endpoint-dlp"]))
+      .toContain("Add Microsoft Defender Suite FLW for Microsoft 365 F3");
   });
 
   it("shows F1 upgrade paths for DLP, retention, eDLP and auto labelling", () => {
@@ -1303,10 +1347,10 @@ describe("security goal recommendations", () => {
       .toContain("Endpoint DLP (eDLP) is not included with the selected base licenses");
   });
 
-  it("does not suggest another add-on when FLW Purview is already selected", () => {
-    expect(getDataSecurityLicenseNote(["f3-purview"])).not.toContain("Add ");
-    expect(getDataSecurityLicenseNote(["e3", "e5"])).toContain("Sensitivity labels:");
-    expect(getDataSecurityLicenseNote(["e3", "e5"])).not.toContain("Add ");
+  it("requires only missing entitlements when FLW Purview is already selected", () => {
+    expect(getDataSecurityLicenseNote(["f3-purview"])).toContain("Add Microsoft Defender Suite FLW");
+    expect(getDataSecurityLicenseNote(["f3-purview"])).not.toContain("Add Microsoft Purview Suite");
+    expect(getDataSecurityLicenseNote(["e3", "e5"])).toBeUndefined();
     expect(getDataSecurityLicenseNote([])).toBeUndefined();
   });
 
