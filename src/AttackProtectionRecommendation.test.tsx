@@ -7,7 +7,7 @@ function render(licenseIds: readonly License["id"][]) {
   return renderToStaticMarkup(<AttackProtectionRecommendation licenseIds={licenseIds} />);
 }
 
-describe("attack protection recommendation", () => {
+describe("attack prevention recommendation", () => {
   it.each(licenses.filter((license) => license.eligible))(
     "matches the P2 experience and upgrade guidance to $name",
     ({ id }) => {
@@ -39,6 +39,9 @@ describe("attack protection recommendation", () => {
     expect(html).toContain("Disclaimer:");
     expect(html).toContain("Modern-Work-Plan-Comparison-Enterprise.pdf");
     expect(html).toContain("Modern-Work-Plan-Comparison-SMB.pdf");
+    expect(html).toContain("Attack prevention with limited experience");
+    expect(html).not.toContain("Mapped policies are a starting point");
+    expect(html).not.toContain("Verify the prerequisites for each policy before deployment.");
   });
 
   it("combines selected plans without redundant upgrades when P2 is already covered", () => {

@@ -927,7 +927,7 @@ function App() {
               <h1 id="main-title" tabIndex={-1}>
                 {selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "attack-protection"
-                  ? "Attack protection"
+                  ? "Attack prevention"
                   : selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "endpoint-protection"
                   ? "Choose endpoint platforms"

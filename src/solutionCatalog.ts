@@ -42,7 +42,7 @@ const AGENT_POLICY_NOTE =
 export const securityGoals = [
   {
     id: "attack-protection",
-    name: "Attack protection",
+    name: "Attack prevention",
     description: "Find policy templates that help protect against common identity and device attacks.",
     prompt: "Which attacks are you trying to protect against?",
     options: [

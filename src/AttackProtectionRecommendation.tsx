@@ -26,13 +26,9 @@ export function AttackProtectionRecommendation({
           </span>
         </div>
         <p>Explore attack scenarios and their mapped ALSO Microsoft Security policy templates.</p>
-        <p className="recommended-policy-note">
-          Mapped policies are a starting point and do not guarantee full protection.
-          Verify the prerequisites for each policy before deployment.
-        </p>
         {licenseNote && (
           <aside className="license-requirement-note">
-            <strong>Attack protection with limited experience</strong>
+            <strong>Attack prevention with limited experience</strong>
             <p>{licenseNote.message}</p>
           </aside>
         )}

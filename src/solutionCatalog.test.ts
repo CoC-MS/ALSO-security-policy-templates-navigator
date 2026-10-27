@@ -333,7 +333,7 @@ describe("security goal recommendations", () => {
       .toContain("Add Microsoft Purview Suite for Business Premium");
   });
 
-  it("unlocks Attack protection and retains its mapper repository", () => {
+  it("unlocks Attack prevention and retains its mapper repository", () => {
     expect(securityGoalNavigation.filter((goal) =>
       "comingSoon" in goal && goal.comingSoon,
     ).map((goal) => goal.id)).toEqual([]);
@@ -345,7 +345,7 @@ describe("security goal recommendations", () => {
 
   it("groups the unchanged Conditional Access and Administrator protection goals under Identity and Access", () => {
     expect(securityGoalNavigation.map((goal) => goal.name)).toEqual([
-      "Attack protection", "Identity and Access", "Endpoint protection",
+      "Attack prevention", "Identity and Access", "Endpoint protection",
       "AI and Agent Security", "Data Security", "App protection",
     ]);
     expect(identityAndAccessGoalIds).toEqual(["conditional-access", "administrator-protection"]);
@@ -563,7 +563,7 @@ describe("security goal recommendations", () => {
 
   it("includes administrator protection with the requested Conditional Access policies", () => {
     expect(securityGoals.map((goal) => goal.name)).toEqual([
-      "Attack protection",
+      "Attack prevention",
       "Administrator protection",
       "Conditional Access",
       "Endpoint protection",
