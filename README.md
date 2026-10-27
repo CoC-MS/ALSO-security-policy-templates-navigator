@@ -10,6 +10,10 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
+## Data Security limited-experience notes
+
+Final Data Security cards explain the selected limited categories and link to the [Purview licensing table](https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview#purview-licensing-guide), reviewed on 27 October 2026. Business Premium/E3/F3 base tiers lack the full DLP and auto-labelling experience; qualifying Purview Suite add-ons are named. FLW guidance retains the table's eDLP exclusion and surfaces its additional Defender Suite prerequisite for the full frontline eDLP experience. Where the table does not define individual retention or SIT restrictions, the note explicitly asks for a setting-level licensing check rather than inventing unsupported limitations. Existing category availability and Full/Limited labels are unchanged; full categories do not receive limitation notes.
+
 ## Endpoint limited-experience notes
 
 Final recommendation cards show category-specific limitations before the licensing disclaimer, with links to the repository licensing guide. On Windows, macOS, iOS/iPadOS, and Android, only Antivirus (AV) can show Limited experience and its limitation message; all other endpoint categories show Full experience. Existing AV eligibility restrictions remain in place. Windows Server, Linux Server, and Linux Desktop retain their previous rules and notes. The AV limitation mappings were reviewed against the repository tables on 27 October 2026:

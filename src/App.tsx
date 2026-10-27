@@ -1180,7 +1180,12 @@ function App() {
                   );
                   const dataSecurityLicenseNote =
                     sourcePlatform.id === "purview" && dataSecuritySelection
-                      ? getDataSecurityLicenseNote(eligibleLicenseIds)
+                      ? getDataSecurityLicenseNote(
+                        eligibleLicenseIds,
+                        limitedSelections.filter((option) =>
+                          option.selectionId.startsWith("data-protection:"),
+                        ).map((option) => option.id),
+                      )
                       : undefined;
                   const endpointNoteSelections = [
                     ...limitedSelections,
@@ -1318,6 +1323,15 @@ function App() {
                               option.selectionId.startsWith("data-protection:"),
                             )}</strong>
                             <p>{dataSecurityLicenseNote}</p>
+                            <p>
+                              <a
+                                href="https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview#purview-licensing-guide"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Repository licensing guide
+                              </a>
+                            </p>
                           </aside>
                         )}
                         {onPremisesAppLicenseNote && (

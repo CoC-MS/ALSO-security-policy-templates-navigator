@@ -21,6 +21,34 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(["business-premium", "e3", "f3"] as const)(
+    "scopes Data Security limitation details to selected categories for %s",
+    (licenseId) => {
+      for (const option of getSecurityGoalOptions("data-protection")) {
+        const note = getDataSecurityLicenseNote([licenseId], [option.id]);
+        if (option.id === "sensitivity-labels") {
+          expect(note).toBeUndefined();
+        } else {
+          expect(note).toContain(`${option.name}:`);
+          expect(note).not.toContain("undefined");
+          if (option.id === "retention" || option.id === "sensitive-information-types") {
+            expect(note).toContain("table does not specify");
+          }
+        }
+      }
+    },
+  );
+
+  it("preserves full and unavailable Data Security selections without extra category claims", () => {
+    expect(getDataSecurityLicenseNote(["e5"], ["dlp"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["business-premium"], ["sensitivity-labels"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["e3"], [])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["f3-purview"], ["dlp"]))
+      .toContain("does not identify a separate restriction for this category");
+    expect(getDataSecurityLicenseNote(["business-premium"], ["endpoint-dlp"]))
+      .toContain("Confirm both Purview and Defender entitlements");
+  });
+
   it("locks only Attack protection as Coming and links its new repository", () => {
     expect(securityGoalNavigation.filter((goal) =>
       "comingSoon" in goal && goal.comingSoon,

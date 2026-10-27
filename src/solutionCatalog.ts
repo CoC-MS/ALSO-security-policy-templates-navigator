@@ -734,7 +734,35 @@ export function getEndpointFeatureLicenseNote(
 
 export function getDataSecurityLicenseNote(
   licenseIds: readonly License["id"][],
+  optionIds?: readonly string[],
 ): string | undefined {
+  if (optionIds) {
+    const limitedOptions = getSecurityGoalOptions("data-protection").filter((option) =>
+      optionIds.includes(option.id) &&
+      getSecurityGoalOptionExperience(
+        "data-protection", licenseIds, option.platformIds, option.id,
+      ) === "limited",
+    );
+    if (limitedOptions.length === 0) return undefined;
+    const licenseNote = getDataSecurityLicenseNote(licenseIds);
+    if (!licenseNote) return undefined;
+    const details: Record<string, string> = {
+      "sensitivity-labels": "The Purview Suite FLW table classifies this package as limited; verify the selected label and publishing settings against your entitlement.",
+      "dlp": "The base BP/E3/F3 licensing tier does not include the full DLP experience. Review the selected policy locations and capabilities before deployment.",
+      "endpoint-dlp": "The full Endpoint DLP experience is not included in the base BP/E3/F3 tier. The Purview Suite FLW table excludes eDLP policies; its additional note calls for Defender Suite for the full frontline eDLP experience. Confirm both Purview and Defender entitlements before using endpoint policies.",
+      "retention": "The licensing table does not specify which retention settings are covered in the limited tier. Verify the selected retention and automatic-retention capabilities before deployment; a Limited label does not mean all retention is unavailable.",
+      "auto-labeling": "The base BP/E3/F3 tier does not include the full auto-labelling experience. Verify entitlement before enabling automatic classification and labelling.",
+      "sensitive-information-types": "The licensing table does not specify individual SIT entitlements in the limited tier. Verify the selected sensitive information types and the DLP or labelling policies that use them.",
+    };
+    const frontlinePurview = licenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id));
+    const categoryNotes = limitedOptions.map((option) => {
+      const detail = frontlinePurview && option.id !== "endpoint-dlp"
+        ? "The Purview Suite FLW table supports this package with limitations and excludes eDLP policies; it does not identify a separate restriction for this category. Verify the selected settings against your entitlement."
+        : details[option.id];
+      return `${option.name}: ${detail}`;
+    });
+    return `${licenseNote} ${categoryNotes.join(" ")}`;
+  }
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
   if (eligibleLicenseIds.length === 0) return undefined;
   if (
@@ -764,7 +792,7 @@ export function getDataSecurityLicenseNote(
       flwPurviewSuiteLicenseIds.has(licenseId),
     )
   ) {
-    return "Microsoft Purview Suite FLW supports Data Security with limitations; eDLP policies are not included.";
+    return "Microsoft Purview Suite FLW supports Data Security with limitations; eDLP policies are not included. The repository additionally requires Defender Suite for the full frontline eDLP experience; confirm the combined Purview and Defender entitlements before using endpoint policies.";
   }
 
   if (
