@@ -46,10 +46,6 @@ import { Faq } from "./Faq";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
 import { AttackProtectionRecommendation } from "./AttackProtectionRecommendation";
 import { BusinessLicensePrerequisites } from "./BusinessLicensePrerequisites";
-import {
-  AiSecurityLicenseActions,
-  shouldShowAiSecurityLicenseActions,
-} from "./AiSecurityLicenseActions";
 
 type Step =
   | "license"
@@ -1270,16 +1266,11 @@ function App() {
                       dataSecurityLicenseNote)
                       ? limitedExperienceNote
                       : undefined;
-                  const showAiSecurityLicenseActions =
-                    shouldShowAiSecurityLicenseActions(
-                      eligibleLicenseIds,
-                      sourcePlatform.id,
-                    );
                   const endpointLicensingGuideUrl =
                     `${repository.url}#${endpointLicensingGuideAnchors[sourcePlatform.id]}`;
                   return (
                     <article
-                      className={`recommendation-card${showAiSecurityLicenseActions ? " recommendation-card-ai-security" : ""}`}
+                      className="recommendation-card"
                       key={repository.url}
                     >
                       <div className="recommendation-card-main">
@@ -1468,7 +1459,6 @@ function App() {
                           )}
                         </div>
                       </div>
-                      {showAiSecurityLicenseActions && <AiSecurityLicenseActions />}
                     </article>
                   );
                   })}

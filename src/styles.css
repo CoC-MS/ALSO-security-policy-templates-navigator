@@ -1361,48 +1361,6 @@ h1 {
   flex-direction: column;
 }
 
-.recommendation-card-ai-security {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 1.5rem;
-  align-items: start;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.75fr);
-}
-
-.ai-security-actions {
-  padding: 1.15rem;
-  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
-  border-radius: 0.5rem;
-  background: var(--primary-soft);
-}
-
-.ai-security-actions h3 {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-}
-
-.ai-security-action-section + .ai-security-action-section {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
-}
-
-.ai-security-action-list {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.ai-security-action-list .button {
-  width: 100%;
-  text-align: left;
-}
-
-.ai-security-action-list > span {
-  padding-left: 0.2rem;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
-
 .recommendation-card h2 {
   margin: 1rem 0 0.5rem;
   font-size: 1.25rem;
@@ -1686,11 +1644,6 @@ footer p {
   }
 
   .recommendation-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .recommendation-card-ai-security {
-    grid-column: auto;
     grid-template-columns: 1fr;
   }
 
