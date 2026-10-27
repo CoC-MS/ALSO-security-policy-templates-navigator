@@ -499,7 +499,7 @@ export function getConditionalAccessCategoryLicenseNote(
   ];
   const messages = [
     ...(needsEntraP2
-      ? [`Add the Microsoft Entra ID P2 add-on to unlock PIM authentication context, risky user policies, and risky sign-in policies. Microsoft Entra ID P2 is also included with ${suiteAddOns.join(" or ")}.`]
+      ? [`Add the Microsoft Entra ID P2 add-on to unlock ${selected.some((option) => option.id === "administrator-policies") ? "PIM authentication context, risky user policies, and risky sign-in policies" : "risky user policies and risky sign-in policies"}. Microsoft Entra ID P2 is also included with ${suiteAddOns.join(" or ")}.`]
       : []),
     ...(needsAgent365 ? [AGENT_POLICY_NOTE] : []),
     ...(needsGlobalSecureAccess

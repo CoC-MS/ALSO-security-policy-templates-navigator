@@ -327,7 +327,8 @@ describe("security goal recommendations", () => {
         expect(note?.message).toContain("Agent 365 license");
         expect(note?.message).not.toContain("Entra ID P2");
       } else {
-        expect(note?.message).toContain("Microsoft Entra ID P2 add-on to unlock PIM authentication context, risky user policies, and risky sign-in policies");
+        expect(note?.message).toContain("Microsoft Entra ID P2 add-on to unlock");
+        expect(note?.message?.includes("PIM authentication context")).toBe(option.id === "administrator-policies");
         expect(note?.message).toContain("Microsoft Defender Suite for Microsoft 365 E3");
         expect(note?.message).not.toContain("Agent 365");
       }
@@ -356,7 +357,9 @@ describe("security goal recommendations", () => {
     (id) => {
       for (const category of ["administrator-policies", "internal-user-policies", "service-account-policies", "guest-user-policies"]) {
         const note = getConditionalAccessCategoryLicenseNote([category], [id]);
-        expect(note?.message).toContain("Entra ID P2 add-on to unlock PIM authentication context, risky user policies, and risky sign-in policies");
+        expect(note?.message).toContain("Entra ID P2 add-on to unlock");
+        expect(note?.message).toContain("risky sign-in policies");
+        expect(note?.message?.includes("PIM authentication context")).toBe(category === "administrator-policies");
         expect(note?.message).not.toContain("Agent 365");
       }
       const agent = getConditionalAccessCategoryLicenseNote(["agent-policies"], [id]);
@@ -364,6 +367,9 @@ describe("security goal recommendations", () => {
       expect(agent?.message).not.toMatch(/Entra ID P2|PIM|risky/);
       expect(getConditionalAccessCategoryLicenseNote(
         ["agent-policies", "internal-user-policies"], [id],
+      )?.message).not.toContain("PIM");
+      expect(getConditionalAccessCategoryLicenseNote(
+        ["agent-policies", "administrator-policies"], [id],
       )?.message).toContain("PIM authentication context");
     },
   );

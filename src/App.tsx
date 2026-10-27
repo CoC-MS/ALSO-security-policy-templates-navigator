@@ -1159,6 +1159,10 @@ function App() {
                       sourcePlatform.id,
                       {
                         includeAgent365Guidance: !suppressAgent365Guidance,
+                        includePimGuidance: platformSelections.some((option) =>
+                          option.selectionId === "conditional-access:administrator-policies" ||
+                          option.selectionId.startsWith("administrator-protection:"),
+                        ),
                         includeConditionalAccessPolicyGuidance:
                           !oauthAppsOnly && !cloudAppsOnly && !attackProtectionOnly,
                       },
