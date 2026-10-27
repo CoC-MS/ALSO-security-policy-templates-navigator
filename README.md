@@ -10,6 +10,8 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
+Pages deployments retain assets from the two most recent available main-branch Pages artifacts, including previously retained assets, for seven days. This keeps cached HTML and JavaScript working after a new build changes hashed stylesheet or script filenames. Asset restoration errors fail deployment instead of publishing an incomplete recovery.
+
 ## Final recommendation experience
 
 Limited Agent Security and AI Security messages name the selected licenses and explain that Agent 365 unlocks Conditional Access policies scoped to Agents. Both messages state that Agent 365 is included in Microsoft 365 E7.
