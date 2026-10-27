@@ -460,9 +460,8 @@ describe("security goal recommendations", () => {
       const note = getAdministratorProtectionLicenseNote([licenseId], "windows-11");
       expect(Boolean(note)).toBe(licenseId !== "e5" && licenseId !== "e7");
       if (note) {
-        expect(note.title).toContain("Limited Windows administrator protection");
-        expect(note.message).toContain("Microsoft Intune Suite add-on");
-        expect(note.message).toContain("included in Microsoft 365 E5 and Microsoft 365 E7");
+        expect(note.title).toBe("Administrator protection policies licensing prerequisites");
+        expect(note.message).toBe("Add the Microsoft Intune Suite add-on for the full Windows administrator protection experience. Microsoft Intune Suite is included in Microsoft 365 E5 and Microsoft 365 E7, which unlocks EPM (Endpoint Privilege Management).");
       }
       expect(getAdministratorProtectionLicenseNote([licenseId], "macos")).toBeUndefined();
       expect(getAdministratorProtectionLicenseNote([licenseId], "conditional-access")).toBeUndefined();

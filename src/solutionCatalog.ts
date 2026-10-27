@@ -524,7 +524,13 @@ export function getAdministratorProtectionLicenseNote(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
-  return getWindowsIntuneSuiteLicenseNote(licenseIds, platformId, "administrator protection");
+  const note = getWindowsIntuneSuiteLicenseNote(licenseIds, platformId, "administrator protection");
+  if (!note) return undefined;
+  return {
+    ...note,
+    title: "Administrator protection policies licensing prerequisites",
+    message: "Add the Microsoft Intune Suite add-on for the full Windows administrator protection experience. Microsoft Intune Suite is included in Microsoft 365 E5 and Microsoft 365 E7, which unlocks EPM (Endpoint Privilege Management).",
+  };
 }
 
 function getWindowsIntuneSuiteLicenseNote(

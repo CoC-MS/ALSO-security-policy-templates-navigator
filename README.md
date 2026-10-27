@@ -12,7 +12,7 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 ## Identity and Access limited-experience notes
 
-Identity and Access limited-experience notes identify Microsoft Entra ID P2 as the upgrade for risky user policies and risky sign-in policies when P2 is missing. PIM authentication context is mentioned only for Administrator policies or Administrator protection selections. Agent 365 unlock guidance is shown only when the Agent policies category is selected; existing P2 and Microsoft 365 E7 entitlements suppress unnecessary upgrade notes. Windows administrator protection retains its separate Intune Suite requirements.
+Identity and Access limited-experience notes identify Microsoft Entra ID P2 as the upgrade for risky user policies and risky sign-in policies when P2 is missing. PIM authentication context is mentioned only for Administrator policies or Administrator protection selections. Agent 365 unlock guidance is shown only when the Agent policies category is selected; existing P2 and Microsoft 365 E7 entitlements suppress unnecessary upgrade notes. Windows administrator protection retains its separate Intune Suite requirements and explains the EPM (Endpoint Privilege Management) unlock without a Limited experience badge on its Windows 11 recommendation.
 
 ## Data Security limited-experience notes
 
