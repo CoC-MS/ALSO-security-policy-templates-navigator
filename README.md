@@ -9,3 +9,17 @@ Enterprise licenses: [Microsoft Enterprise Plan Comparison](https://cdn-dynmedia
 SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/education/Modern-Work-Plan-Comparison-Enterprise.pdf)
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
+
+## Endpoint limited-experience notes
+
+Final recommendation cards show category-specific limitations before the licensing disclaimer, with links to the repository licensing guide. The mappings were reviewed against the repository tables on 27 October 2026:
+
+| Repository guide | License scope and limitation |
+| --- | --- |
+| [Windows](https://github.com/CoC-MS/ALSO-Microsoft-Security-Windows#windows-licensing-guide) | Business Premium/E3 support the BP package, not the full E5-level experience. Defender for Cloud Apps integration needs its own entitlement. Exclude Intune Suite-dependent policies without that licensing. F3 supports only the listed Defender subset; F1 supports Intune settings only. |
+| [macOS](https://github.com/CoC-MS/ALSO-Microsoft-Security-MacOS#macos-licensing-guide) | Business Premium/E3 lack the full Defender for Cloud Apps experience. Business Premium uses Custom Indicators and Web Content Filtering rather than Cloud App Catalog. F1/F3 without Defender Suite support Intune settings only. |
+| [iOS/iPadOS](https://github.com/CoC-MS/ALSO-Microsoft-Security-iOSandiPadOS#iosipados-licensing-guide) and [Android](https://github.com/CoC-MS/ALSO-Microsoft-Security-Android#android-licensing-guide) | Business Premium/E3 lack the full Defender for Cloud Apps experience. F1/F3 without Defender Suite support Intune settings only. |
+| [Linux](https://github.com/CoC-MS/ALSO-Microsoft-Security-Linux#linux-server-and-desktop-licensing-guide) | Desktop licensing lists E5-level entitlements, including qualifying Defender Suite/FLW add-ons. Server licensing remains separate. |
+| [Windows Server](https://github.com/CoC-MS/ALSO-Microsoft-Security-WindowsServer#windows-server-licensing-guide) | Server recommendations retain separate per-server/on-premises or Defender for Cloud prerequisites; a user Defender Suite entitlement does not replace server licensing. |
+
+Purview-only add-ons do not remove Defender limitations. Qualifying Defender Suite add-ons use the matching Business Premium, E3, or frontline (FLW) guidance. Existing category availability and Full/Limited badges are unchanged; notes are scoped to selected limited categories, with separate server prerequisites retained for endpoint server selections. Repository tables are guidance, not a substitute for current Microsoft licensing terms; review these mappings when the source guides change.

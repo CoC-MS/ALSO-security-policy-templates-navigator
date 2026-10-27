@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { licenses } from "./catalog";
+import { getWindowsServerLicenseNotes, isPlatformAvailableForLicenses, licenses } from "./catalog";
 import {
   getDataSecurityLicenseNote,
   getConditionalAccessCategoryLicenseNote,
@@ -639,6 +639,85 @@ describe("security goal recommendations", () => {
     }
   });
 
+  it.each(["business-premium", "business-premium-purview", "e3", "e3-purview"] as const)(
+    "explains the repository-specific limited experience for %s",
+    (licenseId) => {
+      for (const platform of ["macos", "ios-ipados", "android"] as const) {
+        const note = getEndpointFeatureLicenseNote("defender", [licenseId], platform);
+        expect(note).toContain("full Defender for Cloud Apps experience is not included");
+        expect(note).toContain(licenseId.startsWith("business-premium")
+          ? "Microsoft Defender Suite for Business Premium"
+          : "Microsoft Defender Suite for Microsoft 365 E3");
+      }
+      const windows = getEndpointFeatureLicenseNote("defender", [licenseId], "windows-11");
+      expect(windows).toContain("Windows BP package");
+      expect(windows).toContain("separate Defender for Cloud Apps entitlement");
+      expect(windows).toContain("Microsoft Intune Suite must be excluded");
+      const linux = getEndpointFeatureLicenseNote("defender", [licenseId], "linux-desktop");
+      expect(linux).toContain("E5-level licensing only");
+      expect(linux).toContain("Add Microsoft Defender Suite");
+    },
+  );
+
+  it("explains the macOS Custom Indicators alternative only for Business Premium", () => {
+    expect(getEndpointFeatureLicenseNote("defender", ["business-premium"], "macos"))
+      .toContain("Custom Indicators and Web Content Filtering workflow instead of");
+    expect(getEndpointFeatureLicenseNote("defender", ["e3"], "macos"))
+      .not.toContain("Custom Indicators");
+  });
+
+  it.each(["f1", "f1-purview", "f3", "f3-purview"] as const)(
+    "retains frontline limitations for Intune-only selections with %s",
+    (licenseId) => {
+      for (const platform of ["macos", "ios-ipados", "android"] as const) {
+        const note = getEndpointFeatureLicenseNote("intune", [licenseId], platform);
+        expect(note).toContain("Intune configuration settings only");
+        expect(note).toContain("not support Microsoft Defender settings");
+        expect(note).toContain("Microsoft Defender Suite FLW");
+      }
+      const windows = getEndpointFeatureLicenseNote("intune", [licenseId], "windows-11");
+      expect(windows).toContain("Microsoft Intune Suite must be excluded");
+      expect(windows).toContain(licenseId.startsWith("f1")
+        ? "Intune configuration settings only"
+        : "BitLocker To Go");
+      expect(getEndpointFeatureLicenseNote("defender", [licenseId], "linux-desktop"))
+        .toContain("Microsoft Defender Suite FLW");
+    },
+  );
+
+  it("uses the combined entitlement without misleading lower-license limitations", () => {
+    for (const platform of ["windows-11", "macos", "ios-ipados", "android", "linux-desktop"] as const) {
+      expect(getEndpointFeatureLicenseNote("defender", ["business-premium", "e5"], platform))
+        .toBeUndefined();
+      expect(getEndpointFeatureLicenseNote("intune", ["f1", "e3-defender"], platform))
+        .toBeUndefined();
+    }
+    expect(getEndpointFeatureLicenseNote("intune", ["f1", "f3"], "windows-11"))
+      .toContain("Microsoft 365 F3 supports only");
+  });
+
+  it.each(licenses.filter((license) => license.eligible))(
+    "provides a limitation or server prerequisite for every available limited endpoint category with $name",
+    (license) => {
+      for (const option of getSecurityGoalOptions("endpoint-protection")) {
+        if (!option.endpointFeature ||
+          !isSecurityGoalOptionAvailable("endpoint-protection", option.id, [license.id])) continue;
+        for (const platform of option.platformIds) {
+          if (!isPlatformAvailableForLicenses([license.id], platform) ||
+            getSecurityGoalOptionExperience(
+              "endpoint-protection", [license.id], [platform], option.id,
+            ) !== "limited") continue;
+          if (platform === "windows-servers" || platform === "linux-server") {
+            expect(getWindowsServerLicenseNotes([license.id], platform).length).toBeGreaterThan(0);
+          } else {
+            expect(getEndpointFeatureLicenseNote(option.endpointFeature, [license.id], platform))
+              .toBeTruthy();
+          }
+        }
+      }
+    },
+  );
+
   it("applies F3's supported Defender subset and F1's Intune-only limitation", () => {
     for (const optionId of [
       "windows-antivirus",
@@ -704,11 +783,14 @@ describe("security goal recommendations", () => {
           option.id,
           ["f3"],
         )).toBe(false);
-        expect(getEndpointFeatureLicenseNote(
+        const note = getEndpointFeatureLicenseNote(
           option.endpointFeature,
           ["f3"],
           platformId,
-        )).toContain("does not support Microsoft Defender settings");
+        );
+        expect(note).toContain(platformId === "linux-desktop"
+          ? "do not cover the Linux Desktop Defender policy package"
+          : "does not support Microsoft Defender settings");
       }
       expect(isSecurityGoalOptionAvailable(
         "endpoint-protection",

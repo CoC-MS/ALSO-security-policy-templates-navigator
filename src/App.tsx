@@ -235,12 +235,23 @@ function uniquePlatforms(platformIds: readonly Platform["id"][]): Platform[] {
 interface RepositoryRecommendation {
   repository: ReturnType<typeof getPlatformRepositories>[number];
   sourcePlatform: Platform;
+  sourcePlatformIds: Platform["id"][];
   solutionNames: string[];
   policyIds: string[];
   policyNotes: string[];
 }
 
-function getRepositoryRecommendations(
+const endpointLicensingGuideAnchors: Partial<Record<Platform["id"], string>> = {
+  "windows-11": "windows-licensing-guide",
+  macos: "macos-licensing-guide",
+  "ios-ipados": "iosipados-licensing-guide",
+  android: "android-licensing-guide",
+  "windows-servers": "windows-server-licensing-guide",
+  "linux-server": "linux-server-and-desktop-licensing-guide",
+  "linux-desktop": "linux-server-and-desktop-licensing-guide",
+};
+
+export function getRepositoryRecommendations(
   selectedPlatforms: readonly Platform[],
   selectedOptions: readonly SolutionOption[],
 ): RepositoryRecommendation[] {
@@ -269,6 +280,7 @@ function getRepositoryRecommendations(
     for (const repository of getPlatformRepositories(platform)) {
       const existing = recommendations.get(repository.url);
       if (existing) {
+        existing.sourcePlatformIds = [...new Set([...existing.sourcePlatformIds, platform.id])];
         existing.solutionNames = [...new Set([...existing.solutionNames, ...solutionNames])];
         existing.policyIds = [...new Set([...existing.policyIds, ...policyIds])];
         existing.policyNotes = [...new Set([...existing.policyNotes, ...policyNotes])];
@@ -286,6 +298,7 @@ function getRepositoryRecommendations(
       recommendations.set(repository.url, {
         repository,
         sourcePlatform: platform,
+        sourcePlatformIds: [platform.id],
         solutionNames,
         policyIds,
         policyNotes,
@@ -1051,18 +1064,22 @@ function App() {
               {recommendedRepositories.length > 0 ? (
                 <div className="result-recommendations-layout">
                   <div className="recommendation-grid result-recommendation-grid">
-                  {recommendedRepositories.map(({ repository, sourcePlatform, solutionNames, policyIds, policyNotes }) => {
+                  {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
                   const platformSelections = selectedOptions.filter((option) =>
                     option.platformIds.some((platformId) =>
-                      platformId === sourcePlatform.id,
+                      sourcePlatformIds.includes(platformId),
                     ),
                   );
-                  const limitedSelections = getLimitedExperienceSelections(
-                    platformSelections,
-                    eligibleLicenseIds,
-                    sourcePlatform.id,
-                  );
+                  const limitedSelections = [...new Set(
+                    sourcePlatformIds.flatMap((platformId) =>
+                      getLimitedExperienceSelections(
+                        platformSelections,
+                        eligibleLicenseIds,
+                        platformId,
+                      ),
+                    ),
+                  )];
                   const licensingTitleFor = (
                     matches: (option: (typeof platformSelections)[number]) => boolean = () => true,
                   ) => getLicensingPrerequisiteTitle(
@@ -1165,16 +1182,30 @@ function App() {
                     sourcePlatform.id === "purview" && dataSecuritySelection
                       ? getDataSecurityLicenseNote(eligibleLicenseIds)
                       : undefined;
+                  const endpointNoteSelections = [
+                    ...limitedSelections,
+                    ...platformSelections.filter((option) =>
+                      option.selectionId.startsWith("endpoint-protection:") &&
+                      option.children?.length &&
+                      !platformSelections.some((selection) =>
+                        selection.endpointFeature &&
+                        selection.platformIds.some((id) => option.platformIds.includes(id)),
+                      ),
+                    ),
+                  ];
+                  const endpointNoteFor = (option: (typeof platformSelections)[number]) =>
+                    getEndpointFeatureLicenseNote(
+                      option.endpointFeature ?? (option.children?.length ? "defender" : undefined),
+                      eligibleLicenseIds,
+                      option.platformIds[0],
+                    );
                   const endpointFeatureNotes = sourcePlatform.id !== "purview"
                     ? [...new Set(
-                      limitedSelections
-                        .map((option) =>
-                          getEndpointFeatureLicenseNote(
-                            option.endpointFeature,
-                            eligibleLicenseIds,
-                            option.platformIds[0],
-                          ),
-                        )
+                      endpointNoteSelections
+                        .filter((option) => !option.platformIds.some((id) =>
+                          id === "windows-servers" || id === "linux-server",
+                        ))
+                        .map(endpointNoteFor)
                         .filter((note): note is string => note !== undefined),
                     )]
                     : [];
@@ -1184,11 +1215,16 @@ function App() {
                       option.selectionId === "app-protection:oauth-apps",
                     ) &&
                     requiresWorkloadIdPremiumForOAuthApps(eligibleLicenseIds);
+                  const serverPlatformId = sourcePlatformIds.includes("windows-servers")
+                    ? "windows-servers"
+                    : sourcePlatformIds.includes("linux-server")
+                    ? "linux-server"
+                    : undefined;
                   const windowsServerNotes =
-                    limitedSelections.length > 0 &&
-                    (sourcePlatform.id === "windows-servers" ||
-                    sourcePlatform.id === "linux-server")
-                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, sourcePlatform.id)
+                    (limitedSelections.length > 0 ||
+                      platformSelections.some((option) => option.endpointFeature)) &&
+                    serverPlatformId
+                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, serverPlatformId)
                       : [];
                   const visibleLimitedExperienceNote =
                     limitedSelections.length > 0 &&
@@ -1204,6 +1240,8 @@ function App() {
                       eligibleLicenseIds,
                       sourcePlatform.id,
                     );
+                  const endpointLicensingGuideUrl =
+                    `${repository.url}#${endpointLicensingGuideAnchors[sourcePlatform.id]}`;
                   return (
                     <article
                       className={`recommendation-card${showAiSecurityLicenseActions ? " recommendation-card-ai-security" : ""}`}
@@ -1313,14 +1351,18 @@ function App() {
                         )}
                         {endpointFeatureNotes.map((note) => (
                           <aside className="license-requirement-note" key={note}>
-                            <strong>{licensingTitleFor((option) =>
-                              getEndpointFeatureLicenseNote(
-                                option.endpointFeature,
-                                eligibleLicenseIds,
-                                option.platformIds[0],
-                              ) === note,
+                            <strong>{getLicensingPrerequisiteTitle(
+                              endpointNoteSelections.filter((option) =>
+                                endpointNoteFor(option) === note,
+                              ).map((option) => option.name),
                             )}</strong>
                             <p>{note}</p>
+                            <p>
+                              <a href={endpointLicensingGuideUrl}
+                                target="_blank" rel="noopener noreferrer">
+                                Repository licensing guide
+                              </a>
+                            </p>
                           </aside>
                         ))}
                         {cloudAppsConditionalAccessLicenseNote && (
@@ -1351,8 +1393,19 @@ function App() {
                         )}
                         {windowsServerNotes.map((note) => (
                           <aside className="license-requirement-note" key={note}>
-                            <strong>{licensingTitleFor()}</strong>
+                            <strong>{getLicensingPrerequisiteTitle(
+                              platformSelections.filter((option) =>
+                                !option.children?.length &&
+                                serverPlatformId !== undefined &&
+                                option.platformIds.includes(serverPlatformId),
+                              ).map((option) => option.name),
+                            )}</strong>
                             <p>{renderWindowsServerLicenseNote(note)}</p>
+                            <p>
+                              <a href={endpointLicensingGuideUrl} target="_blank" rel="noopener noreferrer">
+                                Repository licensing guide
+                              </a>
+                            </p>
                           </aside>
                         ))}
                         <LicensingDisclaimer />
