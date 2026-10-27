@@ -656,7 +656,9 @@ export function getEndpointFeatureLicenseNote(
       : []),
   ];
   const upgradeNote = `Add ${suiteAddOns.join(" or ")} for the full Defender policy experience.`;
-  const intuneSuiteNote = "Policies that require Microsoft Intune Suite must be excluded unless that additional licensing is available.";
+  const intuneSuiteNote = feature === "intune"
+    ? "Policies that require Microsoft Intune Suite must be excluded unless that additional licensing is available. "
+    : "";
 
   if (platformId === "linux-desktop") {
     return `The Linux Desktop licensing table lists E5-level licensing only; the selected licenses do not cover the Linux Desktop Defender policy package. Automated onboarding to Defender is not eligible without additional licensing. ${upgradeNote}`;
@@ -667,7 +669,7 @@ export function getEndpointFeatureLicenseNote(
   );
   if (platformId && hasBusinessOrE3) {
     if (platformId === "windows-11") {
-      return `The Windows BP package supports your selected licenses, but does not provide the full E5-level policy experience. The Defender for Cloud Apps integration requires a separate Defender for Cloud Apps entitlement; it is not included just because the BP package is supported. ${manualCloudAppsControlNote} ${intuneSuiteNote} ${upgradeNote}`;
+      return `The Windows BP package supports your selected licenses, but does not provide the full E5-level policy experience. The Defender for Cloud Apps integration requires a separate Defender for Cloud Apps entitlement; it is not included just because the BP package is supported. ${manualCloudAppsControlNote} ${intuneSuiteNote}${upgradeNote}`;
     }
     if (platformId === "macos" || platformId === "ios-ipados" || platformId === "android") {
       return `The ${getPlatform(platformId).name} BP package supports your selected licenses with limitations: the full Defender for Cloud Apps experience is not included. ${manualCloudAppsControlNote} ${upgradeNote}`;
@@ -686,7 +688,7 @@ export function getEndpointFeatureLicenseNote(
   if (eligibleLicenseIds.every((licenseId) => licenseId.startsWith("f1"))) {
     return feature === "defender"
       ? "Microsoft 365 F1 does not support Microsoft Defender settings. Automated onboarding to Defender is not eligible with this license."
-      : `Microsoft 365 F1 supports Intune configuration settings only. Microsoft Defender security policy settings are not supported with F1 licensing. ${platformId === "windows-11" ? `${intuneSuiteNote} ` : ""}${upgradeNote}`;
+      : `Microsoft 365 F1 supports Intune configuration settings only. Microsoft Defender security policy settings are not supported with F1 licensing. ${platformId === "windows-11" ? intuneSuiteNote : ""}${upgradeNote}`;
   }
 
   if (!hasBusinessOrE3 && eligibleLicenseIds.some((licenseId) => licenseId.startsWith("f3"))) {
@@ -697,7 +699,7 @@ export function getEndpointFeatureLicenseNote(
     ) {
       return `Microsoft 365 F3 does not support Microsoft Defender settings on ${getPlatform(platformId).name}. Automated onboarding to Defender is not eligible with this license.`;
     }
-    return `Microsoft 365 F3 supports only Defender Antimalware, Microsoft Defender Firewall, Exploit Guard, Credential Guard, BitLocker, and BitLocker To Go. Other Defender-related configurations may require additional licensing. ${platformId === "windows-11" ? `${intuneSuiteNote} ` : ""}${upgradeNote}`;
+    return `Microsoft 365 F3 supports only Defender Antimalware, Microsoft Defender Firewall, Exploit Guard, Credential Guard, BitLocker, and BitLocker To Go. Other Defender-related configurations may require additional licensing. ${platformId === "windows-11" ? intuneSuiteNote : ""}${upgradeNote}`;
   }
 
   if (feature === "defender") {

@@ -21,6 +21,16 @@ import {
 
 describe("security goal recommendations", () => {
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "never mentions Intune Suite in AV licensing notes for %s",
+    (id) => {
+      for (const platform of ["windows-11", "macos", "ios-ipados", "android", "linux-desktop", "linux-server", "windows-servers"] as const) {
+        expect(getEndpointFeatureLicenseNote("defender", [id], platform) ?? "")
+          .not.toContain("Intune Suite");
+      }
+    },
+  );
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
     "keeps macOS administrator protection full and scopes app entitlements for %s",
     (id) => {
       expect(getSecurityGoalOptionExperience(
@@ -862,7 +872,7 @@ describe("security goal recommendations", () => {
       const windows = getEndpointFeatureLicenseNote("defender", [licenseId], "windows-11");
       expect(windows).toContain("Windows BP package");
       expect(windows).toContain("separate Defender for Cloud Apps entitlement");
-      expect(windows).toContain("Microsoft Intune Suite must be excluded");
+      expect(windows).not.toContain("Intune Suite");
       const linux = getEndpointFeatureLicenseNote("defender", [licenseId], "linux-desktop");
       expect(linux).toContain("E5-level licensing only");
       expect(linux).toContain("Add Microsoft Defender Suite");

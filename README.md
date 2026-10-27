@@ -36,6 +36,8 @@ For Business Premium, E3, F1, and F3 without the matching Purview Suite, the Sen
 
 ## Endpoint limited-experience notes
 
+Antivirus (AV) limitation notes do not mention Intune Suite. Administrator protection retains its separate Intune Suite/EPM prerequisite.
+
 Final recommendation cards show category-specific limitations before the licensing disclaimer, with links to the repository licensing guide. On Windows, macOS, iOS/iPadOS, and Android, only Antivirus (AV) can show Limited experience and its limitation message; all other endpoint categories show Full experience. Existing AV eligibility restrictions remain in place. Windows Server, Linux Server, and Linux Desktop retain their previous rules and notes. The AV limitation mappings were reviewed against the repository tables on 27 October 2026:
 
 | Repository guide | License scope and limitation |
