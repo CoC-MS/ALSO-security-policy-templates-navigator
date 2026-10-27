@@ -431,14 +431,6 @@ const endpointIntuneFullLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
-const frontlineUnsupportedDefenderPlatforms = new Set<Platform["id"]>([
-  "macos",
-  "ios-ipados",
-  "android",
-  "linux-desktop",
-  "linux-server",
-]);
-
 function isFullExperienceClientEndpointOption(option: SolutionOption | undefined): boolean {
   return Boolean(option?.endpointFeature &&
     !option.id.endsWith("-antivirus") &&
@@ -569,38 +561,8 @@ export function isSecurityGoalOptionAvailable(
 ): boolean {
   const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
   if (option?.comingSoon && !option.allowRepositoryPreview) return false;
-  if (goalId === "endpoint-protection" &&
-    isFullExperienceClientEndpointOption(option)) {
+  if (goalId === "endpoint-protection") {
     return licenseIds.some(isLicenseEligible);
-  }
-  if (
-    goalId === "endpoint-protection" &&
-    option?.endpointFeature === "defender"
-  ) {
-    const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
-    const hasFullDefenderLicense = eligibleLicenseIds.some((licenseId) =>
-      endpointFullExperienceLicenseIds.has(licenseId),
-    );
-    const frontlineOnly =
-      eligibleLicenseIds.length > 0 &&
-      eligibleLicenseIds.every((licenseId) =>
-        licenseId.startsWith("f1") || licenseId.startsWith("f3"),
-      );
-
-    if (frontlineOnly && !hasFullDefenderLicense) {
-      if (eligibleLicenseIds.some((licenseId) => licenseId.startsWith("f1"))) {
-        return false;
-      }
-
-      if (
-        option.platformIds.some((platformId) =>
-          frontlineUnsupportedDefenderPlatforms.has(platformId),
-        ) ||
-        option.id.includes("defender-onboarding")
-      ) {
-        return false;
-      }
-    }
   }
 
   if (goalId !== "data-protection") {
@@ -656,6 +618,9 @@ export function getEndpointFeatureLicenseNote(
       : []),
   ];
   const upgradeNote = `Add ${suiteAddOns.join(" or ")} for the full Defender policy experience.`;
+  if (eligibleLicenseIds.every((id) => id.startsWith("f1") || id.startsWith("f3"))) {
+    return "The selected Microsoft 365 F1/F3 base licenses provide limited endpoint protection experience. Add Microsoft Defender Suite FLW for Microsoft 365 F1/F3 to unlock Defender and other endpoint protection capabilities, including Antivirus (AV) and automated onboarding to Defender.";
+  }
   const intuneSuiteNote = feature === "intune"
     ? "Policies that require Microsoft Intune Suite must be excluded unless that additional licensing is available. "
     : "";
@@ -674,32 +639,6 @@ export function getEndpointFeatureLicenseNote(
     if (platformId === "macos" || platformId === "ios-ipados" || platformId === "android") {
       return `The ${getPlatform(platformId).name} BP package supports your selected licenses with limitations: the full Defender for Cloud Apps experience is not included. ${manualCloudAppsControlNote} ${upgradeNote}`;
     }
-  }
-
-  if (platformId && !hasBusinessOrE3 &&
-    (platformId === "macos" || platformId === "ios-ipados" || platformId === "android")) {
-    const frontlineNames = [
-      ...(eligibleLicenseIds.some((id) => id.startsWith("f1")) ? ["Microsoft 365 F1"] : []),
-      ...(eligibleLicenseIds.some((id) => id.startsWith("f3")) ? ["Microsoft 365 F3"] : []),
-    ].join(" and ");
-    return `${frontlineNames} ${frontlineNames.includes(" and ") ? "do" : "does"} not support Microsoft Defender settings on ${getPlatform(platformId).name}. Intune configuration settings only are supported. Automated onboarding to Defender is not eligible without additional licensing. ${upgradeNote}`;
-  }
-
-  if (eligibleLicenseIds.every((licenseId) => licenseId.startsWith("f1"))) {
-    return feature === "defender"
-      ? "Microsoft 365 F1 does not support Microsoft Defender settings. Automated onboarding to Defender is not eligible with this license."
-      : `Microsoft 365 F1 supports Intune configuration settings only. Microsoft Defender security policy settings are not supported with F1 licensing. ${platformId === "windows-11" ? intuneSuiteNote : ""}${upgradeNote}`;
-  }
-
-  if (!hasBusinessOrE3 && eligibleLicenseIds.some((licenseId) => licenseId.startsWith("f3"))) {
-    if (
-      feature === "defender" &&
-      platformId &&
-      frontlineUnsupportedDefenderPlatforms.has(platformId)
-    ) {
-      return `Microsoft 365 F3 does not support Microsoft Defender settings on ${getPlatform(platformId).name}. Automated onboarding to Defender is not eligible with this license.`;
-    }
-    return `Microsoft 365 F3 supports only Defender Antimalware, Microsoft Defender Firewall, Exploit Guard, Credential Guard, BitLocker, and BitLocker To Go. Other Defender-related configurations may require additional licensing. ${platformId === "windows-11" ? intuneSuiteNote : ""}${upgradeNote}`;
   }
 
   if (feature === "defender") {
@@ -811,6 +750,11 @@ export function getSecurityGoalOptionExperience(
   }
   if (goalId === "endpoint-protection" && optionId) {
     const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
+    if (licenseIds.some(isLicenseEligible) &&
+      licenseIds.filter(isLicenseEligible).every((id) => id.startsWith("f1") || id.startsWith("f3")) &&
+      !licenseIds.some((id) => endpointFullExperienceLicenseIds.has(id))) {
+      return "limited";
+    }
     if (isFullExperienceClientEndpointOption(option)) {
       return licenseIds.some(isLicenseEligible) ? "full" : "limited";
     }

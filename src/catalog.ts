@@ -351,11 +351,7 @@ const serverBaseLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
-const windowsServerLicenseIds = new Set<License["id"]>(
-  [...serverBaseLicenseIds].filter((licenseId) =>
-    !["f1", "f3", "f1-purview", "f3-purview"].includes(licenseId),
-  ),
-);
+const windowsServerLicenseIds = serverBaseLicenseIds;
 
 export function isPlatformAvailableForLicense(
   licenseId: License["id"],
@@ -655,12 +651,16 @@ export function getWindowsServerLicenseNotes(
     )
   ) {
     return [
-      "Limited Windows Server experience: Microsoft 365 F1 or F3 with Defender Suite does not include server licensing. Purchase either Microsoft Defender for Servers Plan 1 or Plan 2 through Microsoft Defender for Cloud, or a Microsoft Defender for Endpoint Server license for each server, before deploying these policies.",
+      `${applicableLicenseIds.some((id) => fullDefenderExperienceLicenseIds.has(id)) ? "Microsoft Defender Suite FLW is already selected." : "First add Microsoft Defender Suite FLW for Microsoft 365 F1/F3 to unlock Defender and other endpoint protection capabilities."} Windows Server protection also requires a Microsoft Defender for Endpoint Server license for each server. A Windows Server operating system license is separate from these security entitlements.`,
     ];
   }
+  const effectiveLicenseIds = platformId === "windows-servers" &&
+    applicableLicenseIds.some((id) => !id.startsWith("f1") && !id.startsWith("f3"))
+    ? applicableLicenseIds.filter((id) => !id.startsWith("f1") && !id.startsWith("f3"))
+    : applicableLicenseIds;
   return [
     ...new Set(
-      applicableLicenseIds
+      effectiveLicenseIds
         .map((licenseId) => getWindowsServerLicenseNote(licenseId))
         .filter((note): note is string => note !== undefined),
     ),

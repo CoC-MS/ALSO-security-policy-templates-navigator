@@ -20,6 +20,25 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
+    "offers every endpoint category as a limited upgrade path for %s",
+    (id) => {
+      for (const option of getSecurityGoalOptions("endpoint-protection")) {
+        expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [id])).toBe(true);
+        expect(getSecurityGoalOptionExperience(
+          "endpoint-protection", [id], option.platformIds, option.id,
+        )).toBe("limited");
+        for (const platform of option.platformIds) {
+          expect(isPlatformAvailableForLicenses([id], platform)).toBe(true);
+        }
+        if (option.endpointFeature) {
+          expect(getEndpointFeatureLicenseNote(option.endpointFeature, [id], option.platformIds[0]))
+            .toContain("Add Microsoft Defender Suite FLW");
+        }
+      }
+    },
+  );
+
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
     "never mentions Intune Suite in AV licensing notes for %s",
     (id) => {
@@ -900,19 +919,16 @@ describe("security goal recommendations", () => {
   );
 
   it.each(["f1", "f1-purview", "f3", "f3-purview"] as const)(
-    "retains frontline limitations for Intune-only selections with %s",
+    "shows frontline endpoint upgrade prerequisites for %s",
     (licenseId) => {
       for (const platform of ["macos", "ios-ipados", "android"] as const) {
         const note = getEndpointFeatureLicenseNote("intune", [licenseId], platform);
-        expect(note).toContain("Intune configuration settings only");
-        expect(note).toContain("not support Microsoft Defender settings");
+        expect(note).toContain("limited endpoint protection experience");
         expect(note).toContain("Microsoft Defender Suite FLW");
       }
       const windows = getEndpointFeatureLicenseNote("intune", [licenseId], "windows-11");
-      expect(windows).toContain("Microsoft Intune Suite must be excluded");
-      expect(windows).toContain(licenseId.startsWith("f1")
-        ? "Intune configuration settings only"
-        : "BitLocker To Go");
+      expect(windows).not.toContain("Intune Suite");
+      expect(windows).toContain("to unlock Defender and other endpoint protection capabilities");
       expect(getEndpointFeatureLicenseNote("defender", [licenseId], "linux-desktop"))
         .toContain("Microsoft Defender Suite FLW");
     },
@@ -926,7 +942,7 @@ describe("security goal recommendations", () => {
         .toBeUndefined();
     }
     expect(getEndpointFeatureLicenseNote("intune", ["f1", "f3"], "windows-11"))
-      .toContain("Microsoft 365 F3 supports only");
+      .toContain("limited endpoint protection experience");
   });
 
   it.each(licenses.filter((license) => license.eligible))(
@@ -965,14 +981,17 @@ describe("security goal recommendations", () => {
           "endpoint-protection", [license.id], option.platformIds, option.id,
         );
         if (!option.id.endsWith("-antivirus")) {
-          expect(experience).toBe("full");
+          expect(experience).toBe(
+            (license.id.startsWith("f1") || license.id.startsWith("f3")) &&
+              !license.id.includes("defender") ? "limited" : "full",
+          );
           expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [license.id]))
             .toBe(true);
           expect(getLimitedExperienceSelections(
             [{ ...option, goalId: "endpoint-protection" as const }],
             [license.id],
             option.platformIds[0],
-          )).toEqual([]);
+          )).toEqual(experience === "limited" ? [{ ...option, goalId: "endpoint-protection" }] : []);
         }
       }
     },
@@ -998,7 +1017,7 @@ describe("security goal recommendations", () => {
     )).toBe("full");
   });
 
-  it("applies F3's AV subset and F1's AV restriction without limiting other client categories", () => {
+  it("keeps all base frontline categories selectable with limited experience", () => {
     for (const optionId of [
       "windows-antivirus",
       "windows-firewall",
@@ -1011,7 +1030,7 @@ describe("security goal recommendations", () => {
         ["f3"],
         ["windows-11"],
         optionId,
-      )).toBe(optionId === "windows-antivirus" ? "limited" : "full");
+      )).toBe("limited");
     }
     expect(isSecurityGoalOptionAvailable(
       "endpoint-protection",
@@ -1019,13 +1038,13 @@ describe("security goal recommendations", () => {
       ["f3"],
     )).toBe(true);
     expect(getEndpointFeatureLicenseNote("defender", ["f3"]))
-      .toContain("Defender Antimalware, Microsoft Defender Firewall, Exploit Guard");
+      .toContain("to unlock Defender and other endpoint protection capabilities");
 
     expect(isSecurityGoalOptionAvailable(
       "endpoint-protection",
       "windows-antivirus",
       ["f1"],
-    )).toBe(false);
+    )).toBe(true);
     expect(isSecurityGoalOptionAvailable(
       "endpoint-protection",
       "ios-app-protection",
@@ -1036,9 +1055,9 @@ describe("security goal recommendations", () => {
       ["f1"],
       ["ios-ipados"],
       "ios-app-protection",
-    )).toBe("full");
+    )).toBe("limited");
     expect(getEndpointFeatureLicenseNote("intune", ["f1"]))
-      .toContain("Intune configuration settings only");
+      .toContain("Microsoft Defender Suite FLW");
   });
 
   it.each([
@@ -1048,7 +1067,7 @@ describe("security goal recommendations", () => {
     ["endpoint-ios-ipados", "ios-antivirus", "ios-defender-onboarding", "ios-ipados"],
     ["endpoint-android", "android-antivirus", "android-defender-onboarding", "android"],
   ] as const)(
-    "disables Defender settings and onboarding for F3 on %s",
+    "allows Defender upgrade selections for F3 on %s",
     (_platformOptionId, antivirusId, onboardingId, platformId) => {
       const defenderOptions = getSecurityGoalOptions("endpoint-protection")
         .filter((option) =>
@@ -1062,21 +1081,19 @@ describe("security goal recommendations", () => {
           "endpoint-protection",
           option.id,
           ["f3"],
-        )).toBe(!option.id.endsWith("-antivirus"));
+        )).toBe(true);
         const note = getEndpointFeatureLicenseNote(
           option.endpointFeature,
           ["f3"],
           platformId,
         );
-        expect(note).toContain(platformId === "linux-desktop"
-          ? "do not cover the Linux Desktop Defender policy package"
-          : "does not support Microsoft Defender settings");
+        expect(note).toContain("to unlock Defender and other endpoint protection capabilities");
       }
       expect(isSecurityGoalOptionAvailable(
         "endpoint-protection",
         antivirusId,
         ["f3"],
-      )).toBe(false);
+      )).toBe(true);
       if (onboardingId) {
         expect(isSecurityGoalOptionAvailable(
           "endpoint-protection",
@@ -1085,11 +1102,11 @@ describe("security goal recommendations", () => {
         )).toBe(true);
       }
       expect(getEndpointFeatureLicenseNote("defender", ["f3"], platformId))
-        .toContain("Automated onboarding to Defender is not eligible");
+        .toContain("automated onboarding to Defender");
     },
   );
 
-  it("retains F1 AV restrictions and server/Linux rules while enabling other client categories", () => {
+  it("allows all F1 Defender upgrade selections including AV and servers", () => {
     const defenderOptions = getSecurityGoalOptions("endpoint-protection")
       .filter((option) => option.endpointFeature === "defender");
     for (const option of defenderOptions) {
@@ -1097,15 +1114,12 @@ describe("security goal recommendations", () => {
         "endpoint-protection",
         option.id,
         ["f1"],
-      )).toBe(!option.id.endsWith("-antivirus") &&
-        option.platformIds.every((id) =>
-          id === "windows-11" || id === "macos" || id === "ios-ipados" || id === "android",
-        ));
+      )).toBe(true);
       expect(getEndpointFeatureLicenseNote(
         option.endpointFeature,
         ["f1"],
         option.platformIds[0],
-      )).toContain("Automated onboarding to Defender is not eligible");
+      )).toContain("to unlock Defender and other endpoint protection capabilities");
       expect(isSecurityGoalOptionAvailable(
         "endpoint-protection",
         option.id,

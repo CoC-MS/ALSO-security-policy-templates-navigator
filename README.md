@@ -36,9 +36,11 @@ For Business Premium, E3, F1, and F3 without the matching Purview Suite, the Sen
 
 ## Endpoint limited-experience notes
 
+Base F1/F3 and their Purview-only variants can select every endpoint platform and category, including AV and Windows Server, as Limited experience upgrade paths. Their notes require Defender Suite FLW to unlock Defender and other endpoint protection capabilities. Windows Server additionally requires Defender for Endpoint Server licensing per server, not Defender for Business servers; the Windows Server operating system license remains separate. An existing Defender Suite entitlement suppresses the redundant Suite purchase instruction. Other license families retain their existing endpoint rules.
+
 Antivirus (AV) limitation notes do not mention Intune Suite. Administrator protection retains its separate Intune Suite/EPM prerequisite.
 
-Final recommendation cards show category-specific limitations before the licensing disclaimer, with links to the repository licensing guide. On Windows, macOS, iOS/iPadOS, and Android, only Antivirus (AV) can show Limited experience and its limitation message; all other endpoint categories show Full experience. Existing AV eligibility restrictions remain in place. Windows Server, Linux Server, and Linux Desktop retain their previous rules and notes. The AV limitation mappings were reviewed against the repository tables on 27 October 2026:
+Final recommendation cards show category-specific limitations before the licensing disclaimer, with links to the repository licensing guide. On Windows, macOS, iOS/iPadOS, and Android, only Antivirus (AV) can show Limited experience for non-frontline license selections; all other client endpoint categories show Full experience. Base frontline selections follow the upgrade-path rules above. Linux Server/Desktop and non-frontline Windows Server licensing notes remain separate. The AV limitation mappings were reviewed against the repository tables on 27 October 2026:
 
 | Repository guide | License scope and limitation |
 | --- | --- |

@@ -358,10 +358,13 @@ describe("Business Premium-only results", () => {
     });
 
     it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
-      "excludes %s from Windows Server policies",
+      "offers %s Windows Server upgrade paths",
       (licenseId) => {
-        expect(isPlatformAvailableForLicense(licenseId, "windows-servers")).toBe(false);
-        expect(getWindowsServerLicenseNotes([licenseId], "windows-servers")).toEqual([]);
+        expect(isPlatformAvailableForLicense(licenseId, "windows-servers")).toBe(true);
+        const note = getWindowsServerLicenseNotes([licenseId], "windows-servers").join(" ");
+        expect(note).toContain("First add Microsoft Defender Suite FLW");
+        expect(note).toContain("Microsoft Defender for Endpoint Server license for each server");
+        expect(note).not.toContain("Defender for Business");
         expect(isPlatformAvailableForLicense(licenseId, "linux-server")).toBe(true);
       },
     );
@@ -373,13 +376,13 @@ describe("Business Premium-only results", () => {
         expect(getPlatformExperienceForLicenses([licenseId], "windows-servers")).toBe("limited");
         const notes = getWindowsServerLicenseNotes([licenseId], "windows-servers");
         expect(notes).toHaveLength(1);
-        expect(notes[0]).toContain("Purchase either Microsoft Defender for Servers Plan 1 or Plan 2");
+        expect(notes[0]).toContain("Microsoft Defender Suite FLW is already selected");
         expect(notes[0]).toContain("Microsoft Defender for Endpoint Server license for each server");
       },
     );
 
-    it("does not unlock Windows Servers by combining base F-series and Purview-only plans", () => {
-      expect(isPlatformAvailableForLicenses(["f1", "f3", "f1-purview", "f3-purview"], "windows-servers")).toBe(false);
+    it("offers Windows Servers with upgrade prerequisites for base F-series and Purview-only plans", () => {
+      expect(isPlatformAvailableForLicenses(["f1", "f3", "f1-purview", "f3-purview"], "windows-servers")).toBe(true);
     });
 
     it("unions valid entitlements without adding prerequisites from excluded F-series plans", () => {
@@ -579,7 +582,7 @@ describe("full-capability suite tier", () => {
     describe("Microsoft 365 F1-only results", () => {
       const licenseIds = ["f1"] as const;
 
-      it("excludes Windows Servers but includes Linux Desktop", () => {
+      it("includes Windows Servers and Linux Desktop with prerequisites", () => {
         expect(
           platforms
             .filter((platform) =>
@@ -588,6 +591,7 @@ describe("full-capability suite tier", () => {
             .map((platform) => platform.id),
         ).toEqual([
           "windows-11",
+          "windows-servers",
           "ai-security",
           "ai-security-macos",
           "agent-security",
@@ -639,7 +643,7 @@ describe("full-capability suite tier", () => {
                   .map((platform) => platform.id),
               ).toEqual([
                 "windows-11",
-                ...(!licenseId.startsWith("f") ? ["windows-servers"] : []),
+                "windows-servers",
                 "ai-security",
                 "ai-security-macos",
                 "conditional-access",
