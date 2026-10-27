@@ -21,6 +21,35 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "shows limited Sensitivity labels with scoped guidance for %s",
+    (id) => {
+      expect(getSecurityGoalOptionExperience(
+        "data-protection", [id], ["purview"], "sensitivity-labels",
+      )).toBe("limited");
+      const note = getDataSecurityLicenseNote([id], ["sensitivity-labels"]);
+      expect(note).toContain("Sensitivity labels:");
+      expect(note).not.toMatch(/DLP|retention|auto.labell|SIT/);
+    },
+  );
+
+  it.each(["business-premium", "business-premium-defender", "f1", "f1-defender"] as const)(
+    "includes only Microsoft 365 app sensitivity labeling for %s",
+    (id) => {
+      const note = getDataSecurityLicenseNote([id], ["sensitivity-labels"]);
+      expect(note).toContain("Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps are included.");
+      expect(note).not.toContain("containers");
+    },
+  );
+
+  it.each(["e3", "e3-defender", "f3", "f3-defender"] as const)(
+    "also includes Microsoft 365 container sensitivity labeling for %s",
+    (id) => {
+      expect(getDataSecurityLicenseNote([id], ["sensitivity-labels"]))
+        .toContain("Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps, plus sensitivity labeling for containers in Microsoft 365, are included.");
+    },
+  );
+
   it.each(["business-premium", "business-premium-defender", "e3", "e3-defender"] as const)(
     "lists the exact included and upgrade-required DLP and retention features for %s",
     (id) => {
@@ -104,14 +133,10 @@ describe("security goal recommendations", () => {
     (licenseId) => {
       for (const option of getSecurityGoalOptions("data-protection")) {
         const note = getDataSecurityLicenseNote([licenseId], [option.id]);
-        if (option.id === "sensitivity-labels") {
-          expect(note).toBeUndefined();
-        } else {
-          expect(note).toContain(`${option.name}:`);
-          expect(note).not.toContain("undefined");
-          if (option.id === "sensitive-information-types") {
-            expect(note).toContain("table does not specify");
-          }
+        expect(note).toContain(`${option.name}:`);
+        expect(note).not.toContain("undefined");
+        if (option.id === "sensitive-information-types") {
+          expect(note).toContain("table does not specify");
         }
       }
     },
@@ -119,7 +144,7 @@ describe("security goal recommendations", () => {
 
   it("preserves full and unavailable Data Security selections without extra category claims", () => {
     expect(getDataSecurityLicenseNote(["e5"], ["dlp"])).toBeUndefined();
-    expect(getDataSecurityLicenseNote(["business-premium"], ["sensitivity-labels"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["business-premium"], ["sensitivity-labels"])).toContain("Only manual");
     expect(getDataSecurityLicenseNote(["e3"], [])).toBeUndefined();
     expect(getDataSecurityLicenseNote(["f3-purview"], ["dlp"])).toBeUndefined();
     expect(getDataSecurityLicenseNote(["business-premium"], ["endpoint-dlp"]))
@@ -169,15 +194,17 @@ describe("security goal recommendations", () => {
     },
   );
 
-  it("omits full Sensitivity labels while retaining limited Data Security categories", () => {
+  it("includes limited Sensitivity labels alongside other limited Data Security categories", () => {
     const data = selections.filter((option) => option.goalId === "data-protection");
     for (const licenseId of ["business-premium", "e3", "f1", "f3"] as const) {
       const limited = getLimitedExperienceSelections(data, [licenseId], "purview");
-      expect(limited.some((option) => option.id === "sensitivity-labels")).toBe(false);
+      expect(limited.some((option) => option.id === "sensitivity-labels")).toBe(true);
       expect(limited.some((option) => option.id === "auto-labeling")).toBe(true);
     }
-    expect(getLimitedExperienceSelections(data, ["e5"], "purview")).toEqual([]);
-    expect(getLimitedExperienceSelections(data, ["e7"], "purview")).toEqual([]);
+    for (const id of ["e5", "e7"] as const) {
+      expect(getLimitedExperienceSelections(data, [id], "purview").map((option) => option.id))
+        .toEqual(["sensitivity-labels"]);
+    }
   });
 
   it("scopes prerequisite guidance to each repository and removes fully licensed selections", () => {
@@ -559,7 +586,7 @@ describe("security goal recommendations", () => {
   });
 
   it.each(["business-premium", "e3", "f3", "f1"] as const)(
-    "shows Full experience for Sensitivity labels with %s",
+    "shows Limited experience for Sensitivity labels with %s",
     (licenseId) => {
       expect(
         getSecurityGoalOptionExperience(
@@ -568,7 +595,7 @@ describe("security goal recommendations", () => {
           ["purview"],
           "sensitivity-labels",
         ),
-      ).toBe("full");
+      ).toBe("limited");
     },
   );
 
@@ -1030,9 +1057,10 @@ describe("security goal recommendations", () => {
         "data-protection",
         [licenseId],
         option.platformIds,
-      )).toBe("full");
+        option.id,
+      )).toBe(option.id === "sensitivity-labels" ? "limited" : "full");
     }
-    expect(getDataSecurityLicenseNote([licenseId])).toBeUndefined();
+    expect(getDataSecurityLicenseNote([licenseId])).toContain("Sensitivity labels:");
   });
 
   it.each(["business-premium", "e3", "e3-defender"] as const)(
@@ -1085,7 +1113,7 @@ describe("security goal recommendations", () => {
   });
 
   it.each(["e3", "e3-defender", "business-premium", "business-premium-defender"] as const)(
-    "names the missing Purview add-on for %s without changing Sensitivity labels experience",
+    "names the missing Purview add-on for %s while limiting Sensitivity labels",
     (licenseId) => {
       expect(getDataSecurityLicenseNote([licenseId])).toContain("Add Microsoft Purview Suite");
       expect(getDataSecurityLicenseNote([licenseId])).toContain(
@@ -1095,7 +1123,7 @@ describe("security goal recommendations", () => {
       );
       expect(getSecurityGoalOptionExperience(
         "data-protection", [licenseId], ["purview"], "sensitivity-labels",
-      )).toBe("full");
+      )).toBe("limited");
     },
   );
 
@@ -1107,7 +1135,8 @@ describe("security goal recommendations", () => {
 
   it("does not suggest another add-on when FLW Purview is already selected", () => {
     expect(getDataSecurityLicenseNote(["f3-purview"])).not.toContain("Add ");
-    expect(getDataSecurityLicenseNote(["e3", "e5"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["e3", "e5"])).toContain("Sensitivity labels:");
+    expect(getDataSecurityLicenseNote(["e3", "e5"])).not.toContain("Add ");
     expect(getDataSecurityLicenseNote([])).toBeUndefined();
   });
 

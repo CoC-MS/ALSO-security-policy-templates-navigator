@@ -450,17 +450,6 @@ const dataSecurityFullExperienceLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
-const fullSensitivityLabelsLicenseIds = new Set<License["id"]>([
-  "business-premium",
-  "business-premium-defender",
-  "e3",
-  "e3-defender",
-  "f3",
-  "f3-defender",
-  "f1",
-  "f1-defender",
-]);
-
 const flwPurviewSuiteLicenseIds = new Set<License["id"]>([
   "f1-purview",
   "f1-defender-purview",
@@ -747,8 +736,15 @@ export function getDataSecurityLicenseNote(
       ? ["Microsoft Purview Suite for Microsoft 365 E3"] : []),
     ...(!hasBusinessOrE3 ? ["Microsoft Purview Suite FLW for Microsoft 365 F1/F3"] : []),
   ].join(" or ");
+  const sensitivityLabelsNote = eligibleLicenseIds.some((id) =>
+    dataSecurityFullExperienceLicenseIds.has(id) || flwPurviewSuiteLicenseIds.has(id),
+  )
+    ? "Limited experience. Verify the selected sensitivity-label and publishing settings against your selected license entitlement."
+    : eligibleLicenseIds.some((id) => id.startsWith("e3") || id.startsWith("f3"))
+      ? "Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps, plus sensitivity labeling for containers in Microsoft 365, are included."
+      : "Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps are included.";
   const details: Record<string, string> = {
-    "sensitivity-labels": "Verify the selected sensitivity-label and publishing settings against your Purview Suite FLW entitlement.",
+    "sensitivity-labels": sensitivityLabelsNote,
     "dlp": hasBusinessOrE3
       ? `DLP for emails and files is included. Add ${addOns} to unlock DLP for Teams chat.`
       : `No DLP features are included with the selected base frontline licenses. Add ${addOns} to unlock all DLP features.`,
@@ -768,6 +764,9 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "data-protection" && optionId === "sensitivity-labels") {
+    return "limited";
+  }
   if (goalId === "data-protection" && optionId &&
     purviewSuiteUnlockedCategoryIds.has(optionId) &&
     licenseIds.some((id) => flwPurviewSuiteLicenseIds.has(id))) {
@@ -795,16 +794,6 @@ export function getSecurityGoalOptionExperience(
       licenseIds,
     ) ? "limited" : "full";
   }
-  if (
-    goalId === "data-protection" &&
-    optionId === "sensitivity-labels" &&
-    licenseIds.some((licenseId) =>
-      fullSensitivityLabelsLicenseIds.has(licenseId),
-    )
-  ) {
-    return "full";
-  }
-
   if (goalId === "endpoint-protection" && optionId) {
     const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
     if (isFullExperienceClientEndpointOption(option)) {
