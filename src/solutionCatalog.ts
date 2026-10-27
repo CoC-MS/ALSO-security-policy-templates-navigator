@@ -715,6 +715,11 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  if (goalId === "endpoint-protection" && platformIds.some((id) =>
+    id === "windows-servers" || id === "linux-server",
+  )) {
+    return "limited";
+  }
   if (goalId === "data-protection" && optionId === "sensitivity-labels") {
     return licenseIds.some((id) => dataSecurityFullExperienceLicenseIds.has(id))
       ? "full" : "limited";

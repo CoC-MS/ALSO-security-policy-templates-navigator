@@ -46,6 +46,8 @@ For Business Premium, E3, F1, and F3 without the matching Purview Suite, the Sen
 
 ## Endpoint limited-experience notes
 
+Windows Server and Linux Server endpoint platforms and every subcategory remain Limited experience for all eligible Microsoft 365 plans, including E5, E7, and Suite combinations. Final repository badges use the same category rule and retain the separate server licensing prerequisites; Microsoft 365 client entitlements do not remove server requirements.
+
 Linux Desktop notes for base F1, F3, E3, and Business Premium state that Defender for Endpoint P2 is required and is included in the matching Defender Suite. Upgrade text names only the selected F1/F3 plan(s). Manual Cloud Apps control names Defender for Business only for Business Premium, and Defender for Endpoint P1 only for E3.
 
 Base F1/F3 and their Purview-only variants can select every endpoint platform and category, including AV and Windows Server, as Limited experience upgrade paths. Their notes require Defender Suite FLW to unlock Defender and other endpoint protection capabilities. Windows Server additionally requires Defender for Endpoint Server licensing per server, not Defender for Business servers; the Windows Server operating system license remains separate. An existing Defender Suite entitlement suppresses the redundant Suite purchase instruction. Other license families retain their existing endpoint rules.

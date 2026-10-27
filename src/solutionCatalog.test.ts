@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getWindowsServerLicenseNotes, isPlatformAvailableForLicenses, licenses } from "./catalog";
+import { getPlatformExperienceForLicenses, getWindowsServerLicenseNotes, isPlatformAvailableForLicenses, licenses } from "./catalog";
 import {
   getDataSecurityLicenseNote,
   getConditionalAccessCategoryLicenseNote,
@@ -20,6 +20,41 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(licenses.filter((license) => license.eligible))(
+    "keeps every server platform, subcategory and final selection limited for $name",
+    ({ id }) => {
+      for (const platform of ["windows-servers", "linux-server"] as const) {
+        expect(getPlatformExperienceForLicenses([id], platform)).toBe("limited");
+        expect(getSecurityGoalOptionExperience("endpoint-protection", [id], [platform]))
+          .toBe("limited");
+        const options = getSecurityGoalOptions("endpoint-protection").filter((option) =>
+          option.platformIds.includes(platform),
+        );
+        for (const option of options) {
+          expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [id]))
+            .toBe(true);
+          expect(getSecurityGoalOptionExperience("endpoint-protection", [id], [platform], option.id))
+            .toBe("limited");
+          const selection = { ...option, goalId: "endpoint-protection" as const };
+          expect(getLimitedExperienceSelections([selection], [id], platform))
+            .toEqual(option.children?.length ? [] : [selection]);
+        }
+        expect(getWindowsServerLicenseNotes([id], platform).length).toBeGreaterThan(0);
+      }
+    },
+  );
+
+  it("does not turn server categories full when licenses are combined", () => {
+    const allLicenseIds = licenses.filter((license) => license.eligible).map((license) => license.id);
+    for (const option of getSecurityGoalOptions("endpoint-protection").filter((option) =>
+      option.platformIds.some((id) => id === "windows-servers" || id === "linux-server"),
+    )) {
+      expect(getSecurityGoalOptionExperience(
+        "endpoint-protection", allLicenseIds, option.platformIds, option.id,
+      )).toBe("limited");
+    }
+  });
+
   it.each(["e5", "e7", "e3-purview", "f1-defender-purview", "f3-defender-purview"] as const)(
     "provides full experience for every Data Security category with %s",
     (id) => {
@@ -936,7 +971,7 @@ describe("security goal recommendations", () => {
     "f3-defender-purview",
     "f1-defender",
     "f1-defender-purview",
-  ] as const)("shows full endpoint feature experience for %s", (licenseId) => {
+  ] as const)("shows full client features but limited server features for %s", (licenseId) => {
     const features = getSecurityGoalOptions("endpoint-protection")
       .filter((option) => option.endpointFeature);
     for (const option of features) {
@@ -945,7 +980,9 @@ describe("security goal recommendations", () => {
         [licenseId],
         option.platformIds,
         option.id,
-      )).toBe("full");
+      )).toBe(option.platformIds.some((id) =>
+        id === "windows-servers" || id === "linux-server",
+      ) ? "limited" : "full");
       expect(getEndpointFeatureLicenseNote(option.endpointFeature, [licenseId]))
         .toBeUndefined();
     }
