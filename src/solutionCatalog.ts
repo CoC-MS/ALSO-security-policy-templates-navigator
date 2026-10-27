@@ -4,7 +4,8 @@ import {
   hasEntraIdP2,
   getCloudAppsConditionalAccessLicenseNote,
   requiresWorkloadIdPremiumForOAuthApps,
-  manualCloudAppsControlNote,
+  getManualCloudAppsControlNote,
+  getFrontlineLicenseNames,
   isLicenseEligible,
   type License,
   type Platform,
@@ -492,7 +493,7 @@ export function getConditionalAccessCategoryLicenseNote(
       ? ["Microsoft Defender Suite for Microsoft 365 E3"]
       : []),
     ...(eligibleLicenseIds.some((id) => id.startsWith("f1") || id.startsWith("f3"))
-      ? ["Microsoft Defender Suite FLW for Microsoft 365 F1/F3"]
+      ? [`Microsoft Defender Suite FLW for ${getFrontlineLicenseNames(eligibleLicenseIds)}`]
       : []),
   ];
   const messages = [
@@ -614,21 +615,21 @@ export function getEndpointFeatureLicenseNote(
       ? ["Microsoft Defender Suite for Microsoft 365 E3"]
       : []),
     ...(eligibleLicenseIds.some((id) => id.startsWith("f1") || id.startsWith("f3"))
-      ? ["Microsoft Defender Suite FLW for Microsoft 365 F1/F3"]
+      ? [`Microsoft Defender Suite FLW for ${getFrontlineLicenseNames(eligibleLicenseIds)}`]
       : []),
   ];
   const upgradeNote = `Add ${suiteAddOns.join(" or ")} for the full Defender policy experience.`;
+  if (platformId === "linux-desktop") {
+    return `To use Defender on Linux Desktop, Microsoft Defender for Endpoint P2 is required. It is included in ${suiteAddOns.join(" or ")}.`;
+  }
   if (eligibleLicenseIds.every((id) => id.startsWith("f1") || id.startsWith("f3"))) {
-    return "The selected Microsoft 365 F1/F3 base licenses provide limited endpoint protection experience. Add Microsoft Defender Suite FLW for Microsoft 365 F1/F3 to unlock Defender and other endpoint protection capabilities, including Antivirus (AV) and automated onboarding to Defender.";
+    return `The selected ${getFrontlineLicenseNames(eligibleLicenseIds)} base licensing provides limited endpoint protection experience. Add Microsoft Defender Suite FLW for ${getFrontlineLicenseNames(eligibleLicenseIds)} to unlock Defender and other endpoint protection capabilities, including Antivirus (AV) and automated onboarding to Defender.`;
   }
   const intuneSuiteNote = feature === "intune"
     ? "Policies that require Microsoft Intune Suite must be excluded unless that additional licensing is available. "
     : "";
 
-  if (platformId === "linux-desktop") {
-    return `The Linux Desktop licensing table lists E5-level licensing only; the selected licenses do not cover the Linux Desktop Defender policy package. Automated onboarding to Defender is not eligible without additional licensing. ${upgradeNote}`;
-  }
-
+  const manualCloudAppsControlNote = getManualCloudAppsControlNote(eligibleLicenseIds);
   const hasBusinessOrE3 = eligibleLicenseIds.some((id) =>
     id.startsWith("business-premium") || id.startsWith("e3"),
   );
@@ -676,7 +677,7 @@ export function getDataSecurityLicenseNote(
       ? ["Microsoft Purview Suite for Business Premium"] : []),
     ...(eligibleLicenseIds.some((id) => id.startsWith("e3"))
       ? ["Microsoft Purview Suite for Microsoft 365 E3"] : []),
-    ...(!hasBusinessOrE3 ? ["Microsoft Purview Suite FLW for Microsoft 365 F1/F3"] : []),
+    ...(!hasBusinessOrE3 ? [`Microsoft Purview Suite FLW for ${getFrontlineLicenseNames(eligibleLicenseIds)}`] : []),
   ].join(" or ");
   const hasSensitivityLabelsSuite = eligibleLicenseIds.some((id) =>
     dataSecurityFullExperienceLicenseIds.has(id) || flwPurviewSuiteLicenseIds.has(id),

@@ -157,8 +157,24 @@ export function requiresWorkloadIdPremiumForOAuthApps(
   return eligibleLicenseIds.length > 0 && !eligibleLicenseIds.includes("e7");
 }
 
-export const manualCloudAppsControlNote =
-  "Defender for Business / Defender for Endpoint P1 can only manually control access using Custom Network Indicators and Web Content Filtering.";
+export function getFrontlineLicenseNames(licenseIds: readonly License["id"][]): string {
+  return [
+    ...(licenseIds.some((id) => id.startsWith("f1")) ? ["Microsoft 365 F1"] : []),
+    ...(licenseIds.some((id) => id.startsWith("f3")) ? ["Microsoft 365 F3"] : []),
+  ].join(" and ");
+}
+
+export function getManualCloudAppsControlNote(licenseIds: readonly License["id"][]): string {
+  const products = [
+    ...(licenseIds.some((id) => id.startsWith("business-premium"))
+      ? ["Defender for Business (Business Premium)"] : []),
+    ...(licenseIds.some((id) => id.startsWith("e3"))
+      ? ["Defender for Endpoint P1 (Microsoft 365 E3)"] : []),
+  ];
+  return products.length > 0
+    ? `${products.join(" and ")} can only manually control access using Custom Network Indicators and Web Content Filtering.`
+    : "";
+}
 
 export function getCloudAppsConditionalAccessLicenseNote(
   licenseIds: readonly License["id"][],
@@ -176,15 +192,13 @@ export function getCloudAppsConditionalAccessLicenseNote(
   const usesFlwAddOns = eligibleLicenseIds.every(
     (licenseId) => licenseId.startsWith("f1") || licenseId.startsWith("f3"),
   );
-  const hasBusinessOrE3 = eligibleLicenseIds.some((id) =>
-    id.startsWith("business-premium") || id.startsWith("e3"),
-  );
+  const manualControlNote = getManualCloudAppsControlNote(eligibleLicenseIds);
   const hasFrontline = eligibleLicenseIds.some((id) =>
     id.startsWith("f1") || id.startsWith("f3"),
   );
   return {
     title: "Cloud apps with limited experience",
-    message: `With ${selectedNames}, Microsoft Defender for Cloud Apps is required to unlock the full Cloud apps experience. It is also included in the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${hasBusinessOrE3 ? ` For Business Premium and Microsoft 365 E3: ${manualCloudAppsControlNote}` : ""}${hasFrontline ? " Microsoft 365 F1 and F3 do not include Defender for Cloud Apps control. Add Microsoft Defender Suite FLW to unlock Cloud Apps control for these frontline licenses." : ""}`,
+    message: `With ${selectedNames}, Microsoft Defender for Cloud Apps is required to unlock the full Cloud apps experience. It is also included in the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${manualControlNote ? ` ${manualControlNote}` : ""}${hasFrontline ? ` The selected ${getFrontlineLicenseNames(eligibleLicenseIds)} base licensing does not include Defender for Cloud Apps control. Add Microsoft Defender Suite FLW to unlock Cloud Apps control.` : ""}`,
   };
 }
 
@@ -566,7 +580,7 @@ export function getLimitedExperienceNoteForLicenses(
     return {
       title: "Limited Linux Desktop experience",
       includePlanComparisons: true,
-      message: `With ${selectedNames}, add Microsoft Defender Suite to one of your selected qualifying base licenses, or purchase Microsoft Defender for Endpoint Plan 2, to unlock the full Linux Desktop policy-template experience.`,
+      message: `To use Defender on Linux Desktop, Microsoft Defender for Endpoint P2 is required. It is included in Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""}.`,
     };
   }
 
@@ -651,7 +665,7 @@ export function getWindowsServerLicenseNotes(
     )
   ) {
     return [
-      `${applicableLicenseIds.some((id) => fullDefenderExperienceLicenseIds.has(id)) ? "Microsoft Defender Suite FLW is already selected." : "First add Microsoft Defender Suite FLW for Microsoft 365 F1/F3 to unlock Defender and other endpoint protection capabilities."} Windows Server protection also requires a Microsoft Defender for Endpoint Server license for each server. A Windows Server operating system license is separate from these security entitlements.`,
+      `${applicableLicenseIds.some((id) => fullDefenderExperienceLicenseIds.has(id)) ? "Microsoft Defender Suite FLW is already selected." : `First add Microsoft Defender Suite FLW for ${getFrontlineLicenseNames(applicableLicenseIds)} to unlock Defender and other endpoint protection capabilities.`} Windows Server protection also requires a Microsoft Defender for Endpoint Server license for each server. A Windows Server operating system license is separate from these security entitlements.`,
     ];
   }
   const effectiveLicenseIds = platformId === "windows-servers" &&

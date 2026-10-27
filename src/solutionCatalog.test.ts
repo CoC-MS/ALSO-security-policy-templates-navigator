@@ -21,6 +21,35 @@ import {
 
 describe("security goal recommendations", () => {
   it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
+    "mentions only the selected frontline plan in upgrade notes for %s",
+    (id) => {
+      const selected = id.startsWith("f1") ? "F1" : "F3";
+      const absent = selected === "F1" ? "F3" : "F1";
+      const notes = [
+        getEndpointFeatureLicenseNote("defender", [id], "windows-11"),
+        getEndpointFeatureLicenseNote("defender", [id], "linux-desktop"),
+        getConditionalAccessCategoryLicenseNote(["internal-user-policies"], [id])?.message,
+        getDataSecurityLicenseNote([id], ["dlp"]),
+      ];
+      for (const note of notes.filter((note) => note !== undefined)) {
+        expect(note).toContain(`Microsoft 365 ${selected}`);
+        expect(note).not.toContain(absent);
+        expect(note).not.toContain("Defender for Business");
+      }
+    },
+  );
+
+  it.each(["f1", "f3", "e3", "business-premium"] as const)(
+    "clearly explains Linux Desktop Defender P2 and Suite licensing for %s",
+    (id) => {
+      const note = getEndpointFeatureLicenseNote("defender", [id], "linux-desktop");
+      expect(note).toContain("To use Defender on Linux Desktop, Microsoft Defender for Endpoint P2 is required.");
+      expect(note).toContain("It is included in Microsoft Defender Suite");
+      expect(note).not.toMatch(/E5-level|not eligible|Defender for Business/);
+    },
+  );
+
+  it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
     "offers every endpoint category as a limited upgrade path for %s",
     (id) => {
       for (const option of getSecurityGoalOptions("endpoint-protection")) {
@@ -33,7 +62,7 @@ describe("security goal recommendations", () => {
         }
         if (option.endpointFeature) {
           expect(getEndpointFeatureLicenseNote(option.endpointFeature, [id], option.platformIds[0]))
-            .toContain("Add Microsoft Defender Suite FLW");
+            .toContain("Microsoft Defender Suite FLW");
         }
       }
     },
@@ -119,7 +148,7 @@ describe("security goal recommendations", () => {
         ? "Microsoft Purview Suite for Business Premium"
         : id.startsWith("e3")
           ? "Microsoft Purview Suite for Microsoft 365 E3"
-          : "Microsoft Purview Suite FLW for Microsoft 365 F1/F3";
+          : `Microsoft Purview Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`;
       expect(note).toContain(`Add ${suite} to unlock`);
       for (const feature of [
         "automatic sensitivity labeling in Microsoft 365 apps",
@@ -893,8 +922,8 @@ describe("security goal recommendations", () => {
       expect(windows).toContain("separate Defender for Cloud Apps entitlement");
       expect(windows).not.toContain("Intune Suite");
       const linux = getEndpointFeatureLicenseNote("defender", [licenseId], "linux-desktop");
-      expect(linux).toContain("E5-level licensing only");
-      expect(linux).toContain("Add Microsoft Defender Suite");
+      expect(linux).toContain("Microsoft Defender for Endpoint P2 is required");
+      expect(linux).toContain("included in Microsoft Defender Suite");
     },
   );
 
@@ -902,8 +931,10 @@ describe("security goal recommendations", () => {
     "explains manual Cloud Apps control on limited client endpoint notes for %s",
     (id) => {
       for (const platform of ["windows-11", "macos", "ios-ipados", "android"] as const) {
-        expect(getEndpointFeatureLicenseNote("defender", [id], platform))
-          .toContain("Defender for Business / Defender for Endpoint P1 can only manually control access using Custom Network Indicators and Web Content Filtering.");
+        const note = getEndpointFeatureLicenseNote("defender", [id], platform);
+        expect(note).toContain("can only manually control access using Custom Network Indicators and Web Content Filtering.");
+        expect(note).toContain(id.startsWith("business-premium") ? "Defender for Business" : "Defender for Endpoint P1");
+        expect(note).not.toContain(id.startsWith("business-premium") ? "Defender for Endpoint P1" : "Defender for Business");
       }
     },
   );
@@ -1087,7 +1118,9 @@ describe("security goal recommendations", () => {
           ["f3"],
           platformId,
         );
-        expect(note).toContain("to unlock Defender and other endpoint protection capabilities");
+        expect(note).toContain(platformId === "linux-desktop"
+          ? "Defender for Endpoint P2 is required"
+          : "to unlock Defender and other endpoint protection capabilities");
       }
       expect(isSecurityGoalOptionAvailable(
         "endpoint-protection",
@@ -1102,7 +1135,7 @@ describe("security goal recommendations", () => {
         )).toBe(true);
       }
       expect(getEndpointFeatureLicenseNote("defender", ["f3"], platformId))
-        .toContain("automated onboarding to Defender");
+        .toContain(platformId === "linux-desktop" ? "Defender for Endpoint P2" : "automated onboarding to Defender");
     },
   );
 
@@ -1119,7 +1152,9 @@ describe("security goal recommendations", () => {
         option.endpointFeature,
         ["f1"],
         option.platformIds[0],
-      )).toContain("to unlock Defender and other endpoint protection capabilities");
+      )).toContain(option.platformIds[0] === "linux-desktop"
+        ? "Defender for Endpoint P2 is required"
+        : "to unlock Defender and other endpoint protection capabilities");
       expect(isSecurityGoalOptionAvailable(
         "endpoint-protection",
         option.id,

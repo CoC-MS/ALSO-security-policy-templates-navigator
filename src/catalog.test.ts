@@ -22,6 +22,17 @@ import {
 } from "./catalog";
 
 describe("license catalog", () => {
+  it.each(["f1", "f3"] as const)("keeps %s Cloud Apps and server notes plan-specific", (id) => {
+    const absent = id === "f1" ? "F3" : "F1";
+    for (const note of [
+      getCloudAppsConditionalAccessLicenseNote([id])?.message,
+      ...getWindowsServerLicenseNotes([id], "windows-servers"),
+    ]) {
+      expect(note).toContain(id === "f1" ? "Microsoft 365 F1" : "Microsoft 365 F3");
+      expect(note).not.toContain(absent);
+      expect(note).not.toContain("Defender for Business");
+    }
+  });
   it("labels every license badge with only its base plan", () => {
     expect(licenses.map(getLicenseBadgeLabel)).toEqual([
       "M365 E7", "M365 E5",
@@ -67,12 +78,19 @@ describe("license catalog", () => {
         expect(note?.message).toContain("Add Microsoft Defender Suite FLW to unlock Cloud Apps control");
       } else {
         expect(note?.message).toContain("Custom Network Indicators and Web Content Filtering");
+        expect(note?.message).toContain(id.startsWith("business-premium") ? "Defender for Business" : "Defender for Endpoint P1");
+        expect(note?.message).not.toContain(id.startsWith("business-premium") ? "Defender for Endpoint P1" : "Defender for Business");
       }
       expect(note?.message).not.toContain("Agent 365");
     }
     const mixed = getCloudAppsConditionalAccessLicenseNote(["business-premium", "f1"]);
-    expect(mixed?.message).toContain("For Business Premium and Microsoft 365 E3:");
+    expect(mixed?.message).toContain("Defender for Business (Business Premium)");
+    expect(mixed?.message).not.toContain("Microsoft 365 E3");
     expect(mixed?.message).toContain("Add Microsoft Defender Suite FLW");
+    const both = getCloudAppsConditionalAccessLicenseNote(["business-premium", "e3", "f1", "f3"]);
+    expect(both?.message).toContain("Defender for Business (Business Premium) and Defender for Endpoint P1 (Microsoft 365 E3)");
+    expect(both?.message).toContain("Microsoft 365 F1 and Microsoft 365 F3 base licensing");
+    expect(getCloudAppsConditionalAccessLicenseNote(["f1", "e5"])).toBeUndefined();
   });
 
   it("blocks only Business Basic and Business Standard", () => {
@@ -310,7 +328,8 @@ describe("selection helpers", () => {
     );
 
     expect(note?.title).toBe("Limited Linux Desktop experience");
-    expect(note?.message).toContain("purchase Microsoft Defender for Endpoint Plan 2");
+    expect(note?.message).toContain("Microsoft Defender for Endpoint P2 is required");
+    expect(note?.message).toContain("included in Microsoft Defender Suite");
     expect(
       getLimitedExperienceNoteForLicenses(["e3-defender-purview"], "linux-desktop"),
     ).toBeUndefined();
