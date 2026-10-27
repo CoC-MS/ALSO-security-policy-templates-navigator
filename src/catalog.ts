@@ -307,13 +307,6 @@ const fullDefenderExperienceLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
-const aiSecurityAgent365PrerequisiteLicenseIds = new Set<License["id"]>([
-  "business-premium",
-  "e3",
-  "f3",
-  "f1",
-]);
-
 const entraIdP2LicenseIds = new Set<License["id"]>([
   "e7",
   "e5",
@@ -504,19 +497,15 @@ export function getLimitedExperienceNoteForLicenses(
       return {
         title: "Agent 365 license required for full AI Security experience",
         includePlanComparisons: false,
-        message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+        message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
 
-    if (eligibleLicenseIds.some((licenseId) =>
-      aiSecurityAgent365PrerequisiteLicenseIds.has(licenseId),
-    )) {
-      return {
-        title: `Limited ${getPlatform(platformId).name} experience`,
-        includePlanComparisons: true,
-        message: `With ${selectedNames}, add the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on and an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
-      };
-    }
+    return {
+      title: `Limited ${getPlatform(platformId).name} experience`,
+      includePlanComparisons: true,
+      message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
+    };
   }
 
   if (platformId === "agent-security") {
@@ -534,20 +523,18 @@ export function getLimitedExperienceNoteForLicenses(
       return {
         title: "Limited Agent Security experience",
         includePlanComparisons: false,
-        message: `With ${formatSelectedLicenseNames(supportedLicenseIds)}, an Agent 365 license is a prerequisite for using the Conditional Access policies. Adding Agent 365 does not by itself provide the full Agent Security experience.`,
+        message: `With ${selectedNames}, add an Agent 365 license to unlock the full Agent Security policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
 
     return {
       title: "Agent 365 license required for full Agent Security experience",
       includePlanComparisons: false,
-      message: `With ${formatSelectedLicenseNames(supportedLicenseIds)}, add an Agent 365 license to unlock the full Agent Security policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+      message: `With ${selectedNames}, add an Agent 365 license to unlock the full Agent Security policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
     };
   }
 
   if (
-    platformId === "ai-security" ||
-    platformId === "ai-security-macos" ||
     platformId === "windows-11" ||
     platformId === "macos" ||
     platformId === "ios-ipados" ||
