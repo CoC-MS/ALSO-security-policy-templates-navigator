@@ -57,7 +57,8 @@ export function AttackProtectionExplorer() {
         <ul className="coverage-policy-list">
           {policies.map((policy) => (
             <li key={policy.url}>
-              <a href={policy.url} target="_blank" rel="noopener noreferrer">{policy.name}</a>
+              <a href={policy.url} target="_blank" rel="noopener"
+                referrerPolicy="strict-origin-when-cross-origin">{policy.name}</a>
             </li>
           ))}
         </ul>

@@ -10,3 +10,4 @@ SMB licenses: [Microsoft SMB Plan Comparison](https://cdn-dynmedia-1.microsoft.c
 
 **Live site:** https://coc-ms.github.io/ALSO-security-policy-templates-navigator/
 
+Repository, repository licensing-guide, and mapped-policy links allow origin-only referrals using `strict-origin-when-cross-origin`, while retaining `noopener`. GitHub may show `coc-ms.github.io` in each destination repository's **Insights > Traffic > Referring sites**; page paths and query parameters are not shared. Reporting depends on GitHub and visitors' browser privacy settings. Other external links continue to suppress referrals.
