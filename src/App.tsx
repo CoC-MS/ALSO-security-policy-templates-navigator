@@ -731,7 +731,8 @@ function App() {
                               className="button primary repository-link"
                               href={repository.url}
                               target="_blank"
-                              rel="noopener noreferrer"
+                              rel="noopener"
+                              referrerPolicy="strict-origin-when-cross-origin"
                               key={repository.url}
                             >
                               Open {repository.name} repository <ArrowIcon />
@@ -1345,7 +1346,8 @@ function App() {
                               <a
                                 href="https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview#purview-licensing-guide"
                                 target="_blank"
-                                rel="noopener noreferrer"
+                                rel="noopener"
+                                referrerPolicy="strict-origin-when-cross-origin"
                               >
                                 Repository licensing guide
                               </a>
@@ -1386,7 +1388,8 @@ function App() {
                             <p>{note}</p>
                             <p>
                               <a href={endpointLicensingGuideUrl}
-                                target="_blank" rel="noopener noreferrer">
+                                target="_blank" rel="noopener"
+                                referrerPolicy="strict-origin-when-cross-origin">
                                 Repository licensing guide
                               </a>
                             </p>
@@ -1434,7 +1437,8 @@ function App() {
                             )}</strong>
                             <p>{renderWindowsServerLicenseNote(note)}</p>
                             <p>
-                              <a href={endpointLicensingGuideUrl} target="_blank" rel="noopener noreferrer">
+                              <a href={endpointLicensingGuideUrl} target="_blank" rel="noopener"
+                                referrerPolicy="strict-origin-when-cross-origin">
                                 Repository licensing guide
                               </a>
                             </p>
@@ -1451,7 +1455,8 @@ function App() {
                               className="button primary repository-link"
                               href={repository.url}
                               target="_blank"
-                              rel="noopener noreferrer"
+                              rel="noopener"
+                              referrerPolicy="strict-origin-when-cross-origin"
                               key={repository.url}
                             >
                               Open {repository.name} repository <ArrowIcon />
