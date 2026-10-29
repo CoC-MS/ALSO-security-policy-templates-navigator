@@ -32,6 +32,7 @@ import {
   securityGoalNavigation,
   identityAndAccessGoalIds,
   toggleSecurityGoalSelection,
+  type SecurityGoal,
   type SecurityGoalId,
   type SolutionOption,
 } from "./solutionCatalog";
@@ -58,6 +59,44 @@ type Step =
   | "result"
   | "overview"
   | "faq";
+
+export function getAuxiliaryPageReturnStep(currentStep: Step, returnStep: Step): Step {
+  return currentStep === "overview" || currentStep === "faq" ? returnStep : currentStep;
+}
+
+export function getUnconfiguredGoalNames(
+  goals: readonly SecurityGoal[],
+  selectedOptionIds: readonly string[],
+): string[] {
+  return goals
+    .filter((goal) =>
+      goal.id !== "attack-protection" &&
+      goal.id !== "endpoint-protection" &&
+      goal.options.some((option) => !isAutoSelectedOption(option)) &&
+      !goal.options.some((option) =>
+        !isAutoSelectedOption(option) &&
+        selectedOptionIds.includes(`${goal.id}:${option.id}`),
+      ),
+    )
+    .map((goal) => goal.name);
+}
+
+export function getEndpointPlatformsMissingCategories(
+  selectedPlatforms: readonly SolutionOption[],
+  selectedCategoryIds: readonly string[],
+): string[] {
+  return selectedPlatforms
+    .filter((platform) =>
+      !getSecurityGoalOptionChildren(platform).some((category) =>
+        selectedCategoryIds.includes(`endpoint-protection:${category.id}`),
+      ),
+    )
+    .map((platform) => platform.name);
+}
+
+export function getExcludedLicenses(selectedLicenses: readonly License[]): License[] {
+  return selectedLicenses.filter((license) => !license.eligible);
+}
 
 function ProfessionalServicesPanel() {
   return (
@@ -324,8 +363,7 @@ function isAutoSelectedOption(option: SolutionOption): boolean {
 
 function App() {
   const [step, setStep] = useState<Step>("license");
-  const [overviewReturnStep, setOverviewReturnStep] = useState<Step>("license");
-  const [faqReturnStep, setFaqReturnStep] = useState<Step>("license");
+  const [auxiliaryReturnStep, setAuxiliaryReturnStep] = useState<Step>("license");
   const [selectedLicenses, setSelectedLicenses] = useState<License[]>([]);
   const [selectedGoalIds, setSelectedGoalIds] = useState<SecurityGoalId[]>([]);
   const [identityAndAccessSelected, setIdentityAndAccessSelected] = useState(false);
@@ -339,6 +377,7 @@ function App() {
     "loading" | "ready" | "error"
   >("loading");
   const eligibleLicenses = selectedLicenses.filter((license) => license.eligible);
+  const excludedLicenses = getExcludedLicenses(selectedLicenses);
   const eligibleLicenseIds = eligibleLicenses.map((license) => license.id);
   const selectedGoals = securityGoals.filter((goal) =>
     selectedGoalIds.includes(goal.id),
@@ -360,6 +399,14 @@ function App() {
         selectionId === `endpoint-protection:${child.id}`,
       ),
     ),
+  );
+  const missingEndpointCategories = getEndpointPlatformsMissingCategories(
+    selectedEndpointPlatforms,
+    selectedEndpointCategoryIds,
+  );
+  const unconfiguredGoalNames = getUnconfiguredGoalNames(
+    selectedGoals,
+    selectedOptionIds,
   );
   const selectedOptions = selectedGoals.flatMap((goal) =>
     getSecurityGoalOptions(goal.id)
@@ -531,6 +578,7 @@ function App() {
   }
 
   function continueFromFocus() {
+    if (unconfiguredGoalNames.length > 0) return;
     if (selectedGoalIds.includes("endpoint-protection")) {
       if (selectedEndpointPlatforms.length > 0) setStep("endpoint-categories");
       return;
@@ -539,7 +587,12 @@ function App() {
   }
 
   function continueFromEndpointCategories() {
-    if (selectedEndpointCategoryIds.length > 0) setStep("result");
+    if (
+      missingEndpointCategories.length === 0 &&
+      unconfiguredGoalNames.length === 0
+    ) {
+      setStep("result");
+    }
   }
 
   function startOver() {
@@ -551,12 +604,16 @@ function App() {
   }
 
   function showOverview() {
-    setOverviewReturnStep(step === "overview" ? overviewReturnStep : step);
+    setAuxiliaryReturnStep((current) =>
+      getAuxiliaryPageReturnStep(step, current),
+    );
     setStep("overview");
   }
 
   function showFaq() {
-    setFaqReturnStep(step === "faq" ? faqReturnStep : step);
+    setAuxiliaryReturnStep((current) =>
+      getAuxiliaryPageReturnStep(step, current),
+    );
     setStep("faq");
   }
 
@@ -625,6 +682,13 @@ function App() {
       <main>
         <div className="content">
           {step !== "blocked" && step !== "overview" && step !== "faq" && <StepIndicator step={step} />}
+          {excludedLicenses.length > 0 && step !== "license" && step !== "blocked" && (
+            <aside className="license-exclusion-notice" role="note">
+              <strong>Excluded from matching:</strong>{" "}
+              {excludedLicenses.map((license) => license.name).join(", ")} do not meet the minimum supported license requirement.
+              Recommendations are based only on {eligibleLicenses.map((license) => license.name).join(", ")}.
+            </aside>
+          )}
           {step === "license" && (
             <PolicyCounters metadata={repositoryMetadata} status={metadataStatus} />
           )}
@@ -635,7 +699,7 @@ function App() {
                 <button
                   className="button secondary"
                   type="button"
-                  onClick={() => setStep(faqReturnStep)}
+                  onClick={() => setStep(auxiliaryReturnStep)}
                 >
                   &larr; Back
                 </button>
@@ -748,7 +812,7 @@ function App() {
                 <button
                   className="button secondary"
                   type="button"
-                  onClick={() => setStep(overviewReturnStep)}
+                  onClick={() => setStep(auxiliaryReturnStep)}
                 >
                   &larr; Back
                 </button>
@@ -978,15 +1042,23 @@ function App() {
                   className="button primary"
                   type="button"
                   disabled={
-                    selectedGoalIds.includes("endpoint-protection")
-                      ? selectedEndpointPlatforms.length === 0
-                      : selectedOptions.length === 0
+                    (selectedGoalIds.includes("endpoint-protection") &&
+                      selectedEndpointPlatforms.length === 0) ||
+                    unconfiguredGoalNames.length > 0 ||
+                    (!selectedGoalIds.includes("endpoint-protection") &&
+                      selectedOptions.length === 0)
                   }
                   onClick={continueFromFocus}
                 >
                   {selectedGoalIds.includes("endpoint-protection")
-                    ? "Choose endpoint policy categories"
-                    : "View recommendations"} &rarr;
+                    ? selectedEndpointPlatforms.length === 0
+                      ? "Select at least one endpoint platform"
+                      : unconfiguredGoalNames.length > 0
+                        ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
+                        : "Choose endpoint policy categories"
+                    : unconfiguredGoalNames.length > 0
+                      ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
+                      : "View recommendations"} &rarr;
                 </button>}
               </div>
             </section>
@@ -1026,6 +1098,16 @@ function App() {
                     </section>
                   ))}
                 </div>
+                {(missingEndpointCategories.length > 0 || unconfiguredGoalNames.length > 0) && (
+                  <p className="selection-validation" role="status">
+                    {missingEndpointCategories.length > 0 && (
+                      <>Choose at least one category for each selected endpoint platform: {missingEndpointCategories.join(", ")}. </>
+                    )}
+                    {unconfiguredGoalNames.length > 0 && (
+                      <>Choose at least one option for each selected goal: {unconfiguredGoalNames.join(", ")}.</>
+                    )}
+                  </p>
+                )}
                 <div className="actions platform-actions">
                   <div>
                     <button
@@ -1042,12 +1124,17 @@ function App() {
                   <button
                     className="button primary"
                     type="button"
-                    disabled={selectedEndpointCategoryIds.length === 0}
+                    disabled={
+                      missingEndpointCategories.length > 0 ||
+                      unconfiguredGoalNames.length > 0
+                    }
                     onClick={continueFromEndpointCategories}
                   >
-                    {selectedEndpointCategoryIds.length === 0
-                      ? "Select at least one category"
-                      : "View recommendations"} &rarr;
+                    {missingEndpointCategories.length > 0
+                      ? "Choose a category for each platform"
+                      : unconfiguredGoalNames.length > 0
+                        ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
+                        : "View recommendations"} &rarr;
                   </button>
                 </div>
               </section>
