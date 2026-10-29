@@ -1002,6 +1002,22 @@ h1 {
   flex-wrap: wrap;
 }
 
+.license-exclusion-notice,
+.selection-validation {
+  max-width: 850px;
+  margin: 0 auto 1.25rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid #e7c77b;
+  border-radius: 0.5rem;
+  background: #fff8e6;
+  color: #694b00;
+  line-height: 1.5;
+}
+
+.selection-validation {
+  margin-top: 1rem;
+}
+
 .recommendation-context {
   display: flex;
   margin-top: 1rem;
