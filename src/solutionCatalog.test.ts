@@ -382,6 +382,7 @@ describe("security goal recommendations", () => {
     expect(securityGoalNavigation.map((goal) => goal.name)).toEqual([
       "Attack prevention", "Identity and Access", "Endpoint protection",
       "AI and Agent Security", "Data Security", "App protection",
+      "Security fundamentals", "Copilot Readiness",
     ]);
     expect(identityAndAccessGoalIds).toEqual(["conditional-access", "administrator-protection"]);
     expect(getSecurityGoalOptions("conditional-access").map((option) => option.id)).toEqual([
@@ -605,6 +606,8 @@ describe("security goal recommendations", () => {
       "AI and Agent Security",
       "Data Security",
       "App protection",
+      "Security fundamentals",
+      "Copilot Readiness",
     ]);
 
     expect(getSolutionPlatformIds("administrator-protection", []))

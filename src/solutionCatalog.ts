@@ -32,6 +32,7 @@ export interface SecurityGoal {
   description: string;
   prompt: string;
   options: readonly SolutionOption[];
+  isNew?: boolean;
 }
 
 const ATTACK_POLICY_NOTE =
@@ -43,6 +44,7 @@ export const securityGoals = [
   {
     id: "attack-protection",
     name: "Attack prevention",
+    isNew: true,
     description: "Find policy templates that help protect against common identity and device attacks.",
     prompt: "Which attacks are you trying to protect against?",
     options: [
@@ -372,6 +374,22 @@ export const securityGoals = [
         platformIds: ["windows-11", "windows-servers", "macos", "conditional-access"],
       },
     ],
+  },
+  {
+    id: "security-fundamentals",
+    name: "Security fundamentals",
+    description: "Build a security foundation with Microsoft identity, threat protection, and data security capabilities.",
+    prompt: "Explore Security fundamentals",
+    options: [],
+    isNew: true,
+  },
+  {
+    id: "copilot-readiness",
+    name: "Copilot Readiness",
+    description: "Prepare for Microsoft 365 Copilot with security and data governance guidance.",
+    prompt: "Explore Copilot Readiness",
+    options: [],
+    isNew: true,
   },
 ] as const satisfies readonly SecurityGoal[];
 

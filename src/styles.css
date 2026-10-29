@@ -975,6 +975,12 @@ h1 {
   color: #854d0e;
 }
 
+.experience-badge.new-badge {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
 .coming-soon-badge {
   width: fit-content;
   border-color: #aab4c2;

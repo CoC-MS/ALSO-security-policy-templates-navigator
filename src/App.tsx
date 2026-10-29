@@ -45,6 +45,7 @@ import { PolicyCounters } from "./PolicyCounters";
 import { Faq } from "./Faq";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
 import { AttackProtectionRecommendation } from "./AttackProtectionRecommendation";
+import { ReadinessRecommendation } from "./ReadinessRecommendation";
 import { BusinessLicensePrerequisites } from "./BusinessLicensePrerequisites";
 
 type Step =
@@ -828,6 +829,7 @@ function App() {
                       <span className="choice-name">{goal.name}</span>
                       <span className="goal-description">{goal.description}</span>
                       {comingSoon && <span className="experience-badge coming-soon-badge">Coming</span>}
+                      {"isNew" in goal && goal.isNew && <span className="experience-badge new-badge">New</span>}
                     </span>
                     <span className="choice-check" aria-hidden="true">{selected ? "\u2713" : ""}</span>
                   </button>
@@ -1065,7 +1067,7 @@ function App() {
             </section>
           )}
 
-          {step === "result" && eligibleLicenses.length > 0 && selectedGoals.length > 0 && (selectedOptions.length > 0 || selectedGoalIds.includes("attack-protection")) && (
+          {step === "result" && eligibleLicenses.length > 0 && selectedGoals.length > 0 && (selectedOptions.length > 0 || selectedGoals.some((goal) => goal.id === "attack-protection" || goal.options.length === 0)) && (
             <section className="result-wrap" aria-labelledby="main-title">
               <div className="result-heading">
                 <div className="eyebrow">{selectedGoals.map((goal) => goal.name).join(" + ")}</div>
@@ -1077,11 +1079,17 @@ function App() {
                   ))}
                 </div>
               </div>
-              {recommendedRepositories.length > 0 || selectedGoalIds.includes("attack-protection") ? (
+              {recommendedRepositories.length > 0 || selectedGoals.some((goal) => goal.id === "attack-protection" || goal.options.length === 0) ? (
                 <div className="result-recommendations-layout">
                   <div className="recommendation-grid result-recommendation-grid">
                   {selectedGoalIds.includes("attack-protection") && (
                     <AttackProtectionRecommendation licenseIds={eligibleLicenseIds} />
+                  )}
+                  {selectedGoalIds.includes("security-fundamentals") && (
+                    <ReadinessRecommendation goalId="security-fundamentals" licenseIds={eligibleLicenseIds} />
+                  )}
+                  {selectedGoalIds.includes("copilot-readiness") && (
+                    <ReadinessRecommendation goalId="copilot-readiness" licenseIds={eligibleLicenseIds} />
                   )}
                   {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
