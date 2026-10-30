@@ -42,7 +42,7 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
       const missing = [
         ...(!hasDefender ? [suiteNames("Defender")] : []),
         ...(!hasPurview ? [suiteNames("Purview")] : []),
-        "Microsoft 365 Copilot",
+        "a SharePoint Advanced Management license",
       ];
       message = `With ${selectedNames}, add ${missing.join(" and ")} for the full Copilot Readiness experience.`;
       if (!hasPurview) {
@@ -51,6 +51,9 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
       if (!hasDefender) {
         message += " Defender Suite unlocks features such as Defender for Identity and Defender for Cloud Apps.";
       }
+    }
+    if (goalId === "copilot-readiness") {
+      message += " SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with Microsoft 365 Business Premium, F1, F3, E3, and E5.";
     }
   }
   return { name, experience: full ? "full" as const : "limited" as const, message };

@@ -25,27 +25,30 @@ describe("fundamentals and Copilot Readiness", () => {
       expect(fundamentals?.message).toContain("auto labelling, SITs (Sensitive Information Types)");
     }
     expect(copilot?.message).toContain(`With ${name},`);
+    expect(copilot?.message).not.toMatch(/Microsoft 365 Copilot|Copilot for Microsoft 365/);
+    expect(copilot?.message).toContain("SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive.");
+    expect(copilot?.message).toContain("purchased as an add-on with Microsoft 365 Business Premium, F1, F3, E3, and E5");
     if (complete) {
       expect(copilot?.message).toContain("SharePoint Advanced Management");
       expect(copilot?.message).not.toContain("also included in a Copilot");
       expect(copilot?.message.includes("only core SharePoint Advanced Management features"))
         .toBe(id === "e5" || id === "e7");
     } else {
-      expect(copilot?.message).toContain("Microsoft 365 Copilot");
+      expect(copilot?.message).toContain("a SharePoint Advanced Management license");
       if (!defender) expect(copilot?.message).toContain("Defender for Cloud Apps");
       if (!purview) expect(copilot?.message).toContain("full DLP and retention policy experience");
       if (id.startsWith("f1") || id.startsWith("f3")) {
         expect(copilot?.message).toContain(`Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`);
-        expect(copilot?.message).not.toContain(id.startsWith("f1") ? "F3" : "F1");
+        expect(copilot?.message).not.toContain(`Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F3" : "F1"}`);
       }
     }
   });
 
   it("recommends only missing suites and combines existing entitlements", () => {
     expect(getReadinessGuidance("copilot-readiness", ["e3-defender"])?.message)
-      .toContain("add Microsoft Purview Suite for Microsoft 365 E3 and Microsoft 365 Copilot");
+      .toContain("add Microsoft Purview Suite for Microsoft 365 E3 and a SharePoint Advanced Management license");
     expect(getReadinessGuidance("copilot-readiness", ["business-premium-purview"])?.message)
-      .toContain("add Microsoft Defender Suite for Business Premium and Microsoft 365 Copilot");
+      .toContain("add Microsoft Defender Suite for Business Premium and a SharePoint Advanced Management license");
     expect(getReadinessGuidance("security-fundamentals", ["f1-defender", "f1-purview"])?.experience)
       .toBe("full");
     expect(getReadinessGuidance("copilot-readiness", ["e5", "e7"])?.experience).toBe("limited");
