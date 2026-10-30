@@ -17,27 +17,26 @@ describe("fundamentals and Copilot Readiness", () => {
     const defender = complete || id.includes("defender");
     const purview = complete || id.includes("purview");
     expect(fundamentals?.experience).toBe(complete ? "full" : "limited");
-    expect(copilot?.experience).toBe(id === "e7" ? "full" : "limited");
+    expect(copilot?.experience).toBe("limited");
     if (!complete) {
       expect(fundamentals?.message).toContain(`With ${name}, add`);
       expect(fundamentals?.message).toContain("Defender for Identity");
       expect(fundamentals?.message).toContain("PIM, access reviews, risky sign-in policies, and risky user policies");
       expect(fundamentals?.message).toContain("auto labelling, SITs (Sensitive Information Types)");
     }
-    if (id !== "e7") {
-      expect(copilot?.message).toContain(`With ${name}, add`);
-      if (complete) {
-        expect(copilot?.message).toContain("add SharePoint Advanced Management");
-        expect(copilot?.message).toContain("SharePoint Advanced Management is also included in a Copilot for Microsoft 365 license.");
-        expect(copilot?.message.includes("Microsoft 365 E5 includes limited")).toBe(id === "e5");
-      } else {
-        expect(copilot?.message).toContain("Microsoft 365 Copilot");
-        if (!defender) expect(copilot?.message).toContain("Defender for Cloud Apps");
-        if (!purview) expect(copilot?.message).toContain("full DLP and retention policy experience");
-        if (id.startsWith("f1") || id.startsWith("f3")) {
-          expect(copilot?.message).toContain(`Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`);
-          expect(copilot?.message).not.toContain(id.startsWith("f1") ? "F3" : "F1");
-        }
+    expect(copilot?.message).toContain(`With ${name},`);
+    if (complete) {
+      expect(copilot?.message).toContain("SharePoint Advanced Management");
+      expect(copilot?.message).not.toContain("also included in a Copilot");
+      expect(copilot?.message.includes("only core SharePoint Advanced Management features"))
+        .toBe(id === "e5" || id === "e7");
+    } else {
+      expect(copilot?.message).toContain("Microsoft 365 Copilot");
+      if (!defender) expect(copilot?.message).toContain("Defender for Cloud Apps");
+      if (!purview) expect(copilot?.message).toContain("full DLP and retention policy experience");
+      if (id.startsWith("f1") || id.startsWith("f3")) {
+        expect(copilot?.message).toContain(`Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`);
+        expect(copilot?.message).not.toContain(id.startsWith("f1") ? "F3" : "F1");
       }
     }
   });
@@ -49,16 +48,29 @@ describe("fundamentals and Copilot Readiness", () => {
       .toContain("add Microsoft Defender Suite for Business Premium and Microsoft 365 Copilot");
     expect(getReadinessGuidance("security-fundamentals", ["f1-defender", "f1-purview"])?.experience)
       .toBe("full");
-    expect(getReadinessGuidance("copilot-readiness", ["e5", "e7"])?.experience).toBe("full");
+    expect(getReadinessGuidance("copilot-readiness", ["e5", "e7"])?.experience).toBe("limited");
     expect(getReadinessGuidance("copilot-readiness", ["e5"])?.experience).toBe("limited");
     expect(getReadinessGuidance("security-fundamentals", [])).toBeUndefined();
   });
 
-  it("explains E5's limited capabilities without changing experience entitlements", () => {
+  it("explains core capabilities and the separate license requirement", () => {
     const e5 = getReadinessGuidance("copilot-readiness", ["e5"]);
-    expect(e5?.message).toContain("Microsoft 365 E5 includes limited SharePoint Advanced Management capabilities, but not the full version.");
+    expect(e5?.message).toContain("only core SharePoint Advanced Management features are included in Microsoft 365 E5.");
     expect(e5?.experience).toBe("limited");
-    expect(getReadinessGuidance("copilot-readiness", ["e5", "e7"])?.message).toBe("");
+    expect(getReadinessGuidance("copilot-readiness", ["e5", "e7"])?.message)
+      .toContain("Add a SharePoint Advanced Management license");
+  });
+
+  it("renders E7 Copilot Readiness as limited with the SharePoint prerequisite", () => {
+    const html = renderToStaticMarkup(
+      <ReadinessRecommendation goalId="copilot-readiness" licenseIds={["e7"]} />,
+    );
+    expect(html).toContain('class="experience-badge limited"');
+    expect(html).not.toContain("Full experience");
+    expect(html).toContain("only core SharePoint Advanced Management features are included in Microsoft 365 E7.");
+    expect(html).toContain("Add a SharePoint Advanced Management license for the full Copilot Readiness experience.");
+    expect(html).not.toContain("also included in a Copilot");
+    expect(getReadinessGuidance("security-fundamentals", ["e7"])?.experience).toBe("full");
   });
 
   it("marks exactly the three requested goals New", () => {

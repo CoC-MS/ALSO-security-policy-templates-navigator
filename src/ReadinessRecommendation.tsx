@@ -11,8 +11,7 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
   if (eligible.length === 0) return undefined;
   const hasDefender = eligible.some((id) => id === "e5" || id === "e7" || id.includes("defender"));
   const hasPurview = eligible.some((id) => id === "e5" || id === "e7" || id.includes("purview"));
-  const full = goalId === "copilot-readiness"
-    ? eligible.includes("e7") : hasDefender && hasPurview;
+  const full = goalId === "security-fundamentals" && hasDefender && hasPurview;
   const name = goalId === "copilot-readiness" ? "Copilot Readiness" : "Security fundamentals";
   const selectedNames = licenses.filter((license) => eligible.includes(license.id))
     .map((license) => license.name).join(", ");
@@ -33,11 +32,12 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
       ];
       message = `With ${selectedNames}, add ${missing.join(" and ")} for the full Security fundamentals experience. Defender Suite unlocks features such as Defender for Identity, Defender for Cloud Apps, PIM, access reviews, risky sign-in policies, and risky user policies. Purview Suite unlocks auto labelling, SITs (Sensitive Information Types), and the full DLP and retention policy experience.`;
     } else if (hasDefender && hasPurview) {
-      message = `With ${selectedNames}, add SharePoint Advanced Management for the full Copilot Readiness experience.`;
-      message += " SharePoint Advanced Management is also included in a Copilot for Microsoft 365 license.";
-      if (eligible.includes("e5")) {
-        message += " Microsoft 365 E5 includes limited SharePoint Advanced Management capabilities, but not the full version.";
-      }
+      const coreLicenseNames = licenses.filter((license) =>
+        (license.id === "e5" || license.id === "e7") && eligible.includes(license.id),
+      ).map((license) => license.name).join(" and ");
+      message = coreLicenseNames
+        ? `With ${selectedNames}, only core SharePoint Advanced Management features are included in ${coreLicenseNames}. Add a SharePoint Advanced Management license for the full Copilot Readiness experience.`
+        : `With ${selectedNames}, add SharePoint Advanced Management for the full Copilot Readiness experience.`;
     } else {
       const missing = [
         ...(!hasDefender ? [suiteNames("Defender")] : []),
@@ -49,7 +49,7 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
         message += " Purview Suite unlocks SITs (Sensitive Information Types), auto labelling, and the full DLP and retention policy experience.";
       }
       if (!hasDefender) {
-        message += " Defender Suite unlocks features such as Defender for Identity and Defender for Cloud Apps. Microsoft 365 Copilot provides SharePoint Advanced Management capabilities.";
+        message += " Defender Suite unlocks features such as Defender for Identity and Defender for Cloud Apps.";
       }
     }
   }
