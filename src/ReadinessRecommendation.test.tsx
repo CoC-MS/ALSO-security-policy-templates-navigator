@@ -21,8 +21,9 @@ describe("fundamentals and Copilot Readiness", () => {
     if (!complete) {
       expect(fundamentals?.message).toContain(`With ${name}, add`);
       expect(fundamentals?.message).toContain("Defender for Identity");
-      expect(fundamentals?.message).toContain("PIM, access reviews, risky sign-in policies, and risky user policies");
-      expect(fundamentals?.message).toContain("auto labelling, SITs (Sensitive Information Types)");
+      expect(fundamentals?.message).toContain("PIM, access reviews, risky sign-in policies, risky user policies, Identity Protection");
+      expect(fundamentals?.message).toContain("Defender for Endpoint Plan 2, and Defender for Cloud Apps");
+      expect(fundamentals?.message).toContain("SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention experience, and Insider Risk Management");
     }
     expect(copilot?.message).toContain(`With ${name},`);
     expect(copilot?.message).not.toMatch(/Microsoft 365 Copilot|Copilot for Microsoft 365/);

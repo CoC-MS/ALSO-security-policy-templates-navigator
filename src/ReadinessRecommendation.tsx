@@ -30,7 +30,7 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
         ...(!hasDefender ? [suiteNames("Defender")] : []),
         ...(!hasPurview ? [suiteNames("Purview")] : []),
       ];
-      message = `With ${selectedNames}, add ${missing.join(" and ")} for the full Security fundamentals experience. Defender Suite unlocks features such as Defender for Identity, Defender for Cloud Apps, PIM, access reviews, risky sign-in policies, and risky user policies. Purview Suite unlocks auto labelling, SITs (Sensitive Information Types), and the full DLP and retention policy experience.`;
+      message = `With ${selectedNames}, add ${missing.join(" and ")} for the full Security fundamentals experience. Defender Suite unlocks features such as PIM, access reviews, risky sign-in policies, risky user policies, Identity Protection, Defender for Identity, Defender for Endpoint Plan 2, and Defender for Cloud Apps. Purview Suite unlocks SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention experience, and Insider Risk Management.`;
     } else if (hasDefender && hasPurview) {
       const coreLicenseNames = licenses.filter((license) =>
         (license.id === "e5" || license.id === "e7") && eligible.includes(license.id),
