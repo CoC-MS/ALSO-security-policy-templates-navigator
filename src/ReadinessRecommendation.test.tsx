@@ -38,7 +38,7 @@ describe("fundamentals and Copilot Readiness", () => {
     } else {
       expect(copilot?.message).toContain("a SharePoint Advanced Management license");
       if (!defender) {
-        expect(copilot?.message).toContain("PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, and Defender for Cloud Apps");
+        expect(copilot?.message).toContain("PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, Defender for Endpoint Plan 2, and Defender for Cloud Apps");
       }
       if (!purview) {
         expect(copilot?.message).toContain("SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention policy experience, and Insider Risk Management");
@@ -64,7 +64,7 @@ describe("fundamentals and Copilot Readiness", () => {
 
   it("renders the requested Business Premium readiness message", () => {
     const message = getReadinessGuidance("copilot-readiness", ["business-premium"])?.message;
-    expect(message).toBe("With Microsoft 365 Business Premium, add Microsoft Defender Suite for Business Premium and Microsoft Purview Suite for Business Premium and a SharePoint Advanced Management license for the full Copilot Readiness experience. Purview Suite unlocks features like SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention policy experience, and Insider Risk Management. Defender Suite unlocks features such as PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, and Defender for Cloud Apps. SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with Microsoft 365 Business Premium.");
+    expect(message).toBe("With Microsoft 365 Business Premium, add Microsoft Defender Suite for Business Premium and Microsoft Purview Suite for Business Premium and a SharePoint Advanced Management license for the full Copilot Readiness experience. Purview Suite unlocks features like SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention policy experience, and Insider Risk Management. Defender Suite unlocks features such as PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, Defender for Endpoint Plan 2, and Defender for Cloud Apps. SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with Microsoft 365 Business Premium.");
   });
 
   it("lists selected base plans once when multiple license variants are selected", () => {

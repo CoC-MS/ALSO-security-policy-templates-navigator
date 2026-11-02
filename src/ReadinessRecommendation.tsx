@@ -49,7 +49,7 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
         message += " Purview Suite unlocks features like SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention policy experience, and Insider Risk Management.";
       }
       if (!hasDefender) {
-        message += " Defender Suite unlocks features such as PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, and Defender for Cloud Apps.";
+        message += " Defender Suite unlocks features such as PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, Defender for Endpoint Plan 2, and Defender for Cloud Apps.";
       }
     }
     if (goalId === "copilot-readiness") {
