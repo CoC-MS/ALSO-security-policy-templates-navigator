@@ -46,10 +46,10 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
       ];
       message = `With ${selectedNames}, add ${missing.join(" and ")} for the full Copilot Readiness experience.`;
       if (!hasPurview) {
-        message += " Purview Suite unlocks SITs (Sensitive Information Types), auto labelling, and the full DLP and retention policy experience.";
+        message += " Purview Suite unlocks SITs (Sensitive Information Types), auto labelling, the full DLP and retention policy experience, and Insider Risk Management.";
       }
       if (!hasDefender) {
-        message += " Defender Suite unlocks features such as Defender for Identity and Defender for Cloud Apps.";
+        message += " Defender Suite unlocks features such as Entra ID P2 (PIM, Access Reviews, Identity Protection, and more), Defender for Identity, and Defender for Cloud Apps.";
       }
     }
     if (goalId === "copilot-readiness") {
