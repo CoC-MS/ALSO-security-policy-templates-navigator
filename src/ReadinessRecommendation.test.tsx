@@ -27,7 +27,8 @@ describe("fundamentals and Copilot Readiness", () => {
     expect(copilot?.message).toContain(`With ${name},`);
     expect(copilot?.message).not.toMatch(/Microsoft 365 Copilot|Copilot for Microsoft 365/);
     expect(copilot?.message).toContain("SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive.");
-    expect(copilot?.message).toContain("purchased as an add-on with Microsoft 365 Business Premium, F1, F3, E3, and E5");
+    const baseName = name.split(" + ")[0];
+    expect(copilot?.message?.split("It can be purchased as an add-on with ")[1]).toBe(`${baseName}.`);
     if (complete) {
       expect(copilot?.message).toContain("SharePoint Advanced Management");
       expect(copilot?.message).not.toContain("also included in a Copilot");
@@ -36,10 +37,10 @@ describe("fundamentals and Copilot Readiness", () => {
     } else {
       expect(copilot?.message).toContain("a SharePoint Advanced Management license");
       if (!defender) {
-        expect(copilot?.message).toContain("Entra ID P2 (PIM, Access Reviews, Identity Protection, and more), Defender for Identity, and Defender for Cloud Apps");
+        expect(copilot?.message).toContain("PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, and Defender for Cloud Apps");
       }
       if (!purview) {
-        expect(copilot?.message).toContain("full DLP and retention policy experience, and Insider Risk Management");
+        expect(copilot?.message).toContain("SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention policy experience, and Insider Risk Management");
       }
       if (id.startsWith("f1") || id.startsWith("f3")) {
         expect(copilot?.message).toContain(`Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`);
@@ -62,7 +63,18 @@ describe("fundamentals and Copilot Readiness", () => {
 
   it("renders the requested Business Premium readiness message", () => {
     const message = getReadinessGuidance("copilot-readiness", ["business-premium"])?.message;
-    expect(message).toBe("With Microsoft 365 Business Premium, add Microsoft Defender Suite for Business Premium and Microsoft Purview Suite for Business Premium and a SharePoint Advanced Management license for the full Copilot Readiness experience. Purview Suite unlocks SITs (Sensitive Information Types), auto labelling, the full DLP and retention policy experience, and Insider Risk Management. Defender Suite unlocks features such as Entra ID P2 (PIM, Access Reviews, Identity Protection, and more), Defender for Identity, and Defender for Cloud Apps. SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with Microsoft 365 Business Premium, F1, F3, E3, and E5.");
+    expect(message).toBe("With Microsoft 365 Business Premium, add Microsoft Defender Suite for Business Premium and Microsoft Purview Suite for Business Premium and a SharePoint Advanced Management license for the full Copilot Readiness experience. Purview Suite unlocks features like SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention policy experience, and Insider Risk Management. Defender Suite unlocks features such as PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, and Defender for Cloud Apps. SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with Microsoft 365 Business Premium.");
+  });
+
+  it("lists selected base plans once when multiple license variants are selected", () => {
+    const message = getReadinessGuidance("copilot-readiness", [
+      "business-premium", "business-premium-defender", "f1-purview",
+    ])?.message;
+    const plans = message?.split("It can be purchased as an add-on with ")[1];
+    expect(plans).toContain("Microsoft 365 Business Premium");
+    expect(plans).toContain("Microsoft 365 F1");
+    expect(plans?.match(/Microsoft 365 Business Premium/g)).toHaveLength(1);
+    expect(plans).not.toMatch(/F3|E3|E5|E7/);
   });
 
   it("explains core capabilities and the separate license requirement", () => {

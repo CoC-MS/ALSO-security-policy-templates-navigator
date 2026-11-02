@@ -46,14 +46,18 @@ export function getReadinessGuidance(goalId: ReadinessGoalId, licenseIds: readon
       ];
       message = `With ${selectedNames}, add ${missing.join(" and ")} for the full Copilot Readiness experience.`;
       if (!hasPurview) {
-        message += " Purview Suite unlocks SITs (Sensitive Information Types), auto labelling, the full DLP and retention policy experience, and Insider Risk Management.";
+        message += " Purview Suite unlocks features like SITs (Sensitive Information Types) - advanced classifiers, auto labelling, the full DLP and retention policy experience, and Insider Risk Management.";
       }
       if (!hasDefender) {
-        message += " Defender Suite unlocks features such as Entra ID P2 (PIM, Access Reviews, Identity Protection, and more), Defender for Identity, and Defender for Cloud Apps.";
+        message += " Defender Suite unlocks features such as PIM, Access Reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, and Defender for Cloud Apps.";
       }
     }
     if (goalId === "copilot-readiness") {
-      message += " SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with Microsoft 365 Business Premium, F1, F3, E3, and E5.";
+      const selectedBasePlans = licenses.filter((license) =>
+        ["business-premium", "f1", "f3", "e3", "e5", "e7"].includes(license.id) &&
+        eligible.some((id) => id === license.id || id.startsWith(`${license.id}-`)),
+      ).map((license) => license.name).join(" and ");
+      message += ` SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with ${selectedBasePlans}.`;
     }
   }
   return { name, experience: full ? "full" as const : "limited" as const, message };
