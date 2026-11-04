@@ -193,6 +193,10 @@ h1:focus {
     width: 4.5rem;
   }
 
+  .brand-preview {
+    white-space: normal;
+  }
+
   .header-actions {
     width: 100%;
     margin-left: 0;
@@ -407,6 +411,11 @@ h1 {
   gap: 0.6rem;
   align-items: center;
   line-height: 1.35;
+}
+
+.policy-count-card dt > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .policy-count-icon {

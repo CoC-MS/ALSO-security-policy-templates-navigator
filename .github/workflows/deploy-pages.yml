@@ -20,6 +20,7 @@ jobs:
     permissions:
       contents: read
       pages: read
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,6 +39,10 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Preserve assets for cached pages
+        run: node scripts/preserve-pages-assets.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
