@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import appSource from "./App.tsx?raw";
 import {
   getAuxiliaryPageReturnStep,
   getEndpointPlatformsMissingCategories,
@@ -10,6 +11,14 @@ import { getPlatform, licenses } from "./catalog";
 import { getSecurityGoalOptions, securityGoals } from "./solutionCatalog";
 
 describe("repository recommendation licensing scopes", () => {
+  it("omits the Conditional Access recommendation details while retaining reasons for other repositories", () => {
+    const source = appSource;
+    expect(source).not.toContain('className="recommended-policy-list"');
+    expect(source).not.toContain('className="recommended-policy-id"');
+    expect(source).toMatch(/sourcePlatform\.id !== "conditional-access" && \(\s*<p className="recommendation-reasons">/);
+    expect(source).toContain("visibleLimitedExperienceNote");
+  });
+
   it.each([
     ["linux-server", "linux-desktop"],
     ["linux-desktop", "linux-server"],

@@ -1251,7 +1251,7 @@ function App() {
                   {selectedGoalIds.includes("copilot-readiness") && (
                     <ReadinessRecommendation goalId="copilot-readiness" licenseIds={eligibleLicenseIds} licenseQuantities={licenseQuantities} />
                   )}
-                  {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames, policyIds, policyNotes }) => {
+                  {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
                   const platformSelections = selectedOptions.filter((option) =>
                     option.platformIds.some((platformId) =>
@@ -1465,23 +1465,14 @@ function App() {
                           metadata={repositoryMetadata.repositories}
                           comingSoon={comingSoon}
                         />
-                        <p className="recommendation-reasons">
-                          {translate(locale, "Recommended for:")}{" "}{translate(locale, solutionNames.join(", "))}
-                        </p>
+                        {sourcePlatform.id !== "conditional-access" && (
+                          <p className="recommendation-reasons">
+                            {translate(locale, "Recommended for:")}{" "}{translate(locale, solutionNames.join(", "))}
+                          </p>
+                        )}
                         {hasOnPremisesAppSelection && (
                           <p className="recommended-policy-note">
                             {translate(locale, "On-premises app protection templates are coming soon. Explore the Conditional Access repository for currently available policies.")}</p>
-                        )}
-                        {policyIds.length > 0 && (
-                          <div className="recommended-policy-list">
-                            <p>
-                              <strong>{translate(locale, "Recommended Conditional Access policies:")}</strong>{translate(locale, " ")}
-                              {policyIds.map((policyId) => (
-                                <span className="recommended-policy-id" key={policyId}>{translate(locale, policyId)}</span>
-                              ))}
-                            </p>
-                            {policyNotes.map((note) => <p className="recommended-policy-note" key={note}>{translate(locale, note)}</p>)}
-                          </div>
                         )}
                         {visibleLimitedExperienceNote && (
                           <aside className="license-requirement-note">
