@@ -3,6 +3,43 @@ import { describe, expect, it } from "vitest";
 import { Faq, faqItems } from "./Faq";
 
 describe("FAQ page", () => {
+  it("uses the reviewed German wording for security concerns, production and repositories", () => {
+    const html = renderToStaticMarkup(<Faq locale="de" />);
+    expect(html).toContain("Sicherheitsbedenken bezüglich der Tools");
+    expect(html).toContain("in der Produktivumgebung");
+    expect(html).toContain("GitHub-Repositories");
+    expect(html).not.toMatch(/Bedenken zur Sicherheit der Tools|Produktion|Repositorys/);
+  });
+
+  it("uses the supplied French wording for the purpose and customer questions", () => {
+    const html = renderToStaticMarkup(<Faq locale="fr" />);
+    expect(html).toContain("Quel est l’objectif de ALSO Security Policy Templates ?");
+    expect(html).toContain("À quel type de clients policy templates sont-ils destinés ?");
+  });
+
+  it.each([
+    ["ru", "Для чего предназначен сайт ALSO Security Policy Templates Navigator?"],
+    ["it", "Qual è lo scopo del sito ALSO Security Policy Templates Navigator?"],
+    ["pl", "Jaki jest cel witryny ALSO Security Policy Templates Navigator?"],
+  ] as const)("renders all fifteen fully localized FAQ entries in %s", (locale, firstQuestion) => {
+    const html = renderToStaticMarkup(<Faq locale={locale} />);
+    expect(html).toContain(firstQuestion);
+    expect(html.match(/<details class="faq-item"/g)).toHaveLength(15);
+    expect(html).not.toContain("How do I report an issue with a security policy template?");
+    if (locale === "pl") {
+      expect(html).toContain("Szablony pomagają organizacjom szybciej i bardziej konsekwentnie");
+      expect(html).toContain("zasady dostępu warunkowego");
+      expect(html).not.toContain("What happens to my existing security policies");
+      expect(html).not.toContain("<strong>");
+    }
+  });
+
+  it("uses скрипты for Russian mentions of scripts, not scenarios", () => {
+    const html = renderToStaticMarkup(<Faq locale="ru" />);
+    expect(html).toContain("Руководства, скрипты и бесплатные средства импорта");
+    expect(html).toContain("Скрипты и средства импорта используют корпоративное приложение Entra ID");
+  });
+
   it("updates the first answer to include license and security challenge mapping", () => {
     const html = renderToStaticMarkup(<Faq />);
 

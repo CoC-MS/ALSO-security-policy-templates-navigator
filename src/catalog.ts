@@ -65,7 +65,7 @@ export const platforms = [
     name: "AI Security macOS",
     shortLabel: "AI",
     repository: "https://github.com/CoC-MS/ALSO-Microsoft-Security-MacOS",
-    repositoryLabel: "macOS",
+    repositoryLabel: "AI Security macOS",
     description: "This baseline delivers a hardened MacOS configuration that minimizes the risk of unauthorized third-party AI access while maintaining a productive user experience,",
     comingSoon: true,
   },
@@ -136,7 +136,16 @@ export const platforms = [
 ] as const;
 
 export type License = (typeof licenses)[number];
+export type LicenseQuantities = Partial<Record<License["id"], number>>;
 export type Platform = (typeof platforms)[number];
+
+export function getLicenseBadgeLabel(license: License): string {
+  return license.name.split(" + ")[0]
+    .replace("Microsoft 365", "M365")
+    .replace("Business Premium", "BP")
+    .replace("Business Standard", "BS")
+    .replace("Business Basic", "BB");
+}
 
 export function isLicenseEligible(licenseId: License["id"]): boolean {
   return licenses.find((license) => license.id === licenseId)?.eligible ?? false;
@@ -149,25 +158,62 @@ export function requiresWorkloadIdPremiumForOAuthApps(
   return eligibleLicenseIds.length > 0 && !eligibleLicenseIds.includes("e7");
 }
 
+export function getFrontlineLicenseNames(licenseIds: readonly License["id"][]): string {
+  return [
+    ...(licenseIds.some((id) => id.startsWith("f1")) ? ["Microsoft 365 F1"] : []),
+    ...(licenseIds.some((id) => id.startsWith("f3")) ? ["Microsoft 365 F3"] : []),
+  ].join(" and ");
+}
+
+export function getManualCloudAppsControlNote(licenseIds: readonly License["id"][]): string {
+  const products = [
+    ...(licenseIds.some((id) => id.startsWith("business-premium"))
+      ? ["Defender for Business (Business Premium)"] : []),
+    ...(licenseIds.some((id) => id.startsWith("e3"))
+      ? ["Defender for Endpoint P1 (Microsoft 365 E3)"] : []),
+  ];
+  return products.length > 0
+    ? `${products.join(" and ")} can only manually control access using Custom Network Indicators and Web Content Filtering.`
+    : "";
+}
+
 export function getCloudAppsConditionalAccessLicenseNote(
   licenseIds: readonly License["id"][],
+  licenseQuantities: LicenseQuantities = {},
 ): { title: string; message: string } | undefined {
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
-  if (
-    eligibleLicenseIds.length === 0 ||
-    eligibleLicenseIds.includes("e7") ||
-    eligibleLicenseIds.some((licenseId) => entraIdP2LicenseIds.has(licenseId))
-  ) {
-    return undefined;
+  if (eligibleLicenseIds.length === 0) return undefined;
+  if (eligibleLicenseIds.length > 1) {
+    const planNotes = eligibleLicenseIds.map((licenseId) => ({
+      licenseId,
+      note: getCloudAppsConditionalAccessLicenseNote([licenseId]),
+    }));
+    if (planNotes.every(({ note }) => note === undefined)) return undefined;
+    const selectedMix = formatSelectedLicenseMix(eligibleLicenseIds, licenseQuantities);
+    const planDetails = planNotes.map(({ licenseId, note }) => {
+      const quantity = licenseQuantities[licenseId] ?? 1;
+      const licenseName = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      return `${quantity} ${licenseName} ${quantity === 1 ? "license" : "licenses"}: ${note?.message ?? "Full Cloud apps coverage is included with this plan."}`;
+    }).join(" ");
+    return {
+      title: "Mixed Cloud apps license experience",
+      message: `Selected plan mix: ${selectedMix}. Entitlements apply only to users assigned each matching plan; the counts do not indicate whether the same users hold multiple plans. ${planDetails}`,
+    };
   }
+  if (eligibleLicenseIds.includes("e7") ||
+    eligibleLicenseIds.some((licenseId) => fullDefenderExperienceLicenseIds.has(licenseId))) return undefined;
 
   const selectedNames = formatSelectedLicenseNames(eligibleLicenseIds);
   const usesFlwAddOns = eligibleLicenseIds.every(
     (licenseId) => licenseId.startsWith("f1") || licenseId.startsWith("f3"),
   );
+  const manualControlNote = getManualCloudAppsControlNote(eligibleLicenseIds);
+  const hasFrontline = eligibleLicenseIds.some((id) =>
+    id.startsWith("f1") || id.startsWith("f3"),
+  );
   return {
-    title: "Microsoft Defender Suite required for full Conditional Access experience",
-    message: `With ${selectedNames}, add the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on to unlock the full Conditional Access experience for Cloud apps.`,
+    title: "Cloud apps with limited experience",
+    message: `With ${selectedNames}, Microsoft Defender for Cloud Apps is required to unlock the full Cloud apps experience. It is also included in the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${manualControlNote ? ` ${manualControlNote}` : ""}${hasFrontline ? ` The selected ${getFrontlineLicenseNames(eligibleLicenseIds)} base licensing does not include Defender for Cloud Apps control. Add Microsoft Defender Suite FLW to unlock Cloud Apps control.` : ""}`,
   };
 }
 
@@ -276,13 +322,6 @@ const fullDefenderExperienceLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
-const aiSecurityAgent365PrerequisiteLicenseIds = new Set<License["id"]>([
-  "business-premium",
-  "e3",
-  "f3",
-  "f1",
-]);
-
 const entraIdP2LicenseIds = new Set<License["id"]>([
   "e7",
   "e5",
@@ -295,6 +334,10 @@ const entraIdP2LicenseIds = new Set<License["id"]>([
   "business-premium-defender",
   "business-premium-defender-purview",
 ]);
+
+export function hasEntraIdP2(licenseIds: readonly License["id"][]): boolean {
+  return licenseIds.some((licenseId) => entraIdP2LicenseIds.has(licenseId));
+}
 
 const fullPurviewExperienceLicenseIds = new Set<License["id"]>([
   "e7",
@@ -330,11 +373,7 @@ const serverBaseLicenseIds = new Set<License["id"]>([
   "business-premium-defender-purview",
 ]);
 
-const windowsServerLicenseIds = new Set<License["id"]>(
-  [...serverBaseLicenseIds].filter((licenseId) =>
-    !["f1", "f3", "f1-purview", "f3-purview"].includes(licenseId),
-  ),
-);
+const windowsServerLicenseIds = serverBaseLicenseIds;
 
 export function isPlatformAvailableForLicense(
   licenseId: License["id"],
@@ -408,14 +447,29 @@ function formatSelectedLicenseNames(
     .join(", ");
 }
 
+export function formatSelectedLicenseMix(
+  licenseIds: readonly License["id"][],
+  quantities: LicenseQuantities,
+): string {
+  const eligible = [...new Set(licenseIds)].filter(isLicenseEligible);
+  return eligible.map((id) => {
+    const license = licenses.find((item) => item.id === id);
+    if (!license) return undefined;
+    const quantity = quantities[id] ?? 1;
+    return `${quantity} ${license.name} ${quantity === 1 ? "license" : "licenses"}`;
+  }).filter((item): item is string => item !== undefined).join("; ");
+}
+
 export function getLimitedExperienceNoteForLicenses(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
   options: {
     includeAgent365Guidance?: boolean;
     includeConditionalAccessPolicyGuidance?: boolean;
+    includePimGuidance?: boolean;
+    licenseQuantities?: LicenseQuantities;
   } = {},
-): { title: string; message: string } | undefined {
+): { title: string; message: string; includePlanComparisons: boolean } | undefined {
   const includeAgent365Guidance = options.includeAgent365Guidance ?? true;
   const includeConditionalAccessPolicyGuidance =
     options.includeConditionalAccessPolicyGuidance ?? true;
@@ -429,6 +483,29 @@ export function getLimitedExperienceNoteForLicenses(
 
   if (eligibleLicenseIds.length === 0) {
     return undefined;
+  }
+
+  if (eligibleLicenseIds.length > 1) {
+    const planNotes = eligibleLicenseIds.map((licenseId) => ({
+      licenseId,
+      note: getLimitedExperienceNoteForLicenses([licenseId], platformId, options),
+    }));
+    if (planNotes.every(({ note }) => note === undefined)) return undefined;
+    const selectedMix = formatSelectedLicenseMix(
+      eligibleLicenseIds,
+      options.licenseQuantities ?? {},
+    );
+    const planDetails = planNotes.map(({ licenseId, note }) => {
+      const quantity = options.licenseQuantities?.[licenseId] ?? 1;
+      const licenseName = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      const coverage = note?.message ?? "The selected platform experience is included with this plan.";
+      return `${quantity} ${licenseName} ${quantity === 1 ? "license" : "licenses"}: ${coverage}`;
+    }).join(" ");
+    return {
+      title: `Mixed ${getPlatform(platformId).name} license experience`,
+      includePlanComparisons: planNotes.some(({ note }) => note?.includePlanComparisons === true),
+      message: `Selected plan mix: ${selectedMix}. Entitlements apply only to users assigned each matching plan; the counts do not indicate whether the same users hold multiple plans. ${planDetails}`,
+    };
   }
 
   if (eligibleLicenseIds.includes("e7")) {
@@ -447,7 +524,8 @@ export function getLimitedExperienceNoteForLicenses(
     if (needsEntraIdP2) {
       return {
         title: "Limited Conditional Access experience",
-        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 for risky user and risky sign-in policy templates. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${includeAgent365Guidance ? " An Agent 365 license is required for all Agent 365 policy templates; Agent 365 is also included in Microsoft 365 E7." : ""}`,
+        includePlanComparisons: true,
+        message: `With ${selectedNames}, add Microsoft Entra ID Plan 2 (Entra ID P2) to unlock ${options.includePimGuidance ? "PIM authentication context, risky user policies, and risky sign-in policies" : "risky user policies and risky sign-in policies"}. Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on.${includeAgent365Guidance ? " An Agent 365 license is required for all Agent 365 policy templates; add an Agent 365 license to unlock all Agent policies. Agent 365 is also included in Microsoft 365 E7." : ""}`,
       };
     }
 
@@ -457,7 +535,8 @@ export function getLimitedExperienceNoteForLicenses(
 
     return {
       title: "Agent 365 license required for full Conditional Access experience",
-      message: `With ${selectedNames}, add an Agent 365 license to unlock the full Conditional Access policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+      includePlanComparisons: false,
+      message: `With ${selectedNames}, add an Agent 365 license to unlock all Agent policies. Agent 365 is also included in Microsoft 365 E7.`,
     };
   }
 
@@ -469,18 +548,16 @@ export function getLimitedExperienceNoteForLicenses(
     ) {
       return {
         title: "Agent 365 license required for full AI Security experience",
-        message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+        includePlanComparisons: false,
+        message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
 
-    if (eligibleLicenseIds.some((licenseId) =>
-      aiSecurityAgent365PrerequisiteLicenseIds.has(licenseId),
-    )) {
-      return {
-        title: `Limited ${getPlatform(platformId).name} experience`,
-        message: `With ${selectedNames}, add the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on and an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
-      };
-    }
+    return {
+      title: `Limited ${getPlatform(platformId).name} experience`,
+      includePlanComparisons: true,
+      message: `With ${selectedNames}, add an Agent 365 license to unlock the full ${getPlatform(platformId).name} policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
+    };
   }
 
   if (platformId === "agent-security") {
@@ -497,19 +574,19 @@ export function getLimitedExperienceNoteForLicenses(
     )) {
       return {
         title: "Limited Agent Security experience",
-        message: `With ${formatSelectedLicenseNames(supportedLicenseIds)}, an Agent 365 license is a prerequisite for using the Conditional Access policies. Adding Agent 365 does not by itself provide the full Agent Security experience.`,
+        includePlanComparisons: false,
+        message: `With ${selectedNames}, add an Agent 365 license to unlock the full Agent Security policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
       };
     }
 
     return {
       title: "Agent 365 license required for full Agent Security experience",
-      message: `With ${formatSelectedLicenseNames(supportedLicenseIds)}, add an Agent 365 license to unlock the full Agent Security policy-template experience. Agent 365 is also included in Microsoft 365 E7.`,
+      includePlanComparisons: false,
+      message: `With ${selectedNames}, add an Agent 365 license to unlock the full Agent Security policy-template experience to be able to use Conditional Access policies scoped to Agents. Agent 365 is also included in Microsoft 365 E7.`,
     };
   }
 
   if (
-    platformId === "ai-security" ||
-    platformId === "ai-security-macos" ||
     platformId === "windows-11" ||
     platformId === "macos" ||
     platformId === "ios-ipados" ||
@@ -525,6 +602,7 @@ export function getLimitedExperienceNoteForLicenses(
 
     return {
       title: `Limited ${getPlatform(platformId).name} experience`,
+      includePlanComparisons: true,
       message: `With ${selectedNames}, add the Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""} add-on to unlock the full ${getPlatform(platformId).name} policy-template experience.`,
     };
   }
@@ -540,7 +618,8 @@ export function getLimitedExperienceNoteForLicenses(
 
     return {
       title: "Limited Linux Desktop experience",
-      message: `With ${selectedNames}, add Microsoft Defender Suite to one of your selected qualifying base licenses, or purchase Microsoft Defender for Endpoint Plan 2, to unlock the full Linux Desktop policy-template experience.`,
+      includePlanComparisons: true,
+      message: `To use Defender on Linux Desktop, Microsoft Defender for Endpoint P2 is required. It is included in Microsoft Defender Suite${usesFlwAddOns ? " FLW" : ""}.`,
     };
   }
 
@@ -555,6 +634,7 @@ export function getLimitedExperienceNoteForLicenses(
 
     return {
       title: "Limited Microsoft Purview experience",
+      includePlanComparisons: true,
       message: `With ${selectedNames}, add the Microsoft Purview Suite${usesFlwAddOns ? " FLW" : ""} add-on to unlock the full Microsoft Purview policy-template experience.`,
     };
   }
@@ -612,10 +692,22 @@ export function getWindowsServerLicenseNote(
 export function getWindowsServerLicenseNotes(
   licenseIds: readonly License["id"][],
   platformId?: "windows-servers" | "linux-server",
+  licenseQuantities: LicenseQuantities = {},
 ): string[] {
   const applicableLicenseIds = platformId === "windows-servers"
     ? licenseIds.filter((licenseId) => windowsServerLicenseIds.has(licenseId))
     : licenseIds;
+  if (applicableLicenseIds.length > 1) {
+    const details = applicableLicenseIds.map((licenseId) => {
+      const quantity = licenseQuantities[licenseId] ?? 1;
+      const licenseName = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      const notes = getWindowsServerLicenseNotes([licenseId], platformId);
+      return `${quantity} ${licenseName} ${quantity === 1 ? "license" : "licenses"}: ${notes.join(" ") || "No additional Windows Server licensing note for this plan."}`;
+    });
+    return [
+      `Selected plan mix: ${formatSelectedLicenseMix(applicableLicenseIds, licenseQuantities)}. Server requirements apply to the users or devices covered by each matching plan. ${details.join(" ")}`,
+    ];
+  }
   if (
     platformId === "windows-servers" &&
     applicableLicenseIds.length > 0 &&
@@ -624,12 +716,16 @@ export function getWindowsServerLicenseNotes(
     )
   ) {
     return [
-      "Limited Windows Server experience: Microsoft 365 F1 or F3 with Defender Suite does not include server licensing. Purchase either Microsoft Defender for Servers Plan 1 or Plan 2 through Microsoft Defender for Cloud, or a Microsoft Defender for Endpoint Server license for each server, before deploying these policies.",
+      `${applicableLicenseIds.some((id) => fullDefenderExperienceLicenseIds.has(id)) ? "Microsoft Defender Suite FLW is already selected." : `First add Microsoft Defender Suite FLW for ${getFrontlineLicenseNames(applicableLicenseIds)} to unlock Defender and other endpoint protection capabilities.`} Windows Server protection also requires a Microsoft Defender for Endpoint Server license for each server. A Windows Server operating system license is separate from these security entitlements.`,
     ];
   }
+  const effectiveLicenseIds = platformId === "windows-servers" &&
+    applicableLicenseIds.some((id) => !id.startsWith("f1") && !id.startsWith("f3"))
+    ? applicableLicenseIds.filter((id) => !id.startsWith("f1") && !id.startsWith("f3"))
+    : applicableLicenseIds;
   return [
     ...new Set(
-      applicableLicenseIds
+      effectiveLicenseIds
         .map((licenseId) => getWindowsServerLicenseNote(licenseId))
         .filter((note): note is string => note !== undefined),
     ),
@@ -639,12 +735,13 @@ export function getWindowsServerLicenseNotes(
 export function getPlatformExperienceForLicenses(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
+  options: { licenseQuantities?: LicenseQuantities } = {},
 ): "full" | "limited" {
   const hasLimitedExperienceNote =
-    getLimitedExperienceNoteForLicenses(licenseIds, platformId) !== undefined;
+    getLimitedExperienceNoteForLicenses(licenseIds, platformId, options) !== undefined;
   const needsServerLicense =
     (platformId === "windows-servers" || platformId === "linux-server") &&
-    getWindowsServerLicenseNotes(licenseIds, platformId).length > 0;
+    getWindowsServerLicenseNotes(licenseIds, platformId, options.licenseQuantities).length > 0;
 
   return hasLimitedExperienceNote || needsServerLicense ? "limited" : "full";
 }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { getPlatformExperienceForLicenses, getWindowsServerLicenseNotes, isPlatformAvailableForLicenses, licenses } from "./catalog";
 import {
   getDataSecurityLicenseNote,
+  getConditionalAccessCategoryLicenseNote,
+  getOnPremisesAppLicenseNote,
+  getLicensingPrerequisiteTitle,
+  getLimitedExperienceSelections,
+  getAdministratorProtectionLicenseNote,
   getEndpointFeatureLicenseNote,
   getRecommendedPolicyIds,
   getSecurityGoalOptions,
@@ -8,22 +14,605 @@ import {
   isSecurityGoalOptionAvailable,
   getSolutionPlatformIds,
   securityGoals,
+  securityGoalNavigation,
+  identityAndAccessGoalIds,
   toggleSecurityGoalSelection,
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each(licenses.filter((license) => license.eligible))(
+    "keeps every server platform, subcategory and final selection limited for $name",
+    ({ id }) => {
+      for (const platform of ["windows-servers", "linux-server"] as const) {
+        expect(getPlatformExperienceForLicenses([id], platform)).toBe("limited");
+        expect(getSecurityGoalOptionExperience("endpoint-protection", [id], [platform]))
+          .toBe("limited");
+        const options = getSecurityGoalOptions("endpoint-protection").filter((option) =>
+          option.platformIds.includes(platform),
+        );
+        for (const option of options) {
+          expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [id]))
+            .toBe(true);
+          expect(getSecurityGoalOptionExperience("endpoint-protection", [id], [platform], option.id))
+            .toBe("limited");
+          const selection = { ...option, goalId: "endpoint-protection" as const };
+          expect(getLimitedExperienceSelections([selection], [id], platform))
+            .toEqual(option.children?.length ? [] : [selection]);
+        }
+        expect(getWindowsServerLicenseNotes([id], platform).length).toBeGreaterThan(0);
+      }
+    },
+  );
+
+  it("does not turn server categories full when licenses are combined", () => {
+    const allLicenseIds = licenses.filter((license) => license.eligible).map((license) => license.id);
+    for (const option of getSecurityGoalOptions("endpoint-protection").filter((option) =>
+      option.platformIds.some((id) => id === "windows-servers" || id === "linux-server"),
+    )) {
+      expect(getSecurityGoalOptionExperience(
+        "endpoint-protection", allLicenseIds, option.platformIds, option.id,
+      )).toBe("limited");
+    }
+  });
+
+  it.each(["e5", "e7", "e3-purview", "f1-defender-purview", "f3-defender-purview"] as const)(
+    "provides full experience for every Data Security category with %s",
+    (id) => {
+      for (const option of getSecurityGoalOptions("data-protection")) {
+        expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], option.id))
+          .toBe("full");
+        expect(getDataSecurityLicenseNote([id], [option.id])).toBeUndefined();
+      }
+    },
+  );
+
+  it.each(["f1-purview", "f3-purview"] as const)(
+    "requires Defender Suite FLW for eDLP with %s",
+    (id) => {
+      const note = getDataSecurityLicenseNote([id], ["endpoint-dlp"]);
+      expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], "endpoint-dlp"))
+        .toBe("limited");
+      expect(note).toContain(`Add Microsoft Defender Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`);
+      expect(note).toContain("Endpoint DLP will not work without this Defender functionality");
+      expect(note).not.toContain(id.startsWith("f1") ? "F3" : "F1");
+      expect(note).not.toContain("Add Microsoft Purview Suite");
+      const combined = [id, id.startsWith("f1") ? "f1-defender" : "f3-defender"] as const;
+      expect(getSecurityGoalOptionExperience("data-protection", combined, ["purview"], "endpoint-dlp"))
+        .toBe("limited");
+      expect(getDataSecurityLicenseNote(combined, ["endpoint-dlp"]))
+        .toContain("Endpoint DLP will not work without this Defender functionality");
+    },
+  );
+
+  it.each(licenses.filter((license) => license.eligible))(
+    "shows the SIT upgrade message only for limited experience with $name",
+    ({ id }) => {
+      const optionId = "sensitive-information-types";
+      const limited = getSecurityGoalOptionExperience(
+        "data-protection", [id], ["purview"], optionId,
+      ) === "limited";
+      const note = getDataSecurityLicenseNote([id], [optionId]);
+      if (limited) {
+        expect(note).toBe("Sensitive Information Types (SITs): Requires the Purview Suite add-on, which also unlocks sensitivity labels based on SITs and other advanced classifiers, such as EDM (Exact Data Match) and Trainable Classifiers.");
+        expect(getLicensingPrerequisiteTitle(["Sensitive Information Types (SITs)"]))
+          .toBe("Sensitive Information Types (SITs) with limited experience");
+      } else {
+        expect(note).toBeUndefined();
+      }
+    },
+  );
+
+  it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
+    "mentions only the selected frontline plan in upgrade notes for %s",
+    (id) => {
+      const selected = id.startsWith("f1") ? "F1" : "F3";
+      const absent = selected === "F1" ? "F3" : "F1";
+      const notes = [
+        getEndpointFeatureLicenseNote("defender", [id], "windows-11"),
+        getEndpointFeatureLicenseNote("defender", [id], "linux-desktop"),
+        getConditionalAccessCategoryLicenseNote(["internal-user-policies"], [id])?.message,
+        getDataSecurityLicenseNote([id], ["dlp"]),
+      ];
+      for (const note of notes.filter((note) => note !== undefined)) {
+        expect(note).toContain(`Microsoft 365 ${selected}`);
+        expect(note).not.toContain(absent);
+        expect(note).not.toContain("Defender for Business");
+      }
+    },
+  );
+
+  it.each(["f1", "f3", "e3", "business-premium"] as const)(
+    "clearly explains Linux Desktop Defender P2 and Suite licensing for %s",
+    (id) => {
+      const note = getEndpointFeatureLicenseNote("defender", [id], "linux-desktop");
+      expect(note).toContain("To use Defender on Linux Desktop, Microsoft Defender for Endpoint P2 is required.");
+      expect(note).toContain("It is included in Microsoft Defender Suite");
+      expect(note).not.toMatch(/E5-level|not eligible|Defender for Business/);
+    },
+  );
+
+  it.each(["f1", "f3", "f1-purview", "f3-purview"] as const)(
+    "offers every endpoint category as a limited upgrade path for %s",
+    (id) => {
+      for (const option of getSecurityGoalOptions("endpoint-protection")) {
+        expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [id])).toBe(true);
+        expect(getSecurityGoalOptionExperience(
+          "endpoint-protection", [id], option.platformIds, option.id,
+        )).toBe("limited");
+        for (const platform of option.platformIds) {
+          expect(isPlatformAvailableForLicenses([id], platform)).toBe(true);
+        }
+        if (option.endpointFeature) {
+          expect(getEndpointFeatureLicenseNote(option.endpointFeature, [id], option.platformIds[0]))
+            .toContain("Microsoft Defender Suite FLW");
+        }
+      }
+    },
+  );
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "never mentions Intune Suite in AV licensing notes for %s",
+    (id) => {
+      for (const platform of ["windows-11", "macos", "ios-ipados", "android", "linux-desktop", "linux-server", "windows-servers"] as const) {
+        expect(getEndpointFeatureLicenseNote("defender", [id], platform) ?? "")
+          .not.toContain("Intune Suite");
+      }
+    },
+  );
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "keeps macOS administrator protection full and scopes app entitlements for %s",
+    (id) => {
+      expect(getSecurityGoalOptionExperience(
+        "administrator-protection", [id], ["macos"], "administrator-protection-policies",
+      )).toBe("full");
+      const hasCloudApps = id === "e5" || id === "e7" || id.includes("defender");
+      for (const platform of ["windows-11", "windows-servers", "macos", "conditional-access"] as const) {
+        expect(getSecurityGoalOptionExperience(
+          "app-protection", [id], [platform], "cloud-apps",
+        )).toBe(hasCloudApps ? "full" : "limited");
+        expect(getSecurityGoalOptionExperience(
+          "app-protection", [id], [platform], "oauth-apps",
+        )).toBe(hasCloudApps && (platform !== "conditional-access" || id === "e7") ? "full" : "limited");
+      }
+      expect(getSecurityGoalOptionExperience(
+        "administrator-protection", [id], ["conditional-access", "windows-11", "macos"],
+      )).toBe(id === "e5" || id === "e7" ? "full" : "limited");
+      expect(getSecurityGoalOptionExperience(
+        "conditional-access", [id], ["conditional-access"],
+      )).toBe(id === "e7" ? "full" : "limited");
+    },
+  );
+
+  it("does not extend higher-tier Cloud apps and Workload ID entitlements to other plans", () => {
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", ["business-premium", "e5"], ["macos"], "cloud-apps",
+    )).toBe("limited");
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", ["f1", "e7"], ["conditional-access"], "oauth-apps",
+    )).toBe("limited");
+  });
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "matches Sensitivity labels experience and guidance to %s",
+    (id) => {
+      const full = id === "e5" || id === "e7" ||
+        id === "e3-purview" || id === "e3-defender-purview" ||
+        id === "business-premium-purview" || id === "business-premium-defender-purview" ||
+        id === "f1-defender-purview" || id === "f3-defender-purview";
+      expect(getSecurityGoalOptionExperience(
+        "data-protection", [id], ["purview"], "sensitivity-labels",
+      )).toBe(full ? "full" : "limited");
+      const note = getDataSecurityLicenseNote([id], ["sensitivity-labels"]);
+      if (full) {
+        expect(note).toBeUndefined();
+      } else {
+        expect(note).toContain("Sensitivity labels:");
+        expect(note).not.toMatch(/DLP|retention|auto.labell|SIT/);
+      }
+    },
+  );
+
+  it.each(["business-premium", "business-premium-defender", "f1", "f1-defender"] as const)(
+    "includes only Microsoft 365 app sensitivity labeling for %s",
+    (id) => {
+      const note = getDataSecurityLicenseNote([id], ["sensitivity-labels"]);
+      expect(note).toContain("Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps are included.");
+      expect(note).not.toContain("containers");
+    },
+  );
+
+  it.each(["e3", "e3-defender", "f3", "f3-defender"] as const)(
+    "also includes Microsoft 365 container sensitivity labeling for %s",
+    (id) => {
+      expect(getDataSecurityLicenseNote([id], ["sensitivity-labels"]))
+        .toContain("Only manual, default, and mandatory sensitivity labeling in Microsoft 365 apps, plus sensitivity labeling for containers in Microsoft 365, are included.");
+    },
+  );
+
+  it.each(["business-premium", "business-premium-defender", "e3", "e3-defender", "f1", "f1-defender", "f3", "f3-defender"] as const)(
+    "lists the matching Purview upgrade and all advanced sensitivity-label features for %s",
+    (id) => {
+      const note = getDataSecurityLicenseNote([id], ["sensitivity-labels"]);
+      const suite = id.startsWith("business-premium")
+        ? "Microsoft Purview Suite for Business Premium"
+        : id.startsWith("e3")
+          ? "Microsoft Purview Suite for Microsoft 365 E3"
+          : `Microsoft Purview Suite FLW for Microsoft 365 ${id.startsWith("f1") ? "F1" : "F3"}`;
+      expect(note).toContain(`Add ${suite} to unlock`);
+      for (const feature of [
+        "automatic sensitivity labeling in Microsoft 365 apps",
+        "manual sensitivity labeling for Teams online meetings",
+        "automatic sensitivity labels in Exchange, SharePoint, and OneDrive",
+        "default sensitivity labels for SharePoint document libraries",
+        "Trainable Classifiers", "Exact Data Match (EDM)", "Named Entities", "contextual classifiers",
+      ]) {
+        expect(note).toContain(feature);
+      }
+    },
+  );
+
+  it.each(["business-premium-purview", "e3-purview", "f1-purview", "f3-purview", "e5", "e7"] as const)(
+    "does not recommend a redundant sensitivity-label upgrade for %s",
+    (id) => {
+      expect(getDataSecurityLicenseNote([id], ["sensitivity-labels"]) ?? "").not.toContain("Add ");
+    },
+  );
+
+  it.each(["business-premium", "business-premium-defender", "e3", "e3-defender"] as const)(
+    "lists the exact included and upgrade-required DLP and retention features for %s",
+    (id) => {
+      const dlp = getDataSecurityLicenseNote([id], ["dlp"]);
+      expect(dlp).toContain("DLP for emails and files is included");
+      expect(dlp).toContain("to unlock DLP for Teams chat");
+      expect(dlp).toContain(id.startsWith("business-premium")
+        ? "Microsoft Purview Suite for Business Premium"
+        : "Microsoft Purview Suite for Microsoft 365 E3");
+      const retention = getDataSecurityLicenseNote([id], ["retention"]);
+      expect(retention).toContain("Manual retention labels, basic organization-wide or location-wide retention policies, and Teams message retention policies are included");
+      expect(retention).toContain("rules-based automatic retention policies, machine-learning-based retention, and Records Management");
+      expect(retention).not.toMatch(/DLP|auto.labell|SIT/i);
+    },
+  );
+
+  it.each(["f1", "f1-defender", "f3", "f3-defender"] as const)(
+    "requires Purview Suite for frontline DLP and advanced retention for %s",
+    (id) => {
+      expect(getDataSecurityLicenseNote([id], ["dlp"]))
+        .toContain("No DLP features are included");
+      expect(getDataSecurityLicenseNote([id], ["dlp"]))
+        .toContain("Microsoft Purview Suite FLW");
+      const retention = getDataSecurityLicenseNote([id], ["retention"]);
+      expect(retention).toContain("Manual retention labels and Teams message retention policies are included");
+      expect(retention).toContain("All other retention capabilities");
+      expect(retention).toContain("require Microsoft Purview Suite FLW");
+      for (const category of ["dlp", "retention", "endpoint-dlp", "auto-labeling"]) {
+        expect(isSecurityGoalOptionAvailable("data-protection", category, [id])).toBe(true);
+        expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], category))
+          .toBe("limited");
+      }
+    },
+  );
+
+  it.each(["business-premium", "e3", "f1", "f3"] as const)(
+    "requires only the matching Purview upgrade for eDLP and auto labelling for %s",
+    (id) => {
+      const endpoint = getDataSecurityLicenseNote([id], ["endpoint-dlp"]);
+      const auto = getDataSecurityLicenseNote([id], ["auto-labeling"]);
+      expect(endpoint).toContain("not included with the selected base licenses");
+      expect(auto).toContain("not included with the selected base licenses");
+      expect(endpoint).toContain("Add Microsoft Purview Suite");
+      expect(auto).toContain("Add Microsoft Purview Suite");
+      expect(endpoint).not.toContain("Defender");
+      expect(auto).not.toMatch(/DLP|retention|sensitive information types/i);
+    },
+  );
+
+  it.each(["e3-purview", "business-premium-purview", "f1-purview", "f3-purview", "f1-defender-purview", "f3-defender-purview", "e5", "e7"] as const)(
+    "removes all covered feature upgrade notes for %s",
+    (id) => {
+      for (const category of ["dlp", "retention", "endpoint-dlp", "auto-labeling"]) {
+        if (category === "endpoint-dlp" && (id === "f1-purview" || id === "f3-purview")) {
+          expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], category))
+            .toBe("limited");
+          expect(getDataSecurityLicenseNote([id], [category]))
+            .toContain("Purview Suite alone is not sufficient");
+          continue;
+        }
+        expect(getSecurityGoalOptionExperience("data-protection", [id], ["purview"], category))
+          .toBe("full");
+        expect(getDataSecurityLicenseNote([id], [category])).toBeUndefined();
+        expect(isSecurityGoalOptionAvailable("data-protection", category, [id])).toBe(true);
+      }
+      expect(getDataSecurityLicenseNote(["f1", id], ["dlp"])).toContain("1 Microsoft 365 F1 license:");
+    },
+  );
+
+  it.each(["business-premium", "e3", "f3", "f3-purview"] as const)(
+    "never mentions unselected Data Security categories for %s",
+    (licenseId) => {
+      const categoryTerms = [
+        ["dlp", /Endpoint|eDLP|auto.labell|retention|sensitive information types|sensitivity labels/i],
+        ["sensitive-information-types", /DLP|auto.labell|retention/i],
+        ["auto-labeling", /DLP|retention|sensitive information types|sensitivity labels/i],
+        ["retention", /DLP|auto.labell|sensitive information types|sensitivity labels/i],
+      ] as const;
+      for (const [id, unrelated] of categoryTerms) {
+        const note = getDataSecurityLicenseNote([licenseId], [id]);
+        if (note) expect(note).not.toMatch(unrelated);
+      }
+    },
+  );
+
+  it.each(["business-premium", "e3", "f3"] as const)(
+    "scopes Data Security limitation details to selected categories for %s",
+    (licenseId) => {
+      for (const option of getSecurityGoalOptions("data-protection")) {
+        const note = getDataSecurityLicenseNote([licenseId], [option.id]);
+        expect(note).toContain(`${option.name}:`);
+        expect(note).not.toContain("undefined");
+        if (option.id === "sensitive-information-types") {
+          expect(note).toContain("Requires the Purview Suite add-on");
+          expect(note).toContain("sensitivity labels based on SITs");
+          expect(note).toContain("EDM (Exact Data Match) and Trainable Classifiers");
+        }
+      }
+    },
+  );
+
+  it("preserves full and unavailable Data Security selections without extra category claims", () => {
+    expect(getDataSecurityLicenseNote(["e5"], ["dlp"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["business-premium"], ["sensitivity-labels"])).toContain("Only manual");
+    expect(getDataSecurityLicenseNote(["e3"], [])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["f3-purview"], ["dlp"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["business-premium"], ["endpoint-dlp"]))
+      .toContain("Add Microsoft Purview Suite for Business Premium");
+  });
+
+  it("unlocks Attack prevention and retains its mapper repository", () => {
+    expect(securityGoalNavigation.filter((goal) =>
+      "comingSoon" in goal && goal.comingSoon,
+    ).map((goal) => goal.id)).toEqual([]);
+    expect(securityGoalNavigation[0].repositoryUrl).toBe(
+      "https://github.com/CoC-MS/CoC-MS-ALSO-Microsoft-Security-AttackPrevention",
+    );
+    expect(getSecurityGoalOptions("attack-protection").length).toBeGreaterThan(0);
+  });
+
+  it("groups the unchanged Conditional Access and Administrator protection goals under Identity and Access", () => {
+    expect(securityGoalNavigation.map((goal) => goal.name)).toEqual([
+      "Attack prevention", "Identity and Access", "Endpoint protection",
+      "AI and Agent Security", "Data Security", "App protection",
+      "Security fundamentals", "Copilot Readiness",
+    ]);
+    expect(identityAndAccessGoalIds).toEqual(["conditional-access", "administrator-protection"]);
+    expect(getSecurityGoalOptions("conditional-access").map((option) => option.id)).toEqual([
+      "administrator-policies", "internal-user-policies", "service-account-policies",
+      "agent-policies", "guest-user-policies", "global-secure-access-policies",
+      "service-principal-policies",
+    ]);
+    expect(getSecurityGoalOptions("administrator-protection")[0].autoSelect).toBe(true);
+  });
+
+  const selections = securityGoals.flatMap((goal) =>
+    getSecurityGoalOptions(goal.id).map((option) => ({ ...option, goalId: goal.id })),
+  );
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "only includes limited categories in prerequisite guidance for %s",
+    (licenseId) => {
+      for (const option of selections) {
+        for (const platformId of option.platformIds) {
+          const limited = getLimitedExperienceSelections([option], [licenseId], platformId);
+          const experience = getSecurityGoalOptionExperience(
+            option.goalId, [licenseId], [platformId], option.id,
+          );
+          expect(limited).toEqual(!option.children?.length && experience === "limited" ? [option] : []);
+        }
+      }
+    },
+  );
+
+  it("includes limited Sensitivity labels alongside other limited Data Security categories", () => {
+    const data = selections.filter((option) => option.goalId === "data-protection");
+    for (const licenseId of ["business-premium", "e3", "f1", "f3"] as const) {
+      const limited = getLimitedExperienceSelections(data, [licenseId], "purview");
+      expect(limited.some((option) => option.id === "sensitivity-labels")).toBe(true);
+      expect(limited.some((option) => option.id === "auto-labeling")).toBe(true);
+    }
+    for (const id of ["e5", "e7"] as const) {
+      expect(getLimitedExperienceSelections(data, [id], "purview").map((option) => option.id))
+        .toEqual([]);
+    }
+  });
+
+  it("scopes prerequisite guidance to each repository and removes fully licensed selections", () => {
+    const apps = selections.filter((option) =>
+      option.goalId === "app-protection" &&
+      (option.id === "mobile-apps" || option.id === "desktop-apps"),
+    );
+    expect(getLimitedExperienceSelections(apps, ["business-premium"], "macos")).toEqual([]);
+    expect(getLimitedExperienceSelections(apps, ["business-premium"], "windows-11")
+      .map((option) => option.id)).toEqual([]);
+    expect(getLimitedExperienceSelections(apps, ["e3", "e7"], "windows-11")).toEqual([]);
+    const ca = selections.filter((option) =>
+      option.goalId === "conditional-access" && !option.comingSoon,
+    );
+    expect(getLimitedExperienceSelections(ca, ["e5"], "conditional-access")
+      .map((option) => option.id)).toEqual(["agent-policies"]);
+    expect(getLimitedExperienceSelections(ca, ["e7"], "conditional-access")).toEqual([]);
+  });
+
+  it("does not treat endpoint platform navigation as a limited policy selection", () => {
+    const endpoint = selections.filter((option) => option.goalId === "endpoint-protection");
+    const windows = endpoint.filter((option) =>
+      option.children?.length || option.id === "windows-encryption",
+    );
+    expect(getLimitedExperienceSelections(windows, ["business-premium"], "windows-11")).toEqual([]);
+    const mixed = endpoint.filter((option) =>
+      option.children?.length ||
+      option.id === "windows-encryption" ||
+      option.id === "windows-antivirus",
+    );
+    expect(getLimitedExperienceSelections(mixed, ["business-premium"], "windows-11")
+      .map((option) => option.id)).toEqual(["windows-antivirus"]);
+  });
+
+  it("uses selected category names for licensing headings across every goal", () => {
+    for (const goal of securityGoals) {
+      for (const option of getSecurityGoalOptions(goal.id)) {
+        expect(getLicensingPrerequisiteTitle([option.name]))
+          .toBe(`${option.name} with limited experience`);
+      }
+    }
+    expect(getLicensingPrerequisiteTitle(["Retention"])).toBe("Retention with limited experience");
+    expect(getLicensingPrerequisiteTitle(["Retention", "Auto labelling", "Retention"]))
+      .toBe("Retention, Auto labelling with limited experience");
+    expect(getLicensingPrerequisiteTitle([])).toBe("Selected policies with limited experience");
+    expect(getLicensingPrerequisiteTitle(["Antivirus (AV)"], "full"))
+      .toBe("Antivirus (AV) licensing prerequisites");
+  });
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "uses app-specific Mobile and Desktop experience for %s",
+    (licenseId) => {
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["ios-ipados", "android"], "mobile-apps",
+      )).toBe("full");
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["macos"], "desktop-apps",
+      )).toBe("full");
+      const expected = "full";
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["windows-11"], "desktop-apps",
+      )).toBe(expected);
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["windows-11", "macos"], "desktop-apps",
+      )).toBe(expected);
+    },
+  );
+
+  it("combines desktop app entitlements and rejects empty app licensing inputs", () => {
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", [], ["ios-ipados"], "mobile-apps",
+    )).toBe("limited");
+    expect(getSecurityGoalOptionExperience(
+      "app-protection", [], ["windows-11"], "desktop-apps",
+    )).toBe("limited");
+  });
+
+  it("states the correct prerequisite on every Conditional Access category", () => {
+    for (const option of getSecurityGoalOptions("conditional-access")) {
+      if (option.comingSoon) continue;
+      const note = getConditionalAccessCategoryLicenseNote([option.id], ["e3"]);
+      if (option.id === "global-secure-access-policies") {
+        expect(note?.message).toContain("Internet Access or Private Access");
+        expect(note?.message).not.toContain("Entra ID P2");
+      } else if (option.id === "agent-policies") {
+        expect(note?.message).toContain("Agent 365 license");
+        expect(note?.message).not.toContain("Entra ID P2");
+      } else {
+        expect(note?.message).toContain("Microsoft Entra ID P2 add-on to unlock");
+        expect(note?.message?.includes("PIM authentication context")).toBe(option.id === "administrator-policies");
+        expect(note?.message).toContain("Microsoft Defender Suite for Microsoft 365 E3");
+        expect(note?.message).not.toContain("Agent 365");
+      }
+    }
+  });
+
+  it("uses category-specific prerequisites on final results without unrelated Agent upselling", () => {
+    const users = getConditionalAccessCategoryLicenseNote([
+      "administrator-policies", "internal-user-policies", "guest-user-policies",
+    ], ["e3"]);
+    expect(users?.message).toContain("Microsoft Entra ID P2 add-on");
+    expect(users?.includePlanComparisons).toBe(true);
+    const agents = getConditionalAccessCategoryLicenseNote(["agent-policies"], ["e5"]);
+    expect(agents?.message).toContain("Agent 365 license");
+    expect(agents?.includePlanComparisons).toBe(true);
+    const mixed = getConditionalAccessCategoryLicenseNote(["agent-policies", "internal-user-policies"], ["e3"]);
+    expect(mixed?.message).toContain("Agent 365 license");
+    expect(mixed?.message).toContain("Entra ID P2 add-on");
+    expect(mixed?.includePlanComparisons).toBe(true);
+    expect(getConditionalAccessCategoryLicenseNote(["service-principal-policies"], ["e3"])).toBeUndefined();
+    expect(getConditionalAccessCategoryLicenseNote([], ["e3"])).toBeUndefined();
+  });
+
+  it.each(["business-premium", "e3", "f1", "f3"] as const)(
+    "scopes Identity and Access unlock details to the selected categories for %s",
+    (id) => {
+      for (const category of ["administrator-policies", "internal-user-policies", "service-account-policies", "guest-user-policies"]) {
+        const note = getConditionalAccessCategoryLicenseNote([category], [id]);
+        expect(note?.message).toContain("Entra ID P2 add-on to unlock");
+        expect(note?.message).toContain("risky sign-in policies");
+        expect(note?.message?.includes("PIM authentication context")).toBe(category === "administrator-policies");
+        expect(note?.message).not.toContain("Agent 365");
+      }
+      const agent = getConditionalAccessCategoryLicenseNote(["agent-policies"], [id]);
+      expect(agent?.message).toContain("Add an Agent 365 license to unlock all Agent policies");
+      expect(agent?.message).not.toMatch(/Entra ID P2|PIM|risky/);
+      expect(getConditionalAccessCategoryLicenseNote(
+        ["agent-policies", "internal-user-policies"], [id],
+      )?.message).not.toContain("PIM");
+      expect(getConditionalAccessCategoryLicenseNote(
+        ["agent-policies", "administrator-policies"], [id],
+      )?.message).toContain("PIM authentication context");
+    },
+  );
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "matches Conditional Access prerequisites and badges to %s",
+    (licenseId) => {
+      const includesP2 = licenseId === "e5" || licenseId === "e7" || licenseId.includes("defender");
+      for (const option of getSecurityGoalOptions("conditional-access").filter((item) => !item.comingSoon)) {
+        const note = getConditionalAccessCategoryLicenseNote([option.id], [licenseId]);
+        const needsAddOn = option.id === "agent-policies" || option.id === "global-secure-access-policies"
+          ? licenseId !== "e7" : !includesP2;
+        expect(Boolean(note)).toBe(needsAddOn);
+        expect(getSecurityGoalOptionExperience(
+          "conditional-access", [licenseId], ["conditional-access"], option.id,
+        )).toBe(needsAddOn ? "limited" : "full");
+        if (note && option.id !== "agent-policies" && option.id !== "global-secure-access-policies") {
+          expect(note.message).toContain(licenseId.startsWith("f")
+            ? "Microsoft Defender Suite FLW"
+            : licenseId.startsWith("business-premium")
+              ? "Microsoft Defender Suite for Business Premium"
+              : "Microsoft Defender Suite for Microsoft 365 E3");
+        }
+      }
+    },
+  );
+
+  it("keeps Conditional Access licensing notes scoped to plans without the entitlement", () => {
+    expect(getConditionalAccessCategoryLicenseNote(
+      ["internal-user-policies"], ["f1", "e5"],
+    )?.message).toContain("Microsoft 365 F1 license");
+    expect(getConditionalAccessCategoryLicenseNote(
+      ["agent-policies", "internal-user-policies"], ["e3", "e7"],
+    )?.message).toContain("Microsoft 365 E3 license");
+    const note = getConditionalAccessCategoryLicenseNote(
+      ["internal-user-policies"], ["f1", "business-premium", "e3"],
+    );
+    expect(note?.message).toContain("Microsoft Defender Suite FLW");
+    expect(note?.message).toContain("Microsoft Defender Suite for Business Premium");
+    expect(note?.message).toContain("Microsoft Defender Suite for Microsoft 365 E3");
+    expect(getConditionalAccessCategoryLicenseNote(["internal-user-policies"], [])).toBeUndefined();
+  });
+
   it("includes administrator protection with the requested Conditional Access policies", () => {
     expect(securityGoals.map((goal) => goal.name)).toEqual([
-      "Attack protection",
+      "Attack prevention",
       "Administrator protection",
+      "Conditional Access",
       "Endpoint protection",
       "AI and Agent Security",
       "Data Security",
       "App protection",
+      "Security fundamentals",
+      "Copilot Readiness",
     ]);
 
     expect(getSolutionPlatformIds("administrator-protection", []))
-      .toEqual(["conditional-access"]);
+      .toEqual(["conditional-access", "windows-11", "macos"]);
     expect(
       getRecommendedPolicyIds(
         "administrator-protection",
@@ -50,6 +639,101 @@ describe("security goal recommendations", () => {
       .toBe(
         "CA106 requires Microsoft Entra ID Plan 2. These recommended policies are a good starting point, but implementing them does not guarantee full protection.",
       );
+  });
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "uses Intune Suite prerequisites for Windows administrator protection with %s",
+    (licenseId) => {
+      const note = getAdministratorProtectionLicenseNote([licenseId], "windows-11");
+      expect(Boolean(note)).toBe(licenseId !== "e5" && licenseId !== "e7");
+      if (note) {
+        expect(note.title).toBe("Administrator protection policies licensing prerequisites");
+        expect(note.message).toBe("Add the Microsoft Intune Suite add-on for the full Windows administrator protection experience. Microsoft Intune Suite is included in Microsoft 365 E5 and Microsoft 365 E7, which unlocks EPM (Endpoint Privilege Management).");
+      }
+      expect(getAdministratorProtectionLicenseNote([licenseId], "macos")).toBeUndefined();
+      expect(getAdministratorProtectionLicenseNote([licenseId], "conditional-access")).toBeUndefined();
+      expect(getRecommendedPolicyIds("administrator-protection", [], "windows-11")).toEqual([]);
+      expect(getRecommendedPolicyIds("administrator-protection", [], "macos")).toEqual([]);
+    },
+  );
+
+  it("offers the Conditional Access categories in the requested order", () => {
+    const options = getSecurityGoalOptions("conditional-access");
+    expect(options.map((option) => option.name)).toEqual([
+      "Administrator policies",
+      "Internal user policies",
+      "Service Account policies",
+      "Agent policies",
+      "Guest user policies",
+      "Global Secure Access Policies",
+      "Service principal policies",
+    ]);
+    expect(options.every((option) =>
+      option.platformIds.length === 1 && option.platformIds[0] === "conditional-access",
+    )).toBe(true);
+    expect(getSolutionPlatformIds("conditional-access", [])).toEqual([]);
+    for (const option of options.filter((item) => !item.comingSoon)) {
+      expect(option.autoSelect).not.toBe(true);
+      expect(isSecurityGoalOptionAvailable("conditional-access", option.id, ["e3"])).toBe(true);
+      expect(getSolutionPlatformIds("conditional-access", [option.id])).toEqual(["conditional-access"]);
+    }
+    expect(getSolutionPlatformIds(
+      "conditional-access", options.map((option) => option.id),
+    )).toEqual(["conditional-access"]);
+  });
+
+  it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
+    "locks upcoming GSA and on-premises app protection for %s",
+    (licenseId) => {
+      const gsaId = "global-secure-access-policies";
+      const onPremises = getSecurityGoalOptions("app-protection").find(
+        (option) => option.id === "on-premises-apps",
+      )!;
+      expect(onPremises.comingSoon).toBe(true);
+      expect(onPremises.allowRepositoryPreview).not.toBe(true);
+      expect(getSecurityGoalOptions("conditional-access").find((option) => option.id === gsaId)?.comingSoon).toBe(true);
+      expect(isSecurityGoalOptionAvailable("app-protection", onPremises.id, [licenseId])).toBe(false);
+      expect(isSecurityGoalOptionAvailable("conditional-access", gsaId, [licenseId])).toBe(false);
+      expect(getSolutionPlatformIds("app-protection", [onPremises.id])).toEqual([]);
+      expect(getSolutionPlatformIds("conditional-access", [gsaId])).toEqual([]);
+      expect(getRecommendedPolicyIds("conditional-access", [gsaId], "conditional-access")).toEqual([]);
+      expect(getSecurityGoalOptionExperience(
+        "app-protection", [licenseId], ["conditional-access"], onPremises.id,
+      )).toBe(licenseId === "e7" ? "full" : "limited");
+      const gsaNote = getConditionalAccessCategoryLicenseNote([gsaId], [licenseId]);
+      expect(gsaNote).toBeUndefined();
+      const privateNote = getOnPremisesAppLicenseNote([licenseId]);
+      if (licenseId === "e7") {
+        expect(gsaNote).toBeUndefined();
+        expect(privateNote).toBeUndefined();
+      } else {
+        expect(privateNote?.message).toContain("Global Secure Access Private Access");
+        expect(privateNote?.message).toContain("Microsoft Entra Suite or Microsoft 365 E7");
+      }
+    },
+  );
+
+  it("keeps on-premises licensing scoped to plans without the entitlement", () => {
+    expect(getOnPremisesAppLicenseNote(["e3", "e7"])?.message).toContain("Microsoft 365 E3 license");
+    expect(getOnPremisesAppLicenseNote([])).toBeUndefined();
+    const note = getConditionalAccessCategoryLicenseNote([
+      "global-secure-access-policies", "agent-policies", "internal-user-policies",
+    ], ["e3"]);
+    expect(note?.message).not.toContain("Internet Access or Private Access");
+    expect(note?.message).toContain("Agent 365");
+    expect(note?.message).toContain("Entra ID P2");
+  });
+
+  it("keeps upcoming service principal policies out of recommendations", () => {
+    const option = getSecurityGoalOptions("conditional-access").find(
+      (item) => item.id === "service-principal-policies",
+    )!;
+    expect(option.comingSoon).toBe(true);
+    for (const license of ["business-premium", "e3", "e5", "e7"] as const) {
+      expect(isSecurityGoalOptionAvailable("conditional-access", option.id, [license])).toBe(false);
+    }
+    expect(getSolutionPlatformIds("conditional-access", [option.id])).toEqual([]);
+    expect(getRecommendedPolicyIds("conditional-access", [option.id], "conditional-access")).toEqual([]);
   });
 
   it("supports selecting multiple security goals and deselecting one", () => {
@@ -140,7 +824,7 @@ describe("security goal recommendations", () => {
   });
 
   it.each(["business-premium", "e3", "f3", "f1"] as const)(
-    "shows Full experience for Sensitivity labels with %s",
+    "shows Limited experience for Sensitivity labels with %s",
     (licenseId) => {
       expect(
         getSecurityGoalOptionExperience(
@@ -149,7 +833,7 @@ describe("security goal recommendations", () => {
           ["purview"],
           "sensitivity-labels",
         ),
-      ).toBe("full");
+      ).toBe("limited");
     },
   );
 
@@ -291,7 +975,7 @@ describe("security goal recommendations", () => {
     "f3-defender-purview",
     "f1-defender",
     "f1-defender-purview",
-  ] as const)("shows full endpoint feature experience for %s", (licenseId) => {
+  ] as const)("shows full client features but limited server features for %s", (licenseId) => {
     const features = getSecurityGoalOptions("endpoint-protection")
       .filter((option) => option.endpointFeature);
     for (const option of features) {
@@ -300,7 +984,9 @@ describe("security goal recommendations", () => {
         [licenseId],
         option.platformIds,
         option.id,
-      )).toBe("full");
+      )).toBe(option.platformIds.some((id) =>
+        id === "windows-servers" || id === "linux-server",
+      ) ? "limited" : "full");
       expect(getEndpointFeatureLicenseNote(option.endpointFeature, [licenseId]))
         .toBeUndefined();
     }
@@ -325,7 +1011,174 @@ describe("security goal recommendations", () => {
     }
   });
 
-  it("applies F3's supported Defender subset and F1's Intune-only limitation", () => {
+  it.each(["business-premium", "business-premium-purview", "e3", "e3-purview"] as const)(
+    "explains the repository-specific limited experience for %s",
+    (licenseId) => {
+      for (const platform of ["macos", "ios-ipados", "android"] as const) {
+        const note = getEndpointFeatureLicenseNote("defender", [licenseId], platform);
+        expect(note).toContain("full Defender for Cloud Apps experience is not included");
+        expect(note).toContain(licenseId.startsWith("business-premium")
+          ? "Microsoft Defender Suite for Business Premium"
+          : "Microsoft Defender Suite for Microsoft 365 E3");
+      }
+      const windows = getEndpointFeatureLicenseNote("defender", [licenseId], "windows-11");
+      expect(windows).toContain("Windows BP package");
+      expect(windows).toContain("separate Defender for Cloud Apps entitlement");
+      expect(windows).not.toContain("Intune Suite");
+      const linux = getEndpointFeatureLicenseNote("defender", [licenseId], "linux-desktop");
+      expect(linux).toContain("Microsoft Defender for Endpoint P2 is required");
+      expect(linux).toContain("included in Microsoft Defender Suite");
+    },
+  );
+
+  it.each(["business-premium", "business-premium-purview", "e3", "e3-purview"] as const)(
+    "explains manual Cloud Apps control on limited client endpoint notes for %s",
+    (id) => {
+      for (const platform of ["windows-11", "macos", "ios-ipados", "android"] as const) {
+        const note = getEndpointFeatureLicenseNote("defender", [id], platform);
+        expect(note).toContain("can only manually control access using Custom Network Indicators and Web Content Filtering.");
+        expect(note).toContain(id.startsWith("business-premium") ? "Defender for Business" : "Defender for Endpoint P1");
+        expect(note).not.toContain(id.startsWith("business-premium") ? "Defender for Endpoint P1" : "Defender for Business");
+      }
+    },
+  );
+
+  it.each(["f1", "f1-purview", "f3", "f3-purview", "e5", "e7", "e3-defender", "business-premium-defender"] as const)(
+    "does not advertise base BP/E3 manual Cloud Apps control on endpoints for %s",
+    (id) => {
+      for (const platform of ["windows-11", "macos", "ios-ipados", "android"] as const) {
+        expect(getEndpointFeatureLicenseNote("defender", [id], platform) ?? "")
+          .not.toContain("Custom Network Indicators");
+      }
+    },
+  );
+
+  it.each(["f1", "f1-purview", "f3", "f3-purview"] as const)(
+    "shows frontline endpoint upgrade prerequisites for %s",
+    (licenseId) => {
+      for (const platform of ["macos", "ios-ipados", "android"] as const) {
+        const note = getEndpointFeatureLicenseNote("intune", [licenseId], platform);
+        expect(note).toContain("limited endpoint protection experience");
+        expect(note).toContain("Microsoft Defender Suite FLW");
+      }
+      const windows = getEndpointFeatureLicenseNote("intune", [licenseId], "windows-11");
+      expect(windows).not.toContain("Intune Suite");
+      expect(windows).toContain("to unlock Defender and other endpoint protection capabilities");
+      expect(getEndpointFeatureLicenseNote("defender", [licenseId], "linux-desktop"))
+        .toContain("Microsoft Defender Suite FLW");
+    },
+  );
+
+  it("keeps endpoint upgrade guidance scoped to the matching plan", () => {
+    for (const platform of ["windows-11", "macos", "ios-ipados", "android", "linux-desktop"] as const) {
+      const note = getEndpointFeatureLicenseNote(
+        "defender",
+        ["business-premium", "e5"],
+        platform,
+        { "business-premium": 25, e5: 1 },
+      );
+      expect(note).toContain("25 Microsoft 365 Business Premium licenses");
+      expect(note).toContain("1 Microsoft 365 E5 license");
+      expect(note).toContain("Full coverage is included with this plan");
+      expect(getEndpointFeatureLicenseNote("intune", ["f1", "e3-defender"], platform))
+        .toContain("Microsoft 365 F1");
+    }
+    expect(getEndpointFeatureLicenseNote("intune", ["f1", "f3"], "windows-11"))
+      .toContain("Microsoft 365 F1");
+    const dataSecurity = getDataSecurityLicenseNote(
+      ["e5", "business-premium"],
+      ["dlp"],
+      { e5: 1, "business-premium": 25 },
+    );
+    expect(dataSecurity).toContain("1 Microsoft 365 E5 license: Full Data Security coverage");
+    expect(dataSecurity).toContain("25 Microsoft 365 Business Premium licenses: Data Loss Prevention");
+    expect(getConditionalAccessCategoryLicenseNote(
+      ["internal-user-policies"],
+      ["e5", "business-premium"],
+      { e5: 1, "business-premium": 25 },
+    )?.message).toContain("1 Microsoft 365 E5 license");
+    expect(getAdministratorProtectionLicenseNote(
+      ["e5", "business-premium"],
+      "windows-11",
+      { e5: 1, "business-premium": 25 },
+    )?.message).toContain("25 Microsoft 365 Business Premium licenses");
+    expect(getOnPremisesAppLicenseNote(["e7", "business-premium"])?.message)
+      .toContain("1 Microsoft 365 E7 license");
+  });
+
+  it.each(licenses.filter((license) => license.eligible))(
+    "provides a limitation or server prerequisite for every available limited endpoint category with $name",
+    (license) => {
+      for (const option of getSecurityGoalOptions("endpoint-protection")) {
+        if (!option.endpointFeature ||
+          !isSecurityGoalOptionAvailable("endpoint-protection", option.id, [license.id])) continue;
+        for (const platform of option.platformIds) {
+          if (!isPlatformAvailableForLicenses([license.id], platform) ||
+            getSecurityGoalOptionExperience(
+              "endpoint-protection", [license.id], [platform], option.id,
+            ) !== "limited") continue;
+          if (platform === "windows-servers" || platform === "linux-server") {
+            expect(getWindowsServerLicenseNotes([license.id], platform).length).toBeGreaterThan(0);
+          } else {
+            expect(getEndpointFeatureLicenseNote(option.endpointFeature, [license.id], platform))
+              .toBeTruthy();
+          }
+        }
+      }
+    },
+  );
+
+  it.each(licenses.filter((license) => license.eligible))(
+    "limits only AV on client endpoint platforms for $name",
+    (license) => {
+      const options = getSecurityGoalOptions("endpoint-protection").filter((option) =>
+        option.endpointFeature &&
+        option.platformIds.every((id) =>
+          id === "windows-11" || id === "macos" || id === "ios-ipados" || id === "android",
+        ),
+      );
+      for (const option of options) {
+        const experience = getSecurityGoalOptionExperience(
+          "endpoint-protection", [license.id], option.platformIds, option.id,
+        );
+        if (!option.id.endsWith("-antivirus")) {
+          expect(experience).toBe(
+            (license.id.startsWith("f1") || license.id.startsWith("f3")) &&
+              !license.id.includes("defender") ? "limited" : "full",
+          );
+          expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [license.id]))
+            .toBe(true);
+          expect(getLimitedExperienceSelections(
+            [{ ...option, goalId: "endpoint-protection" as const }],
+            [license.id],
+            option.platformIds[0],
+          )).toEqual(experience === "limited" ? [{ ...option, goalId: "endpoint-protection" }] : []);
+        }
+      }
+    },
+  );
+
+  it("keeps server and Linux category experiences unchanged", () => {
+    for (const licenseId of ["business-premium", "e3", "f3", "f1"] as const) {
+      for (const [platform, id] of [
+        ["windows-servers", "server-antivirus"],
+        ["linux-server", "linux-server-antivirus"],
+        ["linux-desktop", "linux-desktop-antivirus"],
+      ] as const) {
+        expect(getSecurityGoalOptionExperience(
+          "endpoint-protection", [licenseId], [platform], id,
+        )).toBe("limited");
+      }
+    }
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", ["f1"], ["linux-desktop"], "linux-desktop-encryption",
+    )).toBe("limited");
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", ["business-premium"], ["linux-desktop"], "linux-desktop-encryption",
+    )).toBe("full");
+  });
+
+  it("keeps all base frontline categories selectable with limited experience", () => {
     for (const optionId of [
       "windows-antivirus",
       "windows-firewall",
@@ -344,15 +1197,15 @@ describe("security goal recommendations", () => {
       "endpoint-protection",
       "macos-defender-onboarding",
       ["f3"],
-    )).toBe(false);
+    )).toBe(true);
     expect(getEndpointFeatureLicenseNote("defender", ["f3"]))
-      .toContain("Defender Antimalware, Microsoft Defender Firewall, Exploit Guard");
+      .toContain("to unlock Defender and other endpoint protection capabilities");
 
     expect(isSecurityGoalOptionAvailable(
       "endpoint-protection",
       "windows-antivirus",
       ["f1"],
-    )).toBe(false);
+    )).toBe(true);
     expect(isSecurityGoalOptionAvailable(
       "endpoint-protection",
       "ios-app-protection",
@@ -365,7 +1218,7 @@ describe("security goal recommendations", () => {
       "ios-app-protection",
     )).toBe("limited");
     expect(getEndpointFeatureLicenseNote("intune", ["f1"]))
-      .toContain("Intune configuration settings only");
+      .toContain("Microsoft Defender Suite FLW");
   });
 
   it.each([
@@ -375,7 +1228,7 @@ describe("security goal recommendations", () => {
     ["endpoint-ios-ipados", "ios-antivirus", "ios-defender-onboarding", "ios-ipados"],
     ["endpoint-android", "android-antivirus", "android-defender-onboarding", "android"],
   ] as const)(
-    "disables Defender settings and onboarding for F3 on %s",
+    "allows Defender upgrade selections for F3 on %s",
     (_platformOptionId, antivirusId, onboardingId, platformId) => {
       const defenderOptions = getSecurityGoalOptions("endpoint-protection")
         .filter((option) =>
@@ -389,31 +1242,34 @@ describe("security goal recommendations", () => {
           "endpoint-protection",
           option.id,
           ["f3"],
-        )).toBe(false);
-        expect(getEndpointFeatureLicenseNote(
+        )).toBe(true);
+        const note = getEndpointFeatureLicenseNote(
           option.endpointFeature,
           ["f3"],
           platformId,
-        )).toContain("does not support Microsoft Defender settings");
+        );
+        expect(note).toContain(platformId === "linux-desktop"
+          ? "Defender for Endpoint P2 is required"
+          : "to unlock Defender and other endpoint protection capabilities");
       }
       expect(isSecurityGoalOptionAvailable(
         "endpoint-protection",
         antivirusId,
         ["f3"],
-      )).toBe(false);
+      )).toBe(true);
       if (onboardingId) {
         expect(isSecurityGoalOptionAvailable(
           "endpoint-protection",
           onboardingId,
           ["f3"],
-        )).toBe(false);
+        )).toBe(true);
       }
       expect(getEndpointFeatureLicenseNote("defender", ["f3"], platformId))
-        .toContain("Automated onboarding to Defender is not eligible");
+        .toContain(platformId === "linux-desktop" ? "Defender for Endpoint P2" : "automated onboarding to Defender");
     },
   );
 
-  it("disables all F1 Defender categories while retaining Defender Suite support", () => {
+  it("allows all F1 Defender upgrade selections including AV and servers", () => {
     const defenderOptions = getSecurityGoalOptions("endpoint-protection")
       .filter((option) => option.endpointFeature === "defender");
     for (const option of defenderOptions) {
@@ -421,12 +1277,14 @@ describe("security goal recommendations", () => {
         "endpoint-protection",
         option.id,
         ["f1"],
-      )).toBe(false);
+      )).toBe(true);
       expect(getEndpointFeatureLicenseNote(
         option.endpointFeature,
         ["f1"],
         option.platformIds[0],
-      )).toContain("Automated onboarding to Defender is not eligible");
+      )).toContain(option.platformIds[0] === "linux-desktop"
+        ? "Defender for Endpoint P2 is required"
+        : "to unlock Defender and other endpoint protection capabilities");
       expect(isSecurityGoalOptionAvailable(
         "endpoint-protection",
         option.id,
@@ -479,6 +1337,7 @@ describe("security goal recommendations", () => {
         "data-protection",
         [licenseId],
         option.platformIds,
+        option.id,
       )).toBe("full");
     }
     expect(getDataSecurityLicenseNote([licenseId])).toBeUndefined();
@@ -495,12 +1354,12 @@ describe("security goal recommendations", () => {
           option.platformIds,
         )).toBe("limited");
       }
-      expect(getDataSecurityLicenseNote([licenseId]))
-        .toContain("without the full DLP and auto-labelling experience");
+      expect(getDataSecurityLicenseNote([licenseId], ["dlp"]))
+        .toContain("DLP for emails and files is included");
     },
   );
 
-  it("limits FLW Purview experience and excludes eDLP", () => {
+  it("unlocks the user-specified Data Security features with FLW Purview Suite", () => {
     for (const licenseId of ["f1-purview", "f3-purview"] as const) {
       const options = securityGoals.find((goal) => goal.id === "data-protection")!.options;
       for (const option of options) {
@@ -508,30 +1367,62 @@ describe("security goal recommendations", () => {
           "data-protection",
           [licenseId],
           option.platformIds,
-        )).toBe("limited");
+          option.id,
+        )).toBe(["dlp", "retention", "auto-labeling"].includes(option.id)
+          ? "full" : "limited");
         expect(isSecurityGoalOptionAvailable(
           "data-protection",
           option.id,
           [licenseId],
-        )).toBe(option.id !== "endpoint-dlp");
+        )).toBe(true);
       }
     }
-    expect(getDataSecurityLicenseNote(["f3-purview"]))
-      .toContain("eDLP policies are not included");
+    expect(getDataSecurityLicenseNote(["f3-purview"], ["endpoint-dlp"]))
+      .toContain("Add Microsoft Defender Suite FLW for Microsoft 365 F3");
   });
 
-  it("limits F1 to Sensitivity labels without Purview Suite", () => {
+  it("shows F1 upgrade paths for DLP, retention, eDLP and auto labelling", () => {
     const options = securityGoals.find((goal) => goal.id === "data-protection")!.options;
     for (const option of options) {
       expect(isSecurityGoalOptionAvailable("data-protection", option.id, ["f1"]))
-        .toBe(option.id === "sensitivity-labels");
+        .toBe(option.id !== "sensitive-information-types");
     }
+    expect(getDataSecurityLicenseNote(["f1"], ["retention"]))
+      .toContain("Manual retention labels and Teams message retention policies are included");
     expect(getDataSecurityLicenseNote(["f1"]))
-      .toBe("Microsoft 365 F1 supports Sensitivity labels only.");
+      .toContain("Add Microsoft Purview Suite FLW");
+  });
+
+  it.each(["e3", "e3-defender", "business-premium", "business-premium-defender"] as const)(
+    "names the missing Purview add-on for %s while limiting Sensitivity labels",
+    (licenseId) => {
+      expect(getDataSecurityLicenseNote([licenseId])).toContain("Add Microsoft Purview Suite");
+      expect(getDataSecurityLicenseNote([licenseId])).toContain(
+        licenseId.startsWith("business-premium")
+          ? "Microsoft Purview Suite for Business Premium"
+          : "Microsoft Purview Suite for Microsoft 365 E3",
+      );
+      expect(getSecurityGoalOptionExperience(
+        "data-protection", [licenseId], ["purview"], "sensitivity-labels",
+      )).toBe("limited");
+    },
+  );
+
+  it.each(["f3", "f3-defender"] as const)("names the FLW add-on missing from %s", (licenseId) => {
+    expect(getDataSecurityLicenseNote([licenseId])).toContain("Add Microsoft Purview Suite FLW");
+    expect(getDataSecurityLicenseNote([licenseId], ["endpoint-dlp"]))
+      .toContain("Endpoint DLP (eDLP) is not included with the selected base licenses");
+  });
+
+  it("requires only missing entitlements when FLW Purview is already selected", () => {
+    expect(getDataSecurityLicenseNote(["f3-purview"])).toContain("Add Microsoft Defender Suite FLW");
+    expect(getDataSecurityLicenseNote(["f3-purview"])).not.toContain("Add Microsoft Purview Suite");
+    expect(getDataSecurityLicenseNote(["e3", "e5"])).toContain("1 Microsoft 365 E3 license:");
+    expect(getDataSecurityLicenseNote([])).toBeUndefined();
   });
 
   it.each([
-    ["oauth-apps", ["conditional-access"]],
+    ["oauth-apps", ["windows-11", "windows-servers", "macos", "conditional-access"]],
     ["desktop-apps", ["windows-11", "macos"]],
     ["mobile-apps", ["ios-ipados", "android"]],
     ["cloud-apps", ["windows-11", "windows-servers", "macos", "conditional-access"]],
@@ -548,12 +1439,12 @@ describe("security goal recommendations", () => {
         "cloud-apps",
       ]),
     ).toEqual([
-      "conditional-access",
       "windows-11",
+      "windows-servers",
       "macos",
+      "conditional-access",
       "ios-ipados",
       "android",
-      "windows-servers",
     ]);
   });
 });

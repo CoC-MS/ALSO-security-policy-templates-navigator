@@ -82,5 +82,26 @@ describe("policy counter dashboard", () => {
   it("uses Central European daylight saving rules regardless of the visitor's time zone", () => {
     expect(formatSyncTime("2026-10-12T11:20:40Z")).toBe("12 Oct 2026, 13:20:40 CEST");
     expect(formatSyncTime("2026-12-12T11:20:40Z")).toBe("12 Dec 2026, 12:20:40 CET");
+    expect(formatSyncTime("2026-10-12T11:20:40Z", "ru")).toContain("12 окт. 2026 г.");
+    expect(formatSyncTime("2026-10-12T11:20:40Z", "it")).toContain("12 ott 2026");
+  });
+
+  it("localizes Polish category labels, unavailable-count accessibility text, dates, and numbers", () => {
+    const html = renderToStaticMarkup(
+      <PolicyCounters metadata={metadata} status="ready" locale="pl" />,
+    );
+    for (const label of [
+      "Zasady dostępu warunkowego",
+      "Zasady dotyczące punktów końcowych",
+      "Zasady zgodności urządzeń",
+      "Skrypty",
+      "Ustawienia filtrów",
+      "Aplikacje",
+      "Zasady Purview",
+      "Łącznie",
+    ]) expect(html).toContain(label);
+    expect(html).toContain("12 paź 2026");
+    expect(formatSyncTime("2026-10-12T11:20:40Z", "pl")).toContain("12 paź 2026");
+    expect(html).not.toContain('aria-label="Count unavailable"');
   });
 });

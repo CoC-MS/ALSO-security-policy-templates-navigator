@@ -1,4 +1,5 @@
 import type { License, Platform } from "./catalog";
+import { translate, type Locale } from "./i18n";
 
 export function shouldShowAiSecurityLicenseActions(
   licenseIds: readonly License["id"][],
@@ -9,11 +10,11 @@ export function shouldShowAiSecurityLicenseActions(
     !licenseIds.includes("e7");
 }
 
-export function AiSecurityLicenseActions() {
+export function AiSecurityLicenseActions({ locale = "en" }: { locale?: Locale }) {
   return (
-    <aside className="ai-security-actions" aria-label="License and professional services options">
+    <aside className="ai-security-actions" aria-label={translate(locale, "License and professional services options")}>
       <section className="ai-security-action-section" aria-labelledby="ai-security-license-title">
-        <h3 id="ai-security-license-title">Explore licenses</h3>
+        <h3 id="ai-security-license-title">{translate(locale, "Explore licenses")}</h3>
         <div className="ai-security-action-list">
           <a
             className="button primary"
@@ -21,7 +22,7 @@ export function AiSecurityLicenseActions() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Explore Agent 365 licenses in ACMP
+            {translate(locale, "Explore Agent 365 licenses in ACMP")}
           </a>
           <a
             className="button primary"
@@ -29,17 +30,17 @@ export function AiSecurityLicenseActions() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Explore Microsoft 365 E7 licenses in ACMP
+            {translate(locale, "Explore Microsoft 365 E7 licenses in ACMP")}
           </a>
         </div>
       </section>
       <section className="ai-security-action-section" aria-labelledby="ai-security-services-title">
-        <h3 id="ai-security-services-title">Need implementation help or consulting?</h3>
+        <h3 id="ai-security-services-title">{translate(locale, "Need implementation help or consulting?")}</h3>
         <div className="ai-security-action-list">
           <button className="button secondary" type="button" disabled>
-            Request Professional Services Help from ALSO CoE
+            {translate(locale, "Request Professional Services Help from ALSO CoE")}
           </button>
-          <span>Coming soon</span>
+          <span>{translate(locale, "Coming soon")}</span>
         </div>
       </section>
     </aside>
