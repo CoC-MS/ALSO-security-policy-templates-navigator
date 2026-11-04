@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState, type FormEvent } from "react";
 import {
   getPlatform,
+  formatSelectedLicenseMix,
   getLicenseBadgeLabel,
   getLimitedExperienceNoteForLicenses,
   getCloudAppsConditionalAccessLicenseNote,
@@ -13,6 +14,7 @@ import {
   isPlatformAvailableForLicenses,
   toggleLicenseSelection,
   type License,
+  type LicenseQuantities,
   type Platform,
 } from "./catalog";
 import {
@@ -176,28 +178,49 @@ function ArrowIcon() {
 function LicenseGrid({
   items,
   selected,
+  quantities,
   onToggle,
+  onQuantityChange,
 }: {
   items: readonly License[];
   selected: readonly License[];
+  quantities: LicenseQuantities;
   onToggle: (license: License) => void;
+  onQuantityChange: (licenseId: License["id"], quantity: number) => void;
 }) {
   return (
     <div className="card-grid license-grid">
       {items.map((license) => {
         const isSelected = selected.some((item) => item.id === license.id);
         return (
-          <button
-            className={`choice-card ${isSelected ? "selected" : ""}`}
-            type="button"
-            key={license.id}
-            aria-pressed={isSelected}
-            onClick={() => onToggle(license)}
-          >
-            <span className="choice-icon license-badge" aria-hidden="true">{getLicenseBadgeLabel(license)}</span>
-            <span className="choice-name">{license.name}</span>
-            <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
-          </button>
+          <div className="license-choice" key={license.id}>
+            <button
+              className={`choice-card ${isSelected ? "selected" : ""}`}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onToggle(license)}
+            >
+              <span className="choice-icon license-badge" aria-hidden="true">{getLicenseBadgeLabel(license)}</span>
+              <span className="choice-name">{license.name}</span>
+              <span className="choice-check" aria-hidden="true">{isSelected ? "\u2713" : ""}</span>
+            </button>
+            {isSelected && (
+              <label className="license-quantity">
+                Number of licenses
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={quantities[license.id] ?? 1}
+                  aria-label={`Number of ${license.name} licenses`}
+                  onChange={(event) => onQuantityChange(
+                    license.id,
+                    Math.max(1, Number.parseInt(event.currentTarget.value, 10) || 1),
+                  )}
+                />
+              </label>
+            )}
+          </div>
         );
       })}
     </div>
@@ -365,6 +388,7 @@ function App() {
   const [step, setStep] = useState<Step>("license");
   const [auxiliaryReturnStep, setAuxiliaryReturnStep] = useState<Step>("license");
   const [selectedLicenses, setSelectedLicenses] = useState<License[]>([]);
+  const [licenseQuantities, setLicenseQuantities] = useState<LicenseQuantities>({});
   const [selectedGoalIds, setSelectedGoalIds] = useState<SecurityGoalId[]>([]);
   const [identityAndAccessSelected, setIdentityAndAccessSelected] = useState(false);
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
@@ -379,6 +403,9 @@ function App() {
   const eligibleLicenses = selectedLicenses.filter((license) => license.eligible);
   const excludedLicenses = getExcludedLicenses(selectedLicenses);
   const eligibleLicenseIds = eligibleLicenses.map((license) => license.id);
+  const totalEligibleLicenseSeats = eligibleLicenses.reduce(
+    (total, license) => total + (licenseQuantities[license.id] ?? 1), 0,
+  );
   const selectedGoals = securityGoals.filter((goal) =>
     selectedGoalIds.includes(goal.id),
   );
@@ -485,7 +512,18 @@ function App() {
   }, []);
 
   function toggleLicense(license: License) {
+    const isSelected = selectedLicenses.some((selected) => selected.id === license.id);
     setSelectedLicenses((current) => toggleLicenseSelection(current, license));
+    setLicenseQuantities((current) => {
+      const next = { ...current };
+      if (isSelected) delete next[license.id];
+      else next[license.id] = 1;
+      return next;
+    });
+  }
+
+  function changeLicenseQuantity(licenseId: License["id"], quantity: number) {
+    setLicenseQuantities((current) => ({ ...current, [licenseId]: quantity }));
   }
 
   function continueFromLicenses() {
@@ -597,6 +635,7 @@ function App() {
 
   function startOver() {
     setSelectedLicenses([]);
+    setLicenseQuantities({});
     setSelectedGoalIds([]);
     setIdentityAndAccessSelected(false);
     setSelectedOptionIds([]);
@@ -824,14 +863,26 @@ function App() {
             <section aria-labelledby="main-title">
               <div className="eyebrow">Find your security policy templates</div>
               <h1 id="main-title" tabIndex={-1}>Which Microsoft 365 licenses does your customer have?</h1>
-              <p className="intro">Select all current licenses. Next, choose the security challenges your customer wants to solve to find relevant ALSO security policy templates.</p>
+              <p className="intro">Select each license plan and enter the number of licenses available. Next, choose the security challenges your customer wants to solve to find relevant ALSO security policy templates.</p>
               <div className="license-section" aria-labelledby="enterprise-heading">
                 <h2 id="enterprise-heading">Enterprise</h2>
-                <LicenseGrid items={enterpriseLicenses} selected={selectedLicenses} onToggle={toggleLicense} />
+                <LicenseGrid
+                  items={enterpriseLicenses}
+                  selected={selectedLicenses}
+                  quantities={licenseQuantities}
+                  onToggle={toggleLicense}
+                  onQuantityChange={changeLicenseQuantity}
+                />
               </div>
               <div className="license-section" aria-labelledby="smb-heading">
                 <h2 id="smb-heading">SMB</h2>
-                <LicenseGrid items={smbLicenses} selected={selectedLicenses} onToggle={toggleLicense} />
+                <LicenseGrid
+                  items={smbLicenses}
+                  selected={selectedLicenses}
+                  quantities={licenseQuantities}
+                  onToggle={toggleLicense}
+                  onQuantityChange={changeLicenseQuantity}
+                />
               </div>
               {selectedLicenses.length > 0 && (
                 <div className="actions license-actions">
@@ -840,7 +891,7 @@ function App() {
                     type="button"
                     onClick={continueFromLicenses}
                   >
-                    Continue with {selectedLicenses.length} license{selectedLicenses.length === 1 ? "" : "s"} &rarr;
+                    Continue with {selectedLicenses.length} license plan{selectedLicenses.length === 1 ? "" : "s"} ({totalEligibleLicenseSeats} seats) &rarr;
                   </button>
                 </div>
               )}
@@ -1166,17 +1217,26 @@ function App() {
                   ))}
                 </div>
               </div>
+              {eligibleLicenses.length > 1 && (
+                <aside className="license-mix-notice" aria-label="License mix coverage">
+                  <strong>Mixed license coverage</strong>
+                  <p>Selected plan quantities: {formatSelectedLicenseMix(eligibleLicenseIds, licenseQuantities)}. Recommendations and experience badges are evaluated for each selected plan; higher-tier licenses do not extend their entitlements to users covered by another plan. Counts do not show whether the same people have more than one plan assigned.</p>
+                </aside>
+              )}
               {recommendedRepositories.length > 0 || selectedGoals.some((goal) => goal.id === "attack-protection" || goal.options.length === 0) ? (
                 <div className="result-recommendations-layout">
                   <div className="recommendation-grid result-recommendation-grid">
                   {selectedGoalIds.includes("attack-protection") && (
-                    <AttackProtectionRecommendation licenseIds={eligibleLicenseIds} />
+                    <AttackProtectionRecommendation
+                      licenseIds={eligibleLicenseIds}
+                      licenseQuantities={licenseQuantities}
+                    />
                   )}
                   {selectedGoalIds.includes("security-fundamentals") && (
-                    <ReadinessRecommendation goalId="security-fundamentals" licenseIds={eligibleLicenseIds} />
+                    <ReadinessRecommendation goalId="security-fundamentals" licenseIds={eligibleLicenseIds} licenseQuantities={licenseQuantities} />
                   )}
                   {selectedGoalIds.includes("copilot-readiness") && (
-                    <ReadinessRecommendation goalId="copilot-readiness" licenseIds={eligibleLicenseIds} />
+                    <ReadinessRecommendation goalId="copilot-readiness" licenseIds={eligibleLicenseIds} licenseQuantities={licenseQuantities} />
                   )}
                   {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames, policyIds, policyNotes }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
@@ -1223,7 +1283,7 @@ function App() {
                   const onPremisesAppsOnly = hasOnPremisesAppSelection &&
                     platformSelections.length === 1;
                   const onPremisesAppLicenseNote = hasOnPremisesAppSelection
-                    ? getOnPremisesAppLicenseNote(eligibleLicenseIds)
+                    ? getOnPremisesAppLicenseNote(eligibleLicenseIds, licenseQuantities)
                     : undefined;
                   const appProtectionOnly = platformSelections.length > 0 &&
                     platformSelections.every((option) =>
@@ -1240,14 +1300,14 @@ function App() {
                       option.selectionId.startsWith("administrator-protection:"),
                     );
                   const administratorLicenseNote = administratorDeviceSelection
-                    ? getAdministratorProtectionLicenseNote(eligibleLicenseIds, sourcePlatform.id)
+                    ? getAdministratorProtectionLicenseNote(eligibleLicenseIds, sourcePlatform.id, licenseQuantities)
                     : undefined;
                   const cloudAppSelections = limitedSelections.filter((option) =>
                     option.selectionId === "app-protection:cloud-apps" ||
                     option.selectionId === "app-protection:oauth-apps",
                   );
                   const cloudAppLicenseNote = cloudAppSelections.length > 0
-                    ? getCloudAppsConditionalAccessLicenseNote(eligibleLicenseIds)
+                    ? getCloudAppsConditionalAccessLicenseNote(eligibleLicenseIds, licenseQuantities)
                     : undefined;
                   const categorySpecificLicensingOnly =
                     platformSelections.length > 0 &&
@@ -1261,6 +1321,7 @@ function App() {
                         option.selectionId.startsWith("conditional-access:"),
                       ).map((option) => option.id),
                       eligibleLicenseIds,
+                      licenseQuantities,
                     );
                   const limitedExperienceNote = administratorDeviceOnly
                     ? administratorLicenseNote
@@ -1281,6 +1342,7 @@ function App() {
                         ),
                         includeConditionalAccessPolicyGuidance:
                           !oauthAppsOnly && !cloudAppsOnly && !attackProtectionOnly,
+                        licenseQuantities,
                       },
                     );
                   const dataSecuritySelection = limitedSelections.some((option) =>
@@ -1298,6 +1360,7 @@ function App() {
                         limitedSelections.filter((option) =>
                           option.selectionId.startsWith("data-protection:"),
                         ).map((option) => option.id),
+                        licenseQuantities,
                       )
                       : undefined;
                   const endpointNoteSelections = [
@@ -1319,6 +1382,7 @@ function App() {
                       option.endpointFeature ?? (option.children?.length ? "defender" : undefined),
                       eligibleLicenseIds,
                       option.platformIds[0],
+                      licenseQuantities,
                     );
                   const endpointFeatureNotes = sourcePlatform.id !== "purview"
                     ? [...new Set(
@@ -1331,12 +1395,15 @@ function App() {
                         .filter((note): note is string => note !== undefined),
                     )]
                     : [];
+                  const oauthAppsPlansNeedingWorkloadId = eligibleLicenseIds.filter((licenseId) =>
+                    requiresWorkloadIdPremiumForOAuthApps([licenseId]),
+                  );
                   const needsOAuthAppsWorkloadIdLicense =
                     sourcePlatform.id === "conditional-access" &&
                     limitedSelections.some((option) =>
                       option.selectionId === "app-protection:oauth-apps",
                     ) &&
-                    requiresWorkloadIdPremiumForOAuthApps(eligibleLicenseIds);
+                    oauthAppsPlansNeedingWorkloadId.length > 0;
                   const serverPlatformId = sourcePlatformIds.includes("windows-servers")
                     ? "windows-servers"
                     : sourcePlatformIds.includes("linux-server")
@@ -1346,7 +1413,7 @@ function App() {
                     (limitedSelections.length > 0 ||
                       platformSelections.some((option) => option.endpointFeature)) &&
                     serverPlatformId
-                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, serverPlatformId)
+                      ? getWindowsServerLicenseNotes(eligibleLicenseIds, serverPlatformId, licenseQuantities)
                       : [];
                   const visibleLimitedExperienceNote =
                     limitedSelections.length > 0 &&
@@ -1505,7 +1572,7 @@ function App() {
                               option.selectionId === "app-protection:oauth-apps",
                             )}</strong>
                             <p>
-                              With the selected licenses, add Microsoft Entra Workload ID Premium licenses to unlock the full OAuth apps experience.{" "}
+                              Microsoft Entra Workload ID Premium is required to unlock the full OAuth apps experience for users assigned these plans: {formatSelectedLicenseMix(oauthAppsPlansNeedingWorkloadId, licenseQuantities)}.{" "}
                               <a
                                 href="https://learn.microsoft.com/en-gb/entra/workload-id/workload-identities-faqs?WT.mc_id=Portal-Microsoft_Azure_Support#how-many-licenses-do-i-need-to-purchase-do-i-need-to-license-all-workload-identities-including-microsoft-and-managed-service-identities"
                                 target="_blank"

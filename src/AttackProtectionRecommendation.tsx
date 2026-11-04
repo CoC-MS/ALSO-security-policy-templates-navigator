@@ -1,4 +1,4 @@
-import type { License } from "./catalog";
+import type { License, LicenseQuantities } from "./catalog";
 import { getConditionalAccessCategoryLicenseNote } from "./solutionCatalog";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
 
@@ -7,12 +7,15 @@ export const attackMapperUrl =
 
 export function AttackProtectionRecommendation({
   licenseIds,
+  licenseQuantities = {},
 }: {
   licenseIds: readonly License["id"][];
+  licenseQuantities?: LicenseQuantities;
 }) {
   const licenseNote = getConditionalAccessCategoryLicenseNote(
     ["administrator-policies"],
     licenseIds,
+    licenseQuantities,
   );
 
   return (

@@ -2,11 +2,14 @@ import {
   getPlatform,
   getPlatformExperienceForLicenses,
   hasEntraIdP2,
+  formatSelectedLicenseMix,
   getCloudAppsConditionalAccessLicenseNote,
   requiresWorkloadIdPremiumForOAuthApps,
   getManualCloudAppsControlNote,
   getFrontlineLicenseNames,
   isLicenseEligible,
+  licenses,
+  type LicenseQuantities,
   type License,
   type Platform,
 } from "./catalog";
@@ -33,6 +36,33 @@ export interface SecurityGoal {
   prompt: string;
   options: readonly SolutionOption[];
   isNew?: boolean;
+}
+
+type LicenseNote = {
+  title: string;
+  message: string;
+  includePlanComparisons: boolean;
+};
+
+function getMixedLicenseNote(
+  licenseIds: readonly License["id"][],
+  licenseQuantities: LicenseQuantities,
+  title: string,
+  getNote: (licenseId: License["id"]) => LicenseNote | undefined,
+): LicenseNote | undefined {
+  const notes = licenseIds.map((licenseId) => ({ licenseId, note: getNote(licenseId) }));
+  if (notes.every(({ note }) => note === undefined)) return undefined;
+  const details = notes.map(({ licenseId, note }) => {
+    const quantity = licenseQuantities[licenseId] ?? 1;
+    const name = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+    const coverage = note?.message ?? "Full coverage is included with this plan.";
+    return `${quantity} ${name} ${quantity === 1 ? "license" : "licenses"}: ${coverage}`;
+  }).join(" ");
+  return {
+    title,
+    message: `Selected plan mix: ${formatSelectedLicenseMix(licenseIds, licenseQuantities)}. Entitlements apply only to users assigned each matching plan; the counts do not indicate whether the same users hold multiple plans. ${details}`,
+    includePlanComparisons: notes.some(({ note }) => note?.includePlanComparisons === true),
+  };
 }
 
 const ATTACK_POLICY_NOTE =
@@ -490,9 +520,18 @@ const f1LicenseIds = new Set<License["id"]>([
 export function getConditionalAccessCategoryLicenseNote(
   optionIds: readonly string[],
   licenseIds: readonly License["id"][],
+  licenseQuantities: LicenseQuantities = {},
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
   if (eligibleLicenseIds.length === 0) return undefined;
+  if (eligibleLicenseIds.length > 1) {
+    return getMixedLicenseNote(
+      eligibleLicenseIds,
+      licenseQuantities,
+      "Mixed Conditional Access license experience",
+      (licenseId) => getConditionalAccessCategoryLicenseNote(optionIds, [licenseId]),
+    );
+  }
   const selected = getSecurityGoalOptions("conditional-access").filter(
     (option) => !option.comingSoon && optionIds.includes(option.id),
   );
@@ -535,7 +574,17 @@ export function getConditionalAccessCategoryLicenseNote(
 export function getAdministratorProtectionLicenseNote(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
+  licenseQuantities: LicenseQuantities = {},
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
+  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  if (eligibleLicenseIds.length > 1) {
+    return getMixedLicenseNote(
+      eligibleLicenseIds,
+      licenseQuantities,
+      "Mixed administrator protection license experience",
+      (licenseId) => getAdministratorProtectionLicenseNote([licenseId], platformId),
+    );
+  }
   const note = getWindowsIntuneSuiteLicenseNote(licenseIds, platformId, "administrator protection");
   if (!note) return undefined;
   return {
@@ -565,9 +614,19 @@ function getWindowsIntuneSuiteLicenseNote(
 
 export function getOnPremisesAppLicenseNote(
   licenseIds: readonly License["id"][],
+  licenseQuantities: LicenseQuantities = {},
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
-  if (eligibleLicenseIds.length === 0 || eligibleLicenseIds.includes("e7")) return undefined;
+  if (eligibleLicenseIds.length === 0) return undefined;
+  if (eligibleLicenseIds.length > 1) {
+    return getMixedLicenseNote(
+      eligibleLicenseIds,
+      licenseQuantities,
+      "Mixed on-premises app license experience",
+      (licenseId) => getOnPremisesAppLicenseNote([licenseId]),
+    );
+  }
+  if (eligibleLicenseIds.includes("e7")) return undefined;
   return {
     title: "On-premises app protection licensing prerequisites",
     message: "On-premises app protection requires a Global Secure Access Private Access license. Private Access is also included in Microsoft Entra Suite or Microsoft 365 E7.",
@@ -616,11 +675,25 @@ export function getEndpointFeatureLicenseNote(
   feature: SolutionOption["endpointFeature"],
   licenseIds: readonly License["id"][],
   platformId?: Platform["id"],
+  licenseQuantities: LicenseQuantities = {},
 ): string | undefined {
   if (!feature) return undefined;
 
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
   if (eligibleLicenseIds.length === 0) return undefined;
+  if (eligibleLicenseIds.length > 1) {
+    const notes = eligibleLicenseIds.map((licenseId) => ({
+      licenseId,
+      note: getEndpointFeatureLicenseNote(feature, [licenseId], platformId),
+    }));
+    if (notes.every(({ note }) => note === undefined)) return undefined;
+    const details = notes.map(({ licenseId, note }) => {
+      const quantity = licenseQuantities[licenseId] ?? 1;
+      const name = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      return `${quantity} ${name} ${quantity === 1 ? "license" : "licenses"}: ${note ?? "Full coverage is included with this plan."}`;
+    }).join(" ");
+    return `Selected plan mix: ${formatSelectedLicenseMix(eligibleLicenseIds, licenseQuantities)}. Entitlements apply only to users assigned each matching plan; the counts do not indicate whether the same users hold multiple plans. ${details}`;
+  }
   if (eligibleLicenseIds.some((licenseId) =>
     endpointFullExperienceLicenseIds.has(licenseId),
   )) {
@@ -679,9 +752,18 @@ export function getEndpointFeatureLicenseNote(
 export function getDataSecurityLicenseNote(
   licenseIds: readonly License["id"][],
   optionIds: readonly string[] = getSecurityGoalOptions("data-protection").map((option) => option.id),
+  licenseQuantities: LicenseQuantities = {},
 ): string | undefined {
-  const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
+  const eligibleLicenseIds = [...new Set(licenseIds.filter(isLicenseEligible))];
   if (eligibleLicenseIds.length === 0) return undefined;
+  if (eligibleLicenseIds.length > 1) {
+    return eligibleLicenseIds.map((licenseId) => {
+      const licenseName = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      const quantity = licenseQuantities[licenseId] ?? 1;
+      const note = getDataSecurityLicenseNote([licenseId], optionIds);
+      return `${quantity} ${licenseName} ${quantity === 1 ? "license" : "licenses"}: ${note ?? "Full Data Security coverage is included with this plan."}`;
+    }).filter((note): note is string => note !== undefined).join(" ") || undefined;
+  }
   const limitedOptions = getSecurityGoalOptions("data-protection").filter((option) =>
     optionIds.includes(option.id) &&
     getSecurityGoalOptionExperience(
@@ -733,6 +815,14 @@ export function getSecurityGoalOptionExperience(
   platformIds: readonly Platform["id"][],
   optionId?: string,
 ): "full" | "limited" {
+  const eligibleLicenseIds = [...new Set(licenseIds.filter(isLicenseEligible))];
+  if (eligibleLicenseIds.length > 1) {
+    return eligibleLicenseIds.every((licenseId) =>
+      getSecurityGoalOptionExperience(goalId, [licenseId], platformIds, optionId) === "full",
+    ) ? "full" : "limited";
+  }
+  licenseIds = eligibleLicenseIds;
+
   if (goalId === "endpoint-protection" && platformIds.some((id) =>
     id === "windows-servers" || id === "linux-server",
   )) {

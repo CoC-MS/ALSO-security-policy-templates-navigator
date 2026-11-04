@@ -39,8 +39,10 @@ describe("license catalog", () => {
   it("names all selected plans in Agent and AI upgrade guidance", () => {
     for (const platform of ["agent-security", "ai-security"] as const) {
       const note = getLimitedExperienceNoteForLicenses(["e5", "f3-defender"], platform);
-      expect(note?.message).toContain("With Microsoft 365 E5, Microsoft 365 F3 + Defender Suite FLW,");
-      expect(getLimitedExperienceNoteForLicenses(["e5", "e7"], platform)).toBeUndefined();
+      expect(note?.message).toContain("Selected plan mix: 1 Microsoft 365 E5 license; 1 Microsoft 365 F3 + Defender Suite FLW license");
+      expect(note?.message).toContain("Entitlements apply only to users assigned each matching plan");
+      expect(getLimitedExperienceNoteForLicenses(["e5", "e7"], platform)?.message)
+        .toContain("Microsoft 365 E5");
     }
   });
 
@@ -110,9 +112,17 @@ describe("license catalog", () => {
     expect(mixed?.message).not.toContain("Microsoft 365 E3");
     expect(mixed?.message).toContain("Add Microsoft Defender Suite FLW");
     const both = getCloudAppsConditionalAccessLicenseNote(["business-premium", "e3", "f1", "f3"]);
-    expect(both?.message).toContain("Defender for Business (Business Premium) and Defender for Endpoint P1 (Microsoft 365 E3)");
-    expect(both?.message).toContain("Microsoft 365 F1 and Microsoft 365 F3 base licensing");
-    expect(getCloudAppsConditionalAccessLicenseNote(["f1", "e5"])).toBeUndefined();
+    expect(both?.message).toContain("Defender for Business (Business Premium)");
+    expect(both?.message).toContain("Defender for Endpoint P1 (Microsoft 365 E3)");
+    expect(both?.message).toContain("Microsoft 365 F1 license");
+    expect(both?.message).toContain("Microsoft 365 F3 license");
+    const tierMix = getCloudAppsConditionalAccessLicenseNote(
+      ["e5", "business-premium"],
+      { e5: 1, "business-premium": 25 },
+    );
+    expect(tierMix?.message).toContain("1 Microsoft 365 E5 license; 25 Microsoft 365 Business Premium licenses");
+    expect(tierMix?.message).toContain("Full Cloud apps coverage is included with this plan");
+    expect(tierMix?.message).toContain("Microsoft Defender for Cloud Apps is required");
   });
 
   it("blocks only Business Basic and Business Standard", () => {
@@ -426,13 +436,19 @@ describe("Business Premium-only results", () => {
       expect(isPlatformAvailableForLicenses(["f1", "f3", "f1-purview", "f3-purview"], "windows-servers")).toBe(true);
     });
 
-    it("unions valid entitlements without adding prerequisites from excluded F-series plans", () => {
+    it("keeps Windows Server prerequisites scoped to each selected F-series plan", () => {
       expect(isPlatformAvailableForLicenses(["f1", "f3-purview", "f3-defender"], "windows-servers")).toBe(true);
-      expect(getWindowsServerLicenseNotes(["f1", "f3-purview", "f3-defender"], "windows-servers"))
-        .toEqual(getWindowsServerLicenseNotes(["f3-defender"], "windows-servers"));
+      const frontlineNotes = getWindowsServerLicenseNotes(
+        ["f1", "f3-purview", "f3-defender"],
+        "windows-servers",
+      );
+      expect(frontlineNotes[0]).toContain("Microsoft 365 F1 license");
+      expect(frontlineNotes[0]).toContain("Microsoft 365 F3 + Purview Suite FLW license");
+      expect(frontlineNotes[0]).toContain("Microsoft 365 F3 + Defender Suite FLW license");
       expect(isPlatformAvailableForLicenses(["f1", "e5"], "windows-servers")).toBe(true);
-      expect(getWindowsServerLicenseNotes(["f1", "e5"], "windows-servers"))
-        .toEqual(getWindowsServerLicenseNotes(["e5"], "windows-servers"));
+      const enterpriseMix = getWindowsServerLicenseNotes(["f1", "e5"], "windows-servers");
+      expect(enterpriseMix[0]).toContain("Microsoft 365 F1 license");
+      expect(enterpriseMix[0]).toContain("Microsoft 365 E5 license");
     });
   });
 

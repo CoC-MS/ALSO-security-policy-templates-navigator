@@ -1,10 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { licenses, type License } from "./catalog";
+import { licenses, type License, type LicenseQuantities } from "./catalog";
 import { AttackProtectionRecommendation, attackMapperUrl } from "./AttackProtectionRecommendation";
 
-function render(licenseIds: readonly License["id"][]) {
-  return renderToStaticMarkup(<AttackProtectionRecommendation licenseIds={licenseIds} />);
+function render(
+  licenseIds: readonly License["id"][],
+  licenseQuantities?: LicenseQuantities,
+) {
+  return renderToStaticMarkup(
+    <AttackProtectionRecommendation licenseIds={licenseIds} licenseQuantities={licenseQuantities} />,
+  );
 }
 
 describe("attack prevention recommendation", () => {
@@ -44,13 +49,15 @@ describe("attack prevention recommendation", () => {
     expect(html).not.toContain("Verify the prerequisites for each policy before deployment.");
   });
 
-  it("combines selected plans without redundant upgrades when P2 is already covered", () => {
+  it("keeps Conditional Access guidance scoped to the matching plan", () => {
     const combined = render(["f1", "f3", "e3", "business-premium"]);
-    expect(combined).toContain("Microsoft 365 F1 and Microsoft 365 F3");
+    expect(combined).toContain("1 Microsoft 365 F1 license");
+    expect(combined).toContain("1 Microsoft 365 F3 license");
     expect(combined).toContain("Microsoft Defender Suite for Microsoft 365 E3");
     expect(combined).toContain("Microsoft Defender Suite for Business Premium");
-    const covered = render(["f1", "business-premium", "e3-defender"]);
-    expect(covered).toContain("Full experience");
-    expect(covered).not.toContain("Entra ID P2 add-on");
+    const mixed = render(["e5", "business-premium"], { e5: 1, "business-premium": 25 });
+    expect(mixed).toContain("1 Microsoft 365 E5 license; 25 Microsoft 365 Business Premium licenses");
+    expect(mixed).toContain("25 Microsoft 365 Business Premium licenses: Add the Microsoft Entra ID P2 add-on");
+    expect(mixed).toContain("Full coverage is included with this plan");
   });
 });

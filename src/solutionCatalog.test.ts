@@ -78,8 +78,9 @@ describe("security goal recommendations", () => {
       expect(note).not.toContain("Add Microsoft Purview Suite");
       const combined = [id, id.startsWith("f1") ? "f1-defender" : "f3-defender"] as const;
       expect(getSecurityGoalOptionExperience("data-protection", combined, ["purview"], "endpoint-dlp"))
-        .toBe("full");
-      expect(getDataSecurityLicenseNote(combined, ["endpoint-dlp"])).toBeUndefined();
+        .toBe("limited");
+      expect(getDataSecurityLicenseNote(combined, ["endpoint-dlp"]))
+        .toContain("Endpoint DLP will not work without this Defender functionality");
     },
   );
 
@@ -183,13 +184,13 @@ describe("security goal recommendations", () => {
     },
   );
 
-  it("uses combined Cloud apps and Workload ID entitlements", () => {
+  it("does not extend higher-tier Cloud apps and Workload ID entitlements to other plans", () => {
     expect(getSecurityGoalOptionExperience(
       "app-protection", ["business-premium", "e5"], ["macos"], "cloud-apps",
-    )).toBe("full");
+    )).toBe("limited");
     expect(getSecurityGoalOptionExperience(
       "app-protection", ["f1", "e7"], ["conditional-access"], "oauth-apps",
-    )).toBe("full");
+    )).toBe("limited");
   });
 
   it.each(licenses.filter((license) => license.eligible).map((license) => license.id))(
@@ -323,7 +324,7 @@ describe("security goal recommendations", () => {
         expect(getDataSecurityLicenseNote([id], [category])).toBeUndefined();
         expect(isSecurityGoalOptionAvailable("data-protection", category, [id])).toBe(true);
       }
-      expect(getDataSecurityLicenseNote(["f1", id], ["dlp"])).toBeUndefined();
+      expect(getDataSecurityLicenseNote(["f1", id], ["dlp"])).toContain("1 Microsoft 365 F1 license:");
     },
   );
 
@@ -581,13 +582,13 @@ describe("security goal recommendations", () => {
     },
   );
 
-  it("combines license entitlements without unnecessary P2 or Agent notices", () => {
+  it("keeps Conditional Access licensing notes scoped to plans without the entitlement", () => {
     expect(getConditionalAccessCategoryLicenseNote(
       ["internal-user-policies"], ["f1", "e5"],
-    )).toBeUndefined();
+    )?.message).toContain("Microsoft 365 F1 license");
     expect(getConditionalAccessCategoryLicenseNote(
       ["agent-policies", "internal-user-policies"], ["e3", "e7"],
-    )).toBeUndefined();
+    )?.message).toContain("Microsoft 365 E3 license");
     const note = getConditionalAccessCategoryLicenseNote(
       ["internal-user-policies"], ["f1", "business-premium", "e3"],
     );
@@ -712,8 +713,8 @@ describe("security goal recommendations", () => {
     },
   );
 
-  it("uses E7 entitlements for mixed selections and ignores empty on-premises licensing input", () => {
-    expect(getOnPremisesAppLicenseNote(["e3", "e7"])).toBeUndefined();
+  it("keeps on-premises licensing scoped to plans without the entitlement", () => {
+    expect(getOnPremisesAppLicenseNote(["e3", "e7"])?.message).toContain("Microsoft 365 E3 license");
     expect(getOnPremisesAppLicenseNote([])).toBeUndefined();
     const note = getConditionalAccessCategoryLicenseNote([
       "global-secure-access-policies", "agent-policies", "internal-user-policies",
@@ -1068,15 +1069,41 @@ describe("security goal recommendations", () => {
     },
   );
 
-  it("uses the combined entitlement without misleading lower-license limitations", () => {
+  it("keeps endpoint upgrade guidance scoped to the matching plan", () => {
     for (const platform of ["windows-11", "macos", "ios-ipados", "android", "linux-desktop"] as const) {
-      expect(getEndpointFeatureLicenseNote("defender", ["business-premium", "e5"], platform))
-        .toBeUndefined();
+      const note = getEndpointFeatureLicenseNote(
+        "defender",
+        ["business-premium", "e5"],
+        platform,
+        { "business-premium": 25, e5: 1 },
+      );
+      expect(note).toContain("25 Microsoft 365 Business Premium licenses");
+      expect(note).toContain("1 Microsoft 365 E5 license");
+      expect(note).toContain("Full coverage is included with this plan");
       expect(getEndpointFeatureLicenseNote("intune", ["f1", "e3-defender"], platform))
-        .toBeUndefined();
+        .toContain("Microsoft 365 F1");
     }
     expect(getEndpointFeatureLicenseNote("intune", ["f1", "f3"], "windows-11"))
-      .toContain("limited endpoint protection experience");
+      .toContain("Microsoft 365 F1");
+    const dataSecurity = getDataSecurityLicenseNote(
+      ["e5", "business-premium"],
+      ["dlp"],
+      { e5: 1, "business-premium": 25 },
+    );
+    expect(dataSecurity).toContain("1 Microsoft 365 E5 license: Full Data Security coverage");
+    expect(dataSecurity).toContain("25 Microsoft 365 Business Premium licenses: Data Loss Prevention");
+    expect(getConditionalAccessCategoryLicenseNote(
+      ["internal-user-policies"],
+      ["e5", "business-premium"],
+      { e5: 1, "business-premium": 25 },
+    )?.message).toContain("1 Microsoft 365 E5 license");
+    expect(getAdministratorProtectionLicenseNote(
+      ["e5", "business-premium"],
+      "windows-11",
+      { e5: 1, "business-premium": 25 },
+    )?.message).toContain("25 Microsoft 365 Business Premium licenses");
+    expect(getOnPremisesAppLicenseNote(["e7", "business-premium"])?.message)
+      .toContain("1 Microsoft 365 E7 license");
   });
 
   it.each(licenses.filter((license) => license.eligible))(
@@ -1390,7 +1417,7 @@ describe("security goal recommendations", () => {
   it("requires only missing entitlements when FLW Purview is already selected", () => {
     expect(getDataSecurityLicenseNote(["f3-purview"])).toContain("Add Microsoft Defender Suite FLW");
     expect(getDataSecurityLicenseNote(["f3-purview"])).not.toContain("Add Microsoft Purview Suite");
-    expect(getDataSecurityLicenseNote(["e3", "e5"])).toBeUndefined();
+    expect(getDataSecurityLicenseNote(["e3", "e5"])).toContain("1 Microsoft 365 E3 license:");
     expect(getDataSecurityLicenseNote([])).toBeUndefined();
   });
 

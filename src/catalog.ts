@@ -136,6 +136,7 @@ export const platforms = [
 ] as const;
 
 export type License = (typeof licenses)[number];
+export type LicenseQuantities = Partial<Record<License["id"], number>>;
 export type Platform = (typeof platforms)[number];
 
 export function getLicenseBadgeLabel(license: License): string {
@@ -178,15 +179,29 @@ export function getManualCloudAppsControlNote(licenseIds: readonly License["id"]
 
 export function getCloudAppsConditionalAccessLicenseNote(
   licenseIds: readonly License["id"][],
+  licenseQuantities: LicenseQuantities = {},
 ): { title: string; message: string } | undefined {
   const eligibleLicenseIds = licenseIds.filter(isLicenseEligible);
-  if (
-    eligibleLicenseIds.length === 0 ||
-    eligibleLicenseIds.includes("e7") ||
-    eligibleLicenseIds.some((licenseId) => fullDefenderExperienceLicenseIds.has(licenseId))
-  ) {
-    return undefined;
+  if (eligibleLicenseIds.length === 0) return undefined;
+  if (eligibleLicenseIds.length > 1) {
+    const planNotes = eligibleLicenseIds.map((licenseId) => ({
+      licenseId,
+      note: getCloudAppsConditionalAccessLicenseNote([licenseId]),
+    }));
+    if (planNotes.every(({ note }) => note === undefined)) return undefined;
+    const selectedMix = formatSelectedLicenseMix(eligibleLicenseIds, licenseQuantities);
+    const planDetails = planNotes.map(({ licenseId, note }) => {
+      const quantity = licenseQuantities[licenseId] ?? 1;
+      const licenseName = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      return `${quantity} ${licenseName} ${quantity === 1 ? "license" : "licenses"}: ${note?.message ?? "Full Cloud apps coverage is included with this plan."}`;
+    }).join(" ");
+    return {
+      title: "Mixed Cloud apps license experience",
+      message: `Selected plan mix: ${selectedMix}. Entitlements apply only to users assigned each matching plan; the counts do not indicate whether the same users hold multiple plans. ${planDetails}`,
+    };
   }
+  if (eligibleLicenseIds.includes("e7") ||
+    eligibleLicenseIds.some((licenseId) => fullDefenderExperienceLicenseIds.has(licenseId))) return undefined;
 
   const selectedNames = formatSelectedLicenseNames(eligibleLicenseIds);
   const usesFlwAddOns = eligibleLicenseIds.every(
@@ -432,6 +447,19 @@ function formatSelectedLicenseNames(
     .join(", ");
 }
 
+export function formatSelectedLicenseMix(
+  licenseIds: readonly License["id"][],
+  quantities: LicenseQuantities,
+): string {
+  const eligible = [...new Set(licenseIds)].filter(isLicenseEligible);
+  return eligible.map((id) => {
+    const license = licenses.find((item) => item.id === id);
+    if (!license) return undefined;
+    const quantity = quantities[id] ?? 1;
+    return `${quantity} ${license.name} ${quantity === 1 ? "license" : "licenses"}`;
+  }).filter((item): item is string => item !== undefined).join("; ");
+}
+
 export function getLimitedExperienceNoteForLicenses(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
@@ -439,6 +467,7 @@ export function getLimitedExperienceNoteForLicenses(
     includeAgent365Guidance?: boolean;
     includeConditionalAccessPolicyGuidance?: boolean;
     includePimGuidance?: boolean;
+    licenseQuantities?: LicenseQuantities;
   } = {},
 ): { title: string; message: string; includePlanComparisons: boolean } | undefined {
   const includeAgent365Guidance = options.includeAgent365Guidance ?? true;
@@ -454,6 +483,29 @@ export function getLimitedExperienceNoteForLicenses(
 
   if (eligibleLicenseIds.length === 0) {
     return undefined;
+  }
+
+  if (eligibleLicenseIds.length > 1) {
+    const planNotes = eligibleLicenseIds.map((licenseId) => ({
+      licenseId,
+      note: getLimitedExperienceNoteForLicenses([licenseId], platformId, options),
+    }));
+    if (planNotes.every(({ note }) => note === undefined)) return undefined;
+    const selectedMix = formatSelectedLicenseMix(
+      eligibleLicenseIds,
+      options.licenseQuantities ?? {},
+    );
+    const planDetails = planNotes.map(({ licenseId, note }) => {
+      const quantity = options.licenseQuantities?.[licenseId] ?? 1;
+      const licenseName = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      const coverage = note?.message ?? "The selected platform experience is included with this plan.";
+      return `${quantity} ${licenseName} ${quantity === 1 ? "license" : "licenses"}: ${coverage}`;
+    }).join(" ");
+    return {
+      title: `Mixed ${getPlatform(platformId).name} license experience`,
+      includePlanComparisons: planNotes.some(({ note }) => note?.includePlanComparisons === true),
+      message: `Selected plan mix: ${selectedMix}. Entitlements apply only to users assigned each matching plan; the counts do not indicate whether the same users hold multiple plans. ${planDetails}`,
+    };
   }
 
   if (eligibleLicenseIds.includes("e7")) {
@@ -640,10 +692,22 @@ export function getWindowsServerLicenseNote(
 export function getWindowsServerLicenseNotes(
   licenseIds: readonly License["id"][],
   platformId?: "windows-servers" | "linux-server",
+  licenseQuantities: LicenseQuantities = {},
 ): string[] {
   const applicableLicenseIds = platformId === "windows-servers"
     ? licenseIds.filter((licenseId) => windowsServerLicenseIds.has(licenseId))
     : licenseIds;
+  if (applicableLicenseIds.length > 1) {
+    const details = applicableLicenseIds.map((licenseId) => {
+      const quantity = licenseQuantities[licenseId] ?? 1;
+      const licenseName = licenses.find((license) => license.id === licenseId)?.name ?? licenseId;
+      const notes = getWindowsServerLicenseNotes([licenseId], platformId);
+      return `${quantity} ${licenseName} ${quantity === 1 ? "license" : "licenses"}: ${notes.join(" ") || "No additional Windows Server licensing note for this plan."}`;
+    });
+    return [
+      `Selected plan mix: ${formatSelectedLicenseMix(applicableLicenseIds, licenseQuantities)}. Server requirements apply to the users or devices covered by each matching plan. ${details.join(" ")}`,
+    ];
+  }
   if (
     platformId === "windows-servers" &&
     applicableLicenseIds.length > 0 &&
@@ -671,12 +735,13 @@ export function getWindowsServerLicenseNotes(
 export function getPlatformExperienceForLicenses(
   licenseIds: readonly License["id"][],
   platformId: Platform["id"],
+  options: { licenseQuantities?: LicenseQuantities } = {},
 ): "full" | "limited" {
   const hasLimitedExperienceNote =
-    getLimitedExperienceNoteForLicenses(licenseIds, platformId) !== undefined;
+    getLimitedExperienceNoteForLicenses(licenseIds, platformId, options) !== undefined;
   const needsServerLicense =
     (platformId === "windows-servers" || platformId === "linux-server") &&
-    getWindowsServerLicenseNotes(licenseIds, platformId).length > 0;
+    getWindowsServerLicenseNotes(licenseIds, platformId, options.licenseQuantities).length > 0;
 
   return hasLimitedExperienceNote || needsServerLicense ? "limited" : "full";
 }
