@@ -22,9 +22,9 @@ Home returns to license selection in the current language; View all policies
 opens the repository catalog. Report problem opens GitHub's issue chooser in
 the current tab and requires a GitHub sign-in.
 Localized disclaimer links open Microsoft's corresponding German, French, or
-Spanish plan comparison pages. Verified Russian and Italian comparison
-destinations are not available, so those locales link directly to the existing
-English PDFs and label them as English. Detailed PDFs for other non-English
+Spanish plan comparison pages. Russian comparison links use Microsoft's Russian
+Enterprise and business pricing pages with `market=kz`. Italian links directly to
+the existing English PDFs and labels them as English. Detailed PDFs for other non-English
 locales are also explicitly labeled as English references.
 Polish comparison links use Microsoft's localized Enterprise and business plan
 comparison pages; the linked detailed PDFs remain clearly labeled as English.

@@ -9,7 +9,15 @@ const smbPlanComparisonUrl =
   "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/bade/documents/products-and-services/en-us/education/Modern-Work-Plan-Comparison-SMB.pdf";
 
 export function getPlanComparisonLinks(locale: Locale) {
-  if (locale === "ru" || locale === "it") {
+  if (locale === "ru") {
+    return {
+      enterprise: "https://www.microsoft.com/ru-ru/microsoft-365/enterprise/microsoft-365-plans-and-pricing?market=kz",
+      smb: "https://www.microsoft.com/ru-ru/microsoft-365/business/microsoft-365-plans-and-pricing?market=kz",
+      enterprisePdf: enterprisePlanComparisonUrl,
+      smbPdf: smbPlanComparisonUrl,
+    };
+  }
+  if (locale === "it") {
     return {
       enterprise: enterprisePlanComparisonUrl,
       smb: smbPlanComparisonUrl,
@@ -46,8 +54,8 @@ export function LicensingDisclaimer() {
       <p className="licensing-comparison-links">
         {translate(locale, "Enterprise licenses:")}{translate(locale, " ")}
         <a href={links.enterprise} target="_blank" rel="noopener noreferrer">
-          {translate(locale, locale === "ru" || locale === "it" ? "Detailed comparison PDF (English)" : "Microsoft Enterprise Plan Comparison")}</a>
-        {locale !== "en" && locale !== "ru" && locale !== "it" && (
+          {translate(locale, locale === "it" ? "Detailed comparison PDF (English)" : "Microsoft Enterprise Plan Comparison")}</a>
+        {locale !== "en" && locale !== "it" && (
           <>{" · "}<a href={links.enterprisePdf} target="_blank" rel="noopener noreferrer">
             {translate(locale, "Detailed comparison PDF (English)")}
           </a></>
@@ -55,8 +63,8 @@ export function LicensingDisclaimer() {
         <br />
         {translate(locale, "SMB licenses:")}{translate(locale, " ")}
         <a href={links.smb} target="_blank" rel="noopener noreferrer">
-          {translate(locale, locale === "ru" || locale === "it" ? "Detailed comparison PDF (English)" : "Microsoft SMB Plan Comparison")}</a>
-        {locale !== "en" && locale !== "ru" && locale !== "it" && (
+          {translate(locale, locale === "it" ? "Detailed comparison PDF (English)" : "Microsoft SMB Plan Comparison")}</a>
+        {locale !== "en" && locale !== "it" && (
           <>{" · "}<a href={links.smbPdf} target="_blank" rel="noopener noreferrer">
             {translate(locale, "Detailed comparison PDF (English)")}
           </a></>

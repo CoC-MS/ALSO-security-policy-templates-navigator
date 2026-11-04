@@ -15,17 +15,28 @@ describe("universal recommendation licensing disclaimer", () => {
     expect(links.enterprisePdf).toContain("/en-us/");
     expect(links.smbPdf).toContain("/en-us/");
   });
-  it.each(["ru", "it"] as const)("uses an explicitly English PDF fallback for %s", (locale) => {
+  it.each(["it"] as const)("uses an explicitly English PDF fallback for %s", (locale) => {
     const links = getPlanComparisonLinks(locale);
     expect(links.enterprise).toBe(links.enterprisePdf);
     expect(links.smb).toBe(links.smbPdf);
     expect(links.enterprise).toContain("/en-us/");
     expect(links.smb).toContain("/en-us/");
     const html = renderToStaticMarkup(<LocaleProvider initialLocale={locale}><LicensingDisclaimer /></LocaleProvider>);
-    const englishPdfLabel = locale === "ru"
-      ? "Подробное сравнение в PDF (на английском языке)"
-      : "Confronto dettagliato in PDF (in inglese)";
+    const englishPdfLabel = "Confronto dettagliato in PDF (in inglese)";
     expect(html.split(englishPdfLabel)).toHaveLength(3);
+  });
+  it("uses the supplied Russian pricing pages with the Kazakhstan market on every shared disclaimer", () => {
+    const links = getPlanComparisonLinks("ru");
+    expect(links.enterprise).toBe("https://www.microsoft.com/ru-ru/microsoft-365/enterprise/microsoft-365-plans-and-pricing?market=kz");
+    expect(links.smb).toBe("https://www.microsoft.com/ru-ru/microsoft-365/business/microsoft-365-plans-and-pricing?market=kz");
+    const html = renderToStaticMarkup(
+      <LocaleProvider initialLocale="ru"><LicensingDisclaimer /></LocaleProvider>,
+    );
+    expect(html).toContain(`href="${links.enterprise}" target="_blank" rel="noopener noreferrer">Microsoft 365 корпоративный: сравните планы и цены</a>`);
+    expect(html).toContain(`href="${links.smb}" target="_blank" rel="noopener noreferrer">Цены Microsoft 365 для бизнеса: планы и функции</a>`);
+    expect(html.split("Подробное сравнение в PDF (на английском языке)")).toHaveLength(3);
+    expect(html).toContain(`href="${links.enterprisePdf}"`);
+    expect(html).toContain(`href="${links.smbPdf}"`);
   });
   it("uses verified Polish comparison pages and labels the fallback PDFs as English", () => {
     const links = getPlanComparisonLinks("pl");
