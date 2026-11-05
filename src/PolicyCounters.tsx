@@ -110,7 +110,7 @@ export function PolicyCounters({
       <dl className="policy-count-grid">
         <div className="policy-count-card policy-count-featured">
           <dt>
-            <span className="policy-count-icon" aria-hidden="true">ALL</span>
+            <span className="policy-count-icon" aria-hidden="true">{translate(locale, "ALL")}</span>
             <span>{translate(locale, "Total")}</span>
           </dt>
           <dd>

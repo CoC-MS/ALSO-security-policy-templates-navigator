@@ -452,6 +452,9 @@ h1 {
 }
 
 .policy-count-featured .policy-count-icon {
+  width: auto;
+  min-width: 2rem;
+  padding-inline: 0.3rem;
   background: rgb(255 255 255 / 15%);
   color: #fff;
 }

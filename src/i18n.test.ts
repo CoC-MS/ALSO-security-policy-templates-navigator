@@ -223,7 +223,7 @@ describe("localized routes", () => {
       es: ["Acceso condicional", "Directivas de cumplimiento de dispositivos"],
       it: ["Accesso condizionale", "Criteri di conformità dei dispositivi"],
       ru: ["Условный доступ", "Политики соответствия устройств требованиям"],
-      pl: ["Dostęp warunkowy", "Zasady zgodności urządzeń"],
+      pl: ["Dostęp warunkowy", "Polityki zgodności urządzeń końcowych"],
     };
     for (const [locale, [conditionalAccess, deviceCompliance]] of Object.entries(expected) as
       [Exclude<Locale, "en">, [string, string]][]) {
@@ -241,8 +241,15 @@ describe("localized routes", () => {
 
   it("uses Polish Microsoft terminology and accurate license-count forms", () => {
     expect(translate("pl", "Conditional Access")).toBe("Dostęp warunkowy");
-    expect(translate("pl", "Conditional Access policies")).toBe("Zasady dostępu warunkowego");
-    expect(translate("pl", "Endpoint compliance policies")).toBe("Zasady zgodności urządzeń");
+    expect(translate("pl", "Conditional Access policies")).toBe("Polityki dostępu warunkowego");
+    expect(translate("pl", "Endpoint compliance policies")).toBe("Polityki zgodności urządzeń końcowych");
+    expect(translate("pl", "Endpoint protection")).toBe("Ochrona urządzeń końcowych");
+    expect(translate("pl", "Copilot Readiness")).toBe("Gotowość do wdrożenia rozwiązania Copilot");
+    expect(translate("pl", "Explore Copilot Readiness")).toBe("Poznaj zagadnienia związane z gotowością do wdrożenia rozwiązania Copilot");
+    expect(translate("pl", "The selected Microsoft 365 F3 base licensing provides limited endpoint protection experience."))
+      .toBe("Wybrana licencja podstawowa Microsoft 365 F3 zapewnia ograniczony zakres funkcji ochrony urządzeń końcowych.");
+    expect(translate("pl", "add Microsoft 365 E5 for full Copilot Readiness experience."))
+      .toBe("dodaj Microsoft 365 E5, aby uzyskać pełny zakres funkcji związanych z gotowością do wdrożenia rozwiązania Copilot.");
     expect(translate("pl", "Scripts")).toBe("Skrypty");
     expect(translate("pl", "Remediation Scripts")).toBe("Skrypty korygujące");
     expect(translate("pl", "Settings catalog")).toBe("Katalog ustawień");

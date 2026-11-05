@@ -91,15 +91,17 @@ describe("policy counter dashboard", () => {
       <PolicyCounters metadata={metadata} status="ready" locale="pl" />,
     );
     for (const label of [
-      "Zasady dostępu warunkowego",
-      "Zasady dotyczące punktów końcowych",
-      "Zasady zgodności urządzeń",
+      "Polityki dostępu warunkowego",
+      "Polityki urządzeń końcowych",
+      "Polityki zgodności urządzeń końcowych",
       "Skrypty",
       "Ustawienia filtrów",
       "Aplikacje",
-      "Zasady Purview",
-      "Łącznie",
+      "Polityki Microsoft Purview",
+      "Wszystko",
     ]) expect(html).toContain(label);
+    expect(html).toContain("Bezpłatne szablony polityk zabezpieczeń Microsoft, które pozwalają skrócić wielogodzinne prace badawcze, konfigurację i testowanie do zaledwie kilku minut.");
+    expect(html).toContain("Wybierz szablony, zaimportuj je do swojego środowiska testowego, przetestuj i dostosuj do własnych potrzeb. Stwórz bazowy zestaw konfiguracji zabezpieczeń, który najlepiej odpowiada potrzebom Twoich klientów.");
     expect(html).toContain("12 paź 2026");
     expect(formatSyncTime("2026-10-12T11:20:40Z", "pl")).toContain("12 paź 2026");
     expect(html).not.toContain('aria-label="Count unavailable"');
