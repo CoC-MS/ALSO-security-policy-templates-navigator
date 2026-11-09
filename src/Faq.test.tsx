@@ -17,6 +17,15 @@ describe("FAQ page", () => {
     expect(html).toContain("À quel type de clients policy templates sont-ils destinés ?");
   });
 
+  it("applies the reviewed French SMB, Graph API, and template-maintainer wording", () => {
+    const html = renderToStaticMarkup(<Faq locale="fr" />);
+    expect(html).toContain('SMB (« Small and Medium Business »), SMC (« Small and Medium Corporate ») et SME (« Small and Medium Enterprise »)');
+    expect(html).toContain("solutions d’administration et d’automatisation Microsoft utilisant l’API Microsoft Graph");
+    expect(html).toContain("Les modèles de stratégies de sécurité sont élaborés et mis à jour par l’équipe technique centrale chargée de la sécurité Microsoft chez ALSO.");
+    expect(html).toContain("Le référentiel regroupe à la fois des travaux originaux réalisés par les spécialistes en sécurité d’ALSO");
+    expect(html).toContain("sous des licences permissives telles que la licence MIT, le cas échéant.");
+  });
+
   it.each([
     ["ru", "Для чего предназначен сайт ALSO Security Policy Templates Navigator?"],
     ["it", "Qual è lo scopo del sito ALSO Security Policy Templates Navigator?"],

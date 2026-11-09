@@ -232,6 +232,22 @@ describe("localized routes", () => {
     }
   });
 
+  it("uses the supplied French Navigator terminology corrections", () => {
+    expect(translate("fr", "Endpoint policies")).toBe("Stratégies d’appareils mobiles");
+    expect(translate("fr", "Filter settings")).toBe("Paramètres de filtrage");
+    expect(translate("fr", "Need implementation help or consulting?"))
+      .toBe("Besoin d’accompagnement ou de conseils pour la mise en œuvre");
+    expect(translate("fr", "Data Security")).toBe("Sécurité des données avec Microsoft Purview");
+    expect(translate("fr", "Choose Data Security categories"))
+      .toBe("Choisir les catégories de sécurité des données avec Microsoft Purview");
+    expect(translate("fr", "Explore the Conditional Access repository for upcoming on-premises app protection."))
+      .toContain("catalogue de stratégies d’accès conditionnel");
+    expect(translate("fr", "A collection of Microsoft Security MacOS policy to help organizations automate onboarding/offboarding of Macbook's to/from Defender with Intune, accelerate secure deployments and implement Microsoft Security best practices with Zero trust principles."))
+      .toContain("leur retrait de Defender à l’aide d’Intune");
+    expect(translate("fr", "Collection of Microsoft Security policy templates for iOS and iPadOS devices, covering both BYOD (Bring Your Own Devices) and corporate-managed devices."))
+      .toMatch(/^Catalogue/);
+  });
+
   it("uses Microsoft Learn ASR and Intune remediation terminology", () => {
     expect(translate("de", "Attack Surface Reduction (ASR)")).toBe("Reduzierung der Angriffsfläche (ASR)");
     expect(translate("ru", "Attack Surface Reduction (ASR)")).toBe("Уменьшение поверхности атаки (ASR)");
