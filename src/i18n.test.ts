@@ -206,6 +206,10 @@ describe("localized routes", () => {
     expect(translate("pl", source)).toBe("Jakie problemy związane z bezpieczeństwem chcesz rozwiązać?");
   });
 
+  it("keeps the Spanish Microsoft Enterprise license label in English", () => {
+    expect(translate("es", "Enterprise")).toBe("Enterprise");
+  });
+
   it("uses the requested Russian terms for Conditional Access and scripts", () => {
     expect(translate("ru", "Conditional Access")).toBe("Условный доступ");
     expect(translate("ru", "Conditional Access policies")).toBe("Политики условного доступа");

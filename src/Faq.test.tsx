@@ -17,6 +17,12 @@ describe("FAQ page", () => {
     expect(html).toContain("À quel type de clients policy templates sont-ils destinés ?");
   });
 
+  it("uses pymes for Spanish SMB wording", () => {
+    const html = renderToStaticMarkup(<Faq locale="es" />);
+    expect(html).toContain("pequeñas y medianas empresas (pymes)");
+    expect(html).not.toContain("SMB, SMC y SME");
+  });
+
   it("applies the reviewed French SMB, Graph API, and template-maintainer wording", () => {
     const html = renderToStaticMarkup(<Faq locale="fr" />);
     expect(html).toContain('SMB (« Small and Medium Business »), SMC (« Small and Medium Corporate ») et SME (« Small and Medium Enterprise »)');

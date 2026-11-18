@@ -1573,7 +1573,7 @@ function App() {
                             <p>
                               {translate(locale, "Microsoft Entra Workload ID Premium is required to unlock the full OAuth apps experience for users assigned these plans:")}{" "}{translate(locale, formatSelectedLicenseMix(oauthAppsPlansNeedingWorkloadId, licenseQuantities))}.{" "}
                               <a
-                                href="https://learn.microsoft.com/en-gb/entra/workload-id/workload-identities-faqs?WT.mc_id=Portal-Microsoft_Azure_Support#how-many-licenses-do-i-need-to-purchase-do-i-need-to-license-all-workload-identities-including-microsoft-and-managed-service-identities"
+                                href="https://learn.microsoft.com/entra/workload-id/workload-identities-faqs"
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
