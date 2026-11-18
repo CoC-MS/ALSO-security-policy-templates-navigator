@@ -128,10 +128,18 @@ export const platforms = [
   },
   {
     id: "azure-security",
-    name: "Azure Security",
+    name: "Azure security deployment best practices",
     shortLabel: "AZ",
+    repositoryLabel: "Azure Security",
     repository: "https://github.com/CoC-MS/ALSO-Microsoft-Security-Azure-Security",
     description: "Azure Security guidance for identity, networks, governance, and threat protection.",
+    comingSoon: true,
+  },
+  {
+    id: "automated-discovery-deployment",
+    name: "Automated Discovery and Deployment",
+    shortLabel: "ADD",
+    description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies",
     comingSoon: true,
   },
   {
@@ -236,6 +244,8 @@ export function getPlatform(platformId: Platform["id"]): Platform {
 export function getPlatformRepositories(
   platform: Platform,
 ): Array<{ name: string; url: string; description: string }> {
+  if (!("repository" in platform)) return [];
+
   const repositories = [
     {
       name: "repositoryLabel" in platform

@@ -194,18 +194,22 @@ describe("repository routing", () => {
     ["azure-security", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Azure-Security"],
     ["purview", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview"],
   ] as const)("routes %s correctly", (platformId, repository) => {
-    expect(getPlatform(platformId).repository).toBe(repository);
+    const platform = getPlatform(platformId);
+    expect("repository" in platform && platform.repository).toBe(repository);
   });
 
-  it("includes Agent Security and coming-soon AI Security macOS and Azure Security", () => {
+  it("includes Agent Security and coming-soon AI Security macOS, Azure, and discovery entries", () => {
     expect(platforms.map((platform) => platform.id)).toContain("agent-security");
-    expect(platforms).toHaveLength(13);
+    expect(platforms).toHaveLength(14);
     const macAiSecurity = getPlatform("ai-security-macos");
     expect("comingSoon" in macAiSecurity && macAiSecurity.comingSoon).toBe(true);
     expect(getPlatformRepositories(macAiSecurity)[0].name).toBe("AI Security macOS");
     const azureSecurity = getPlatform("azure-security");
     expect("comingSoon" in azureSecurity && azureSecurity.comingSoon).toBe(true);
     expect(getPlatformRepositories(azureSecurity)[0].name).toBe("Azure Security");
+    const discovery = getPlatform("automated-discovery-deployment");
+    expect("comingSoon" in discovery && discovery.comingSoon).toBe(true);
+    expect(getPlatformRepositories(discovery)).toEqual([]);
     expect(getPlatformRepositories(getPlatform("macos"))[0].name).toBe("macOS");
   });
 
@@ -535,7 +539,7 @@ describe("Business Premium-only results", () => {
 
 describe("full-capability suite tier", () => {
   const platformsWithLicenseMappings = platforms.filter(
-    (platform) => platform.id !== "azure-security",
+    (platform) => !["azure-security", "automated-discovery-deployment"].includes(platform.id),
   );
   const fullSuiteLicenseIds = [
     "business-premium-defender-purview",

@@ -408,7 +408,7 @@ export const securityGoals = [
   },
   {
     id: "azure-security",
-    name: "Azure Security",
+    name: "Azure security deployment best practices",
     description: "Azure Security policy templates are being prepared.",
     prompt: "Explore Azure Security policies.",
     options: [],
@@ -417,7 +417,7 @@ export const securityGoals = [
   {
     id: "automated-discovery-deployment",
     name: "Automated Discovery and Deployment",
-    description: "Automated discovery and deployment of Microsoft security policies are being prepared.",
+    description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies",
     prompt: "Explore Automated Discovery and Deployment.",
     options: [],
     comingSoon: true,

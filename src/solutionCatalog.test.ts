@@ -388,7 +388,7 @@ describe("security goal recommendations", () => {
     expect(securityGoalNavigation.map((goal) => goal.name)).toEqual([
       "Attack prevention", "Identity and Access", "Endpoint protection",
       "AI and Agent Security", "Data Security", "App protection",
-      "Azure Security", "Automated Discovery and Deployment",
+      "Azure security deployment best practices", "Automated Discovery and Deployment",
       "Security fundamentals", "Copilot Readiness",
     ]);
     expect(identityAndAccessGoalIds).toEqual(["conditional-access", "administrator-protection"]);
@@ -613,7 +613,7 @@ describe("security goal recommendations", () => {
       "AI and Agent Security",
       "Data Security",
       "App protection",
-      "Azure Security",
+      "Azure security deployment best practices",
       "Automated Discovery and Deployment",
       "Security fundamentals",
       "Copilot Readiness",

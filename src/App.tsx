@@ -856,12 +856,17 @@ function App() {
                         comingSoon={comingSoon}
                         showTopicsWhenComingSoon={platform.id === "azure-security"}
                       />
+                      {repositories.length === 0 && (
+                        <p>{translate(locale, platform.description)}</p>
+                      )}
                       <div className="repository-links">
                         {comingSoon ? (
                           <button className="button primary repository-link" type="button" disabled>
                             {translate(locale, platform.id === "azure-security"
                               ? "Azure Security repository coming soon"
-                              : "AI Security macOS repository coming soon")}</button>
+                              : platform.id === "automated-discovery-deployment"
+                                ? "Automated Discovery and Deployment coming soon"
+                                : "AI Security macOS repository coming soon")}</button>
                         ) : repositories.map((repository) => (
                             <a
                               className="button primary repository-link"

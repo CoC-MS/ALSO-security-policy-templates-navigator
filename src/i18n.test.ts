@@ -57,6 +57,7 @@ describe("reviewed German wording", () => {
       }
     }
     sources.add("Azure Security repository coming soon");
+    sources.add("Automated Discovery and Deployment coming soon");
     for (const source of sources) {
       expect(translate("de", source), source)
         .not.toMatch(/bedingte[nrsm]?(?:n)? Zugriff|Sicherheitsvorlagen|App-Typen|\bAI(?: Security|-Security| environments| agents)/i);
