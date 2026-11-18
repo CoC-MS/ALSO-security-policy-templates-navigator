@@ -142,7 +142,7 @@ export const platforms = [
     name: "Automated Discovery and Deployment",
     shortLabel: "ADD",
     siteUrl: secureByDefaultUrl,
-    description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies",
+    description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security baseline policies",
   },
   {
     id: "purview",

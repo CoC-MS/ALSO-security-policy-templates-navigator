@@ -59,7 +59,7 @@ const translations: Record<string, string> = {
   "Automated Discovery and Deployment coming soon": "Zautomatyzowane wykrywanie i wdrażanie już wkrótce",
   "Automated Discovery and Deployment": "Zautomatyzowane wykrywanie i wdrażanie",
   "full Automated Discovery and Deployment experience is covered for this plan.": "ten plan obejmuje pełny zakres zautomatyzowanego wykrywania i wdrażania.",
-  "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies": "Zautomatyzowane wykrywanie i wdrażanie ustawień dla całej dzierżawy, kont awaryjnych i zasad zabezpieczeń ALSO",
+  "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security baseline policies": "Zautomatyzowane wykrywanie i wdrażanie ustawień dla całej dzierżawy, kont awaryjnych i zasad bazowej konfiguracji zabezpieczeń ALSO",
   "Explore Automated Discovery and Deployment.": "Poznaj zautomatyzowane wykrywanie i wdrażanie.",
   "Explore attack-prevention scenarios and mapped security policies.": "Poznaj scenariusze ataków i powiązane z nimi zasady zabezpieczeń.",
   "Explore Microsoft Security fundamentals and Copilot readiness guidance.": "Poznaj podstawy Microsoft Security i wskazówki dotyczące gotowości do wdrożenia rozwiązania Copilot.",

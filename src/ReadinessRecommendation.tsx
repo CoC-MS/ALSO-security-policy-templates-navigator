@@ -129,7 +129,7 @@ export function ReadinessRecommendation({
           </span>
         </div>
         <p>{translate(locale, goalId === "automated-discovery-deployment"
-          ? "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies"
+          ? "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security baseline policies"
           : "Explore ALSO Microsoft Security Fundamentals and Copilot Readiness guidance.")}</p>
         {guidance.message && (
           <aside className="license-requirement-note">

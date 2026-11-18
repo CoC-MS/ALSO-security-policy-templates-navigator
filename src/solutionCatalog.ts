@@ -417,7 +417,7 @@ export const securityGoals = [
   {
     id: "automated-discovery-deployment",
     name: "Automated Discovery and Deployment",
-    description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies",
+    description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security baseline policies",
     prompt: "Explore Automated Discovery and Deployment.",
     options: [],
   },
