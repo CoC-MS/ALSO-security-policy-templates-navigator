@@ -925,15 +925,6 @@ function App() {
                                 name: translate(locale, site.name),
                               })}<ArrowIcon />
                             </a>
-                            <a
-                              className="button secondary repository-link"
-                              href={site.repositoryUrl}
-                              target="_blank"
-                              rel="noopener"
-                              referrerPolicy="strict-origin-when-cross-origin"
-                            >
-                              {translate(locale, "Open GitHub repository")}
-                            </a>
                           </div>
                         </article>
                       );

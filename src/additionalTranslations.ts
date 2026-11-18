@@ -28,7 +28,6 @@ const rows: readonly TranslatedRow[] = [
   ["Explore attack-prevention scenarios and mapped security policies.", "Entdecken Sie Angriffsszenarien und zugeordnete Sicherheitsrichtlinien.", "Découvrez les scénarios d’attaque et les stratégies de sécurité associées.", "Explore escenarios de ataque y directivas de seguridad asociadas."],
   ["Explore Microsoft Security fundamentals and Copilot readiness guidance.", "Entdecken Sie Microsoft-Sicherheitsgrundlagen und Empfehlungen zur Copilot-Bereitschaft.", "Découvrez les fondamentaux de Microsoft Security et les recommandations pour préparer Copilot.", "Explore los fundamentos de Microsoft Security y las recomendaciones de preparación para Copilot."],
   ["Open {name} site", "Website {name} öffnen", "Ouvrir le site {name}", "Abrir el sitio {name}"],
-  ["Open GitHub repository", "GitHub-Repository öffnen", "Ouvrir le dépôt GitHub", "Abrir el repositorio de GitHub"],
   ["Report a problem on GitHub (sign-in required)", "Problem auf GitHub melden (Anmeldung erforderlich)", "Signaler un problème sur GitHub (connexion requise)", "Informar de un problema en GitHub (se requiere iniciar sesión)"],
   ["ALSO Microsoft Security Policy Templates Navigator home", "ALSO Microsoft Security Policy Templates Navigator – Startseite", "ALSO Microsoft Security Policy Templates Navigator – Accueil", "ALSO Microsoft Security Policy Templates Navigator – Inicio"],
   ["Attack prevention", "Angriffsprävention", "Prévention des attaques", "Prevención de ataques"],

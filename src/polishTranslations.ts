@@ -63,7 +63,6 @@ const translations: Record<string, string> = {
   "Explore attack-prevention scenarios and mapped security policies.": "Poznaj scenariusze ataków i powiązane z nimi zasady zabezpieczeń.",
   "Explore Microsoft Security fundamentals and Copilot readiness guidance.": "Poznaj podstawy Microsoft Security i wskazówki dotyczące gotowości do wdrożenia rozwiązania Copilot.",
   "Open {name} site": "Otwórz witrynę {name}",
-  "Open GitHub repository": "Otwórz repozytorium GitHub",
   "Coming": "Wkrótce",
   "AI Security macOS repository coming soon": "Repozytorium AI Security dla systemu macOS będzie dostępne wkrótce",
   "AI Security macOS templates coming soon": "Szablony AI Security dla systemu macOS będą dostępne wkrótce",
