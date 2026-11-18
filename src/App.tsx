@@ -864,9 +864,12 @@ function App() {
                           <button className="button primary repository-link" type="button" disabled>
                             {translate(locale, platform.id === "azure-security"
                               ? "Azure Security repository coming soon"
-                              : platform.id === "automated-discovery-deployment"
-                                ? "Automated Discovery and Deployment coming soon"
-                                : "AI Security macOS repository coming soon")}</button>
+                              : "AI Security macOS repository coming soon")}</button>
+                        ) : "siteUrl" in platform ? (
+                          <a className="button primary repository-link" href={platform.siteUrl}
+                            target="_blank" rel="noopener noreferrer">
+                            {translateFormat(locale, "Open {name} site", { name: translate(locale, platform.name) })}<ArrowIcon />
+                          </a>
                         ) : repositories.map((repository) => (
                             <a
                               className="button primary repository-link"
@@ -1328,6 +1331,9 @@ function App() {
                   )}
                   {selectedGoalIds.includes("copilot-readiness") && (
                     <ReadinessRecommendation goalId="copilot-readiness" licenseIds={eligibleLicenseIds} licenseQuantities={licenseQuantities} />
+                  )}
+                  {selectedGoalIds.includes("automated-discovery-deployment") && (
+                    <ReadinessRecommendation goalId="automated-discovery-deployment" licenseIds={eligibleLicenseIds} licenseQuantities={licenseQuantities} />
                   )}
                   {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;

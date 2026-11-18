@@ -23,7 +23,7 @@ describe("repository link referrals", () => {
   it("keeps referral suppression on unrelated App links", () => {
     const links = (appSource.match(/<a\b[^>]*>/g) ?? [])
       .filter((link) => link.includes('target="_blank"') && !link.includes("referrerPolicy="));
-    expect(links).toHaveLength(6);
+    expect(links).toHaveLength(7);
     for (const link of links) {
       expect(link).toContain('rel="noopener noreferrer"');
     }

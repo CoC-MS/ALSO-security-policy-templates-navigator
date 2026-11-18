@@ -128,7 +128,7 @@ describe("localized routes", () => {
     });
 
     it.each(["de", "fr", "es", "ru", "it", "pl"] as const)("preserves mixed-plan counts and translates readiness guidance in %s", locale => {
-      for (const goalId of ["security-fundamentals", "copilot-readiness"] as const) {
+      for (const goalId of ["security-fundamentals", "copilot-readiness", "automated-discovery-deployment"] as const) {
         const guidance = getReadinessGuidance(goalId, ["e5", "business-premium"], { e5: 1, "business-premium": 100 })!;
         const translated = translate(locale, guidance.message);
         expect(translated).toContain("1");
@@ -174,7 +174,7 @@ describe("localized routes", () => {
         for (const note of [getCloudAppsConditionalAccessLicenseNote(ids), getOnPremisesAppLicenseNote(ids)]) {
           if (note) messages.add(note.message);
         }
-        for (const goalId of ["security-fundamentals", "copilot-readiness"] as const) {
+        for (const goalId of ["security-fundamentals", "copilot-readiness", "automated-discovery-deployment"] as const) {
           const note = getReadinessGuidance(goalId, ids);
           if (note?.message) messages.add(note.message);
         }

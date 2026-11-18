@@ -420,7 +420,6 @@ export const securityGoals = [
     description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies",
     prompt: "Explore Automated Discovery and Deployment.",
     options: [],
-    comingSoon: true,
   },
   {
     id: "security-fundamentals",

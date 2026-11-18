@@ -1,10 +1,47 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { licenses } from "./catalog";
+import { secureByDefaultUrl } from "./relatedSites";
+import { translate } from "./i18n";
 import { securityGoalNavigation } from "./solutionCatalog";
 import { getReadinessGuidance, ReadinessRecommendation, readinessUrl } from "./ReadinessRecommendation";
 
 describe("fundamentals and Copilot Readiness", () => {
+  it.each(licenses)("applies readiness entitlements without SharePoint reporting for automation: $id", ({ id, eligible }) => {
+    const guidance = getReadinessGuidance("automated-discovery-deployment", [id]);
+    if (!eligible) {
+      expect(guidance).toBeUndefined();
+      return;
+    }
+    const full = id === "e5" || id === "e7" || id.includes("defender-purview");
+    expect(guidance?.experience).toBe(full ? "full" : "limited");
+    expect(guidance?.message).not.toMatch(/SharePoint|OneDrive|Copilot Readiness/);
+    if (!full) {
+      expect(guidance?.message).toContain("for full Automated Discovery and Deployment experience.");
+      expect(guidance?.message.includes("add Microsoft Defender")).toBe(!id.includes("defender"));
+      expect(guidance?.message.includes("Microsoft Purview Suite")).toBe(!id.includes("purview"));
+    }
+  });
+
+  it("renders the live automation link and scopes mixed-plan guidance to assigned users", () => {
+    const guidance = getReadinessGuidance("automated-discovery-deployment", ["e5", "business-premium"], { e5: 1, "business-premium": 25 })!;
+    expect(guidance.experience).toBe("limited");
+    expect(guidance.message).toContain("1 Microsoft 365 E5 license: full Automated Discovery and Deployment experience is covered");
+    expect(guidance.message).toContain("25 Microsoft 365 Business Premium licenses: add Microsoft Defender Suite for Business Premium and Microsoft Purview Suite for Business Premium");
+    expect(guidance.message).not.toMatch(/SharePoint|OneDrive/);
+    for (const locale of ["de", "fr", "es", "ru", "it", "pl"] as const) {
+      const localized = translate(locale, guidance.message);
+      expect(localized).not.toContain("full Automated Discovery and Deployment experience");
+      expect(localized).not.toContain("Coverage applies only");
+      expect(localized).toContain("25");
+    }
+    const html = renderToStaticMarkup(
+      <ReadinessRecommendation goalId="automated-discovery-deployment" licenseIds={["e5"]} />,
+    );
+    expect(html).toContain(`href="${secureByDefaultUrl}"`);
+    expect(html).toContain('class="experience-badge full"');
+    expect(html).not.toMatch(/SharePoint Advanced Management|coming-soon-badge/);
+  });
   it.each(licenses)("matches both experiences and missing entitlements for $name", ({ id, name, eligible }) => {
     const fundamentals = getReadinessGuidance("security-fundamentals", [id]);
     const copilot = getReadinessGuidance("copilot-readiness", [id]);

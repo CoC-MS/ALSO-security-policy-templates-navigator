@@ -374,7 +374,6 @@ describe("security goal recommendations", () => {
       "comingSoon" in goal && goal.comingSoon,
     ).map((goal) => goal.id)).toEqual([
       "azure-security",
-      "automated-discovery-deployment",
     ]);
     expect(securityGoalNavigation[0].repositoryUrl).toBe(
       "https://github.com/CoC-MS/CoC-MS-ALSO-Microsoft-Security-AttackPrevention",

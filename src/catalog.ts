@@ -1,3 +1,5 @@
+import { secureByDefaultUrl } from "./relatedSites";
+
 export const licenses = [
   { id: "e7", name: "Microsoft 365 E7", eligible: true },
   { id: "e5", name: "Microsoft 365 E5", eligible: true },
@@ -139,8 +141,8 @@ export const platforms = [
     id: "automated-discovery-deployment",
     name: "Automated Discovery and Deployment",
     shortLabel: "ADD",
+    siteUrl: secureByDefaultUrl,
     description: "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies",
-    comingSoon: true,
   },
   {
     id: "purview",

@@ -1,5 +1,7 @@
 import type { Locale } from "./i18n";
 
+export const secureByDefaultUrl = "https://coc-ms.github.io/ALSO-Microsoft-Security-SecureByDefault/";
+
 export const relatedSites = {
   attackPrevention: {
     url: "https://coc-ms.github.io/CoC-MS-ALSO-Microsoft-Security-AttackPrevention/",

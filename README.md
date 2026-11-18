@@ -38,6 +38,8 @@ original URL.
 
 ## Security fundamentals and Copilot Readiness
 
+Automated Discovery and Deployment links to [ALSO Secure by Default](https://coc-ms.github.io/ALSO-Microsoft-Security-SecureByDefault/) from both the policy overview and security-goal results. It follows Copilot Readiness's per-plan Defender/Purview guidance without SharePoint Advanced Management or reporting requirements: E5, E7, and combined Defender/Purview plans have Full experience; other eligible plans receive missing-suite guidance. Mixed selections retain per-plan quantities and do not pool entitlements across users. All seven Navigator locales share this behavior.
+
 Both sections link to the [ALSO Security Fundamentals and Copilot Readiness site](https://coc-ms.github.io/ALSO-Microsoft-Security-Fundamentals-and-Copilot-Readiness/) and use the standard experience badges, licensing disclaimer, and Enterprise/SMB comparison sheets. Both goals and Attack prevention carry New badges.
 
 Security fundamentals is Full for E5, E7, or combined Defender and Purview Suite entitlements. Copilot Readiness is Limited for all eligible selections: all need SharePoint Advanced Management, with missing Defender or Purview Suites recommended as applicable. Add-on names follow the selected BP/E3 or F1/F3 FLW plans. Basic and Standard remain inapplicable.

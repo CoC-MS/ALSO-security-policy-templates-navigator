@@ -9,9 +9,9 @@ import {
   type LicenseQuantities,
 } from "./catalog";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
-import { getRelatedSiteUrl, relatedSites } from "./relatedSites";
+import { getRelatedSiteUrl, relatedSites, secureByDefaultUrl } from "./relatedSites";
 
-export type ReadinessGoalId = "security-fundamentals" | "copilot-readiness";
+export type ReadinessGoalId = "security-fundamentals" | "copilot-readiness" | "automated-discovery-deployment";
 
 export const readinessUrl = relatedSites.readiness.url;
 
@@ -28,8 +28,10 @@ export function getReadinessGuidance(
     id === "e5" || id === "e7" || id.includes("defender");
   const hasPurview = (id: License["id"]) =>
     id === "e5" || id === "e7" || id.includes("purview");
-  const full = goalId === "security-fundamentals" && eligible.every(isFullPlan);
-  const name = goalId === "copilot-readiness" ? "Copilot Readiness" : "Security fundamentals";
+  const automated = goalId === "automated-discovery-deployment";
+  const full = goalId !== "copilot-readiness" && eligible.every(isFullPlan);
+  const name = automated ? "Automated Discovery and Deployment"
+    : goalId === "copilot-readiness" ? "Copilot Readiness" : "Security fundamentals";
   const selectedNames = licenses.filter((license) => eligible.includes(license.id))
     .map((license) => license.name).join(", ");
   const suiteName = (suite: "Defender" | "Purview", id: License["id"]) => {
@@ -66,18 +68,21 @@ export function getReadinessGuidance(
     if (eligible.some((id) => !isFullPlan(id))) {
       message += " Defender Suite unlocks PIM, access reviews, risky sign-in and risky user policies, Identity Protection, Defender for Identity, Defender for Endpoint Plan 2, and Defender for Cloud Apps. Purview Suite unlocks SITs (Sensitive Information Types), advanced classifiers, auto labelling, full DLP and retention, and Insider Risk Management.";
     }
-  } else if (goalId === "copilot-readiness") {
+  } else if (goalId === "copilot-readiness" || (automated && !full)) {
     const planGuidance = eligible.map((id) => {
       const label = planLabel(id);
-      if (id === "e5" || id === "e7") {
+      if (automated && isFullPlan(id)) {
+        return `${label}: full Automated Discovery and Deployment experience is covered for this plan.`;
+      }
+      if (!automated && (id === "e5" || id === "e7")) {
         return `${label}: only core SharePoint Advanced Management features are included; add a SharePoint Advanced Management license for full experience.`;
       }
       const missing = [
         ...(!hasDefender(id) ? [suiteName("Defender", id)] : []),
         ...(!hasPurview(id) ? [suiteName("Purview", id)] : []),
-        "a SharePoint Advanced Management license",
+        ...(!automated ? ["a SharePoint Advanced Management license"] : []),
       ];
-      let detail = `${label}: add ${missing.join(" and ")} for full Copilot Readiness experience.`;
+      let detail = `${label}: add ${missing.join(" and ")} for full ${name} experience.`;
       if (!hasPurview(id)) {
         detail += " Purview Suite unlocks SITs (Sensitive Information Types), advanced classifiers, auto labelling, full DLP and retention, and Insider Risk Management.";
       }
@@ -96,7 +101,7 @@ export function getReadinessGuidance(
     const guidance = eligible.length > 1
       ? planGuidance.join(" ")
       : planGuidance[0].replace(`${planLabel(eligible[0])}: `, "");
-    message = `${mixedPrefix}${guidance} SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with ${selectedBasePlans}.`;
+    message = `${mixedPrefix}${guidance}${automated ? "" : ` SharePoint Advanced Management is required for the full reporting experience for SharePoint sites and OneDrive. It can be purchased as an add-on with ${selectedBasePlans}.`}`;
   }
   return { name, experience: full ? "full" as const : "limited" as const, message };
 }
@@ -116,14 +121,16 @@ export function ReadinessRecommendation({
   return (
     <article className="recommendation-card">
       <div className="recommendation-card-main">
-        <span className="choice-icon" aria-hidden="true">{translate(locale, goalId === "copilot-readiness" ? "COP" : "SEC")}</span>
+        <span className="choice-icon" aria-hidden="true">{translate(locale, goalId === "automated-discovery-deployment" ? "ADD" : goalId === "copilot-readiness" ? "COP" : "SEC")}</span>
         <div className="platform-title">
           <h2>{translate(locale, guidance.name)}</h2>
           <span className={`experience-badge ${guidance.experience}`}>
             {translate(locale, guidance.experience === "full" ? "Full experience" : "Limited experience")}
           </span>
         </div>
-        <p>{translate(locale, "Explore ALSO Microsoft Security Fundamentals and Copilot Readiness guidance.")}</p>
+        <p>{translate(locale, goalId === "automated-discovery-deployment"
+          ? "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security policies"
+          : "Explore ALSO Microsoft Security Fundamentals and Copilot Readiness guidance.")}</p>
         {guidance.message && (
           <aside className="license-requirement-note">
             <strong>{translate(locale, `${guidance.name} with limited experience`)}</strong>
@@ -132,7 +139,7 @@ export function ReadinessRecommendation({
         )}
         <LicensingDisclaimer />
         <div className="repository-links">
-          <a className="button primary repository-link" href={getRelatedSiteUrl("readiness", locale)}
+          <a className="button primary repository-link" href={goalId === "automated-discovery-deployment" ? secureByDefaultUrl : getRelatedSiteUrl("readiness", locale)}
             target="_blank" rel="noopener noreferrer">
             {translateFormat(locale, "Open {name} →", { name: translate(locale, guidance.name) })}
           </a>

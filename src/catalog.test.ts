@@ -208,7 +208,9 @@ describe("repository routing", () => {
     expect("comingSoon" in azureSecurity && azureSecurity.comingSoon).toBe(true);
     expect(getPlatformRepositories(azureSecurity)[0].name).toBe("Azure Security");
     const discovery = getPlatform("automated-discovery-deployment");
-    expect("comingSoon" in discovery && discovery.comingSoon).toBe(true);
+    expect("comingSoon" in discovery && discovery.comingSoon).toBe(false);
+    expect("siteUrl" in discovery && discovery.siteUrl)
+      .toBe("https://coc-ms.github.io/ALSO-Microsoft-Security-SecureByDefault/");
     expect(getPlatformRepositories(discovery)).toEqual([]);
     expect(getPlatformRepositories(getPlatform("macos"))[0].name).toBe("macOS");
   });
