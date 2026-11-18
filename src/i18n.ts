@@ -302,7 +302,7 @@ const translations: Record<ExistingLocale, TranslationSet> = {
     "Find your security policy templates": "Encuentre sus plantillas de directivas de seguridad",
     "Which Microsoft 365 licenses does your customer have?": "¿Qué licencias de Microsoft 365 tiene su cliente?",
     "Select each license plan and enter the number of licenses available. Next, choose the security challenges your customer wants to solve to find relevant ALSO security policy templates.": "Seleccione cada plan de licencias e indique cuántas licencias tiene disponibles. Después, elija los desafíos de seguridad que quiere resolver su cliente para encontrar las plantillas de directivas ALSO adecuadas.",
-    "Enterprise": "Empresa",
+    "Enterprise": "Enterprise",
     "SMB": "PYME",
     "Continue with {count} license plan ({seats} seats) →": "Continuar con {count} plan de licencias ({seats} licencias) →",
     "Continue with {count} license plans ({seats} seats) →": "Continuar con {count} planes de licencias ({seats} licencias) →",

@@ -11,6 +11,11 @@ import { getPlatform, licenses } from "./catalog";
 import { getSecurityGoalOptions, securityGoals } from "./solutionCatalog";
 
 describe("repository recommendation licensing scopes", () => {
+  it("uses the language-aware Microsoft Learn URL for workload identity licensing", () => {
+    expect(appSource).toContain('href="https://learn.microsoft.com/entra/workload-id/workload-identities-faqs"');
+    expect(appSource).not.toContain("learn.microsoft.com/en-gb/entra/workload-id/workload-identities-faqs");
+  });
+
   it("omits the Conditional Access recommendation details while retaining reasons for other repositories", () => {
     const source = appSource;
     expect(source).not.toContain('className="recommended-policy-list"');
