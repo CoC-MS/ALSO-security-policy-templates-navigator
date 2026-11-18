@@ -21,12 +21,28 @@ const repositoryNames = [
   "ALSO-Microsoft-Security-Android",
   "ALSO-Microsoft-Security-Purview",
 ];
+const relatedRepositoryNames = [
+  "CoC-MS-ALSO-Microsoft-Security-AttackPrevention",
+  "ALSO-Microsoft-Security-Fundamentals-and-Copilot-Readiness",
+  "ALSO-Microsoft-Security-Azure-Security",
+];
 const outputPath = join(process.cwd(), "public", "repository-metadata.json");
+const relatedOutputPath = join(process.cwd(), "public", "related-site-metadata.json");
 
 let cachedRepositories = [];
 try {
   const cachedIndex = JSON.parse(await readFile(outputPath, "utf8"));
   cachedRepositories = Array.isArray(cachedIndex.repositories)
+    ? cachedIndex.repositories
+    : [];
+} catch (error) {
+  if (error?.code !== "ENOENT") throw error;
+}
+
+let cachedRelatedRepositories = [];
+try {
+  const cachedIndex = JSON.parse(await readFile(relatedOutputPath, "utf8"));
+  cachedRelatedRepositories = Array.isArray(cachedIndex.repositories)
     ? cachedIndex.repositories
     : [];
 } catch (error) {
@@ -77,6 +93,37 @@ const repositories = deduplicateRepositoryCounts(repositoryNames.map((name) => {
   };
 }));
 
+const relatedRepositories = relatedRepositoryNames.map((name) => {
+  const url = `https://github.com/${owner}/${name}`;
+  let metadata;
+  try {
+    metadata = JSON.parse(
+      execFileSync("gh", ["api", `repos/${owner}/${name}`], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      }),
+    );
+  } catch (error) {
+    if (!String(error.stderr).includes("HTTP 404")) throw error;
+    const cached = cachedRelatedRepositories.find(
+      (repository) => repository.url === url,
+    );
+    if (!cached) {
+      throw new Error(`Unable to fetch ${name} and no cached metadata exists.`);
+    }
+    console.warn(`Using cached metadata for ${name}.`);
+    return cached;
+  }
+
+  console.log(`Synced ${name} (${metadata.topics.length} topics).`);
+  return {
+    name,
+    url,
+    description: metadata.description,
+    topics: [...metadata.topics].sort(),
+  };
+});
+
 const hasCategoryHashes = repositories.every((repository) =>
   repository.categoryHashes &&
   ["conditionalAccess", "devicePolicies", "compliance", "scripts", "filters", "applications"]
@@ -98,4 +145,14 @@ await writeFile(
     repositories,
   })}\n`,
 );
-console.log(`Synchronized metadata for ${repositories.length} repositories.`);
+await writeFile(
+  relatedOutputPath,
+  `${JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    repositories: relatedRepositories,
+  })}\n`,
+);
+console.log(
+  `Synchronized metadata for ${repositories.length + relatedRepositories.length} repositories ` +
+  `(${repositories.length} policy repositories, ${relatedRepositories.length} related sites).`,
+);

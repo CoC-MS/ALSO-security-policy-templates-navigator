@@ -369,20 +369,26 @@ describe("security goal recommendations", () => {
       .toContain("Add Microsoft Purview Suite for Business Premium");
   });
 
-  it("unlocks Attack prevention and retains its mapper repository", () => {
+  it("retains the attack-prevention mapper and marks planned categories as coming soon", () => {
     expect(securityGoalNavigation.filter((goal) =>
       "comingSoon" in goal && goal.comingSoon,
-    ).map((goal) => goal.id)).toEqual([]);
+    ).map((goal) => goal.id)).toEqual([
+      "azure-security",
+      "automated-discovery-deployment",
+    ]);
     expect(securityGoalNavigation[0].repositoryUrl).toBe(
       "https://github.com/CoC-MS/CoC-MS-ALSO-Microsoft-Security-AttackPrevention",
     );
     expect(getSecurityGoalOptions("attack-protection").length).toBeGreaterThan(0);
+    expect(getSecurityGoalOptions("azure-security")).toEqual([]);
+    expect(getSecurityGoalOptions("automated-discovery-deployment")).toEqual([]);
   });
 
   it("groups the unchanged Conditional Access and Administrator protection goals under Identity and Access", () => {
     expect(securityGoalNavigation.map((goal) => goal.name)).toEqual([
       "Attack prevention", "Identity and Access", "Endpoint protection",
       "AI and Agent Security", "Data Security", "App protection",
+      "Azure Security", "Automated Discovery and Deployment",
       "Security fundamentals", "Copilot Readiness",
     ]);
     expect(identityAndAccessGoalIds).toEqual(["conditional-access", "administrator-protection"]);
@@ -607,6 +613,8 @@ describe("security goal recommendations", () => {
       "AI and Agent Security",
       "Data Security",
       "App protection",
+      "Azure Security",
+      "Automated Discovery and Deployment",
       "Security fundamentals",
       "Copilot Readiness",
     ]);

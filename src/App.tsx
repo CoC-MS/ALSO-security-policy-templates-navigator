@@ -41,11 +41,13 @@ import {
   type SolutionOption,
 } from "./solutionCatalog";
 import {
+  filterItemsByTopics,
   filterPlatformsByTopics,
   getRepositoryMetadata,
   type RepositoryMetadata,
   type RepositoryMetadataIndex,
 } from "./repositoryMetadata";
+import { getRelatedSiteUrl, relatedSiteCatalog } from "./relatedSites";
 import { PolicyCounters } from "./PolicyCounters";
 import { Faq } from "./Faq";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
@@ -262,10 +264,12 @@ function RepositoryDetails({
   repositories,
   metadata,
   comingSoon = false,
+  showTopicsWhenComingSoon = false,
 }: {
   repositories: ReturnType<typeof getPlatformRepositories>;
   metadata: readonly RepositoryMetadata[];
   comingSoon?: boolean;
+  showTopicsWhenComingSoon?: boolean;
 }) {
   const locale = useLocale();
 
@@ -284,7 +288,7 @@ function RepositoryDetails({
           <section key={repository.url}>
             {repositories.length > 1 && <h3>{translate(locale, repository.name)}</h3>}
             <p>{translate(locale, description)}</p>
-            {!comingSoon && (
+            {(!comingSoon || showTopicsWhenComingSoon) && (
               <div
                 className="repository-topics"
                 aria-label={translateFormat(locale, "{name} GitHub topics", { name: translate(locale, repository.name) })}
@@ -405,6 +409,9 @@ function App() {
   const [repositoryMetadata, setRepositoryMetadata] = useState<
     RepositoryMetadataIndex
   >({ generatedAt: "", repositories: [] });
+  const [relatedSiteMetadata, setRelatedSiteMetadata] = useState<
+    RepositoryMetadataIndex
+  >({ generatedAt: "", repositories: [] });
   const [metadataStatus, setMetadataStatus] = useState<
     "loading" | "ready" | "error"
   >("loading");
@@ -479,7 +486,13 @@ function App() {
   );
   const overviewPlatforms = filterPlatformsByTopics(
     platforms,
-    repositoryMetadata.repositories,
+    [...repositoryMetadata.repositories, ...relatedSiteMetadata.repositories],
+    searchQuery,
+  );
+  const overviewRelatedSites = filterItemsByTopics(
+    relatedSiteCatalog,
+    (site) => [site.repositoryUrl],
+    relatedSiteMetadata.repositories,
     searchQuery,
   );
 
@@ -492,19 +505,25 @@ function App() {
 
     async function loadRepositoryMetadata() {
       try {
-        const response = await fetch(
-          `${import.meta.env.BASE_URL}repository-metadata.json`,
-          { cache: "no-store" },
-        );
-        if (!response.ok) {
-          throw new Error(`Repository metadata request failed: ${response.status}`);
+        const [response, relatedResponse] = await Promise.all([
+          fetch(`${import.meta.env.BASE_URL}repository-metadata.json`, { cache: "no-store" }),
+          fetch(`${import.meta.env.BASE_URL}related-site-metadata.json`, { cache: "no-store" }),
+        ]);
+        if (!response.ok || !relatedResponse.ok) {
+          throw new Error(
+            `Repository metadata request failed: ${response.status}, ${relatedResponse.status}`,
+          );
         }
-        const index = await response.json() as RepositoryMetadataIndex;
-        if (!Array.isArray(index.repositories)) {
+        const [index, relatedIndex] = await Promise.all([
+          response.json() as Promise<RepositoryMetadataIndex>,
+          relatedResponse.json() as Promise<RepositoryMetadataIndex>,
+        ]);
+        if (!Array.isArray(index.repositories) || !Array.isArray(relatedIndex.repositories)) {
           throw new Error("Repository metadata is invalid.");
         }
         if (!cancelled) {
           setRepositoryMetadata(index);
+          setRelatedSiteMetadata(relatedIndex);
           setMetadataStatus("ready");
         }
       } catch (error) {
@@ -802,9 +821,9 @@ function App() {
                 )}
                 {metadataStatus === "ready" && searchQuery && (
                   <p className="search-summary">
-                    {translate(locale, overviewPlatforms.length === 0
+                    {translate(locale, overviewPlatforms.length + overviewRelatedSites.length === 0
                       ? `No repository topics found for "${searchQuery}".`
-                      : `${overviewPlatforms.length} ${overviewPlatforms.length === 1 ? "repository section" : "repository sections"} found for "${searchQuery}".`)}
+                      : `${overviewPlatforms.length + overviewRelatedSites.length} ${overviewPlatforms.length + overviewRelatedSites.length === 1 ? "repository section" : "repository sections"} found for "${searchQuery}".`)}
                     {repositoryMetadata.generatedAt && (
                       <span className="search-index-date">
                         {" "}{translate(locale, "Topics refreshed")}{" "}{new Date(repositoryMetadata.generatedAt).toLocaleDateString(locale)}.
@@ -813,11 +832,11 @@ function App() {
                   </p>
                 )}
               </div>
-              <div className="overview-heading">
+              <div className="overview-heading" hidden={overviewPlatforms.length === 0}>
                 <h2>{translate(locale, "Repository overview")}</h2>
                 <p>{translate(locale, "Browse all repositories directly.")}</p>
               </div>
-              <div className="recommendation-grid">
+              <div className="recommendation-grid" hidden={overviewPlatforms.length === 0}>
                 {overviewPlatforms.map((platform) => {
                   const repositories = getPlatformRepositories(platform);
                   const comingSoon = "comingSoon" in platform && platform.comingSoon;
@@ -830,13 +849,19 @@ function App() {
                       </div>
                       <RepositoryDetails
                         repositories={repositories}
-                        metadata={repositoryMetadata.repositories}
+                        metadata={[
+                          ...repositoryMetadata.repositories,
+                          ...relatedSiteMetadata.repositories,
+                        ]}
                         comingSoon={comingSoon}
+                        showTopicsWhenComingSoon={platform.id === "azure-security"}
                       />
                       <div className="repository-links">
                         {comingSoon ? (
                           <button className="button primary repository-link" type="button" disabled>
-                            {translate(locale, "AI Security macOS repository coming soon")}</button>
+                            {translate(locale, platform.id === "azure-security"
+                              ? "Azure Security repository coming soon"
+                              : "AI Security macOS repository coming soon")}</button>
                         ) : repositories.map((repository) => (
                             <a
                               className="button primary repository-link"
@@ -854,6 +879,63 @@ function App() {
                   );
                 })}
               </div>
+              {overviewRelatedSites.length > 0 && (
+                <section className="related-site-section" aria-labelledby="related-sites-heading">
+                  <div className="overview-heading">
+                    <h2 id="related-sites-heading">{translate(locale, "Related security sites")}</h2>
+                  </div>
+                  <div className="recommendation-grid">
+                    {overviewRelatedSites.map((site) => {
+                      const repository = getRepositoryMetadata(
+                        relatedSiteMetadata.repositories,
+                        site.repositoryUrl,
+                      );
+                      return (
+                        <article className="recommendation-card" key={site.id}>
+                          <h2>{translate(locale, site.name)}</h2>
+                          <p>{translate(locale, site.description)}</p>
+                          <div
+                            className="repository-topics"
+                            aria-label={translateFormat(locale, "{name} GitHub topics", {
+                              name: translate(locale, site.name),
+                            })}
+                          >
+                            {repository && repository.topics.length > 0 ? (
+                              repository.topics.map((topic) => (
+                                <span className="repository-topic" key={topic}>{topic}</span>
+                              ))
+                            ) : (
+                              <span className="repository-topic empty">{translate(locale, "No topics configured")}</span>
+                            )}
+                          </div>
+                          <div className="repository-links">
+                            <a
+                              className="button primary repository-link"
+                              href={getRelatedSiteUrl(site.id, locale)}
+                              target="_blank"
+                              rel="noopener"
+                              referrerPolicy="strict-origin-when-cross-origin"
+                            >
+                              {translateFormat(locale, "Open {name} site", {
+                                name: translate(locale, site.name),
+                              })}<ArrowIcon />
+                            </a>
+                            <a
+                              className="button secondary repository-link"
+                              href={site.repositoryUrl}
+                              target="_blank"
+                              rel="noopener"
+                              referrerPolicy="strict-origin-when-cross-origin"
+                            >
+                              {translate(locale, "Open GitHub repository")}
+                            </a>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
               <div className="actions centered">
                 <button
                   className="button secondary"

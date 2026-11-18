@@ -191,17 +191,21 @@ describe("repository routing", () => {
     ["macos", "https://github.com/CoC-MS/ALSO-Microsoft-Security-MacOS"],
     ["ios-ipados", "https://github.com/CoC-MS/ALSO-Microsoft-Security-iOSandiPadOS"],
     ["android", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Android"],
+    ["azure-security", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Azure-Security"],
     ["purview", "https://github.com/CoC-MS/ALSO-Microsoft-Security-Purview"],
   ] as const)("routes %s correctly", (platformId, repository) => {
     expect(getPlatform(platformId).repository).toBe(repository);
   });
 
-  it("includes Agent Security and coming-soon AI Security macOS", () => {
+  it("includes Agent Security and coming-soon AI Security macOS and Azure Security", () => {
     expect(platforms.map((platform) => platform.id)).toContain("agent-security");
-    expect(platforms).toHaveLength(12);
+    expect(platforms).toHaveLength(13);
     const macAiSecurity = getPlatform("ai-security-macos");
     expect("comingSoon" in macAiSecurity && macAiSecurity.comingSoon).toBe(true);
     expect(getPlatformRepositories(macAiSecurity)[0].name).toBe("AI Security macOS");
+    const azureSecurity = getPlatform("azure-security");
+    expect("comingSoon" in azureSecurity && azureSecurity.comingSoon).toBe(true);
+    expect(getPlatformRepositories(azureSecurity)[0].name).toBe("Azure Security");
     expect(getPlatformRepositories(getPlatform("macos"))[0].name).toBe("macOS");
   });
 
@@ -530,6 +534,9 @@ describe("Business Premium-only results", () => {
 });
 
 describe("full-capability suite tier", () => {
+  const platformsWithLicenseMappings = platforms.filter(
+    (platform) => platform.id !== "azure-security",
+  );
   const fullSuiteLicenseIds = [
     "business-premium-defender-purview",
     "e5",
@@ -543,7 +550,7 @@ describe("full-capability suite tier", () => {
       platforms.filter((platform) =>
         isPlatformAvailableForLicense(licenseId, platform.id),
       ),
-    ).toHaveLength(platforms.length);
+    ).toHaveLength(platformsWithLicenseMappings.length);
   });
 
   describe("Microsoft 365 E7 results", () => {
@@ -554,7 +561,7 @@ describe("full-capability suite tier", () => {
         platforms.filter((platform) =>
           isPlatformAvailableForLicenses(licenseIds, platform.id),
         ),
-      ).toHaveLength(platforms.length);
+      ).toHaveLength(platformsWithLicenseMappings.length);
     });
 
     describe("Defender Suite package tier", () => {

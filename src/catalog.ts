@@ -127,6 +127,14 @@ export const platforms = [
     description: "All about managing android",
   },
   {
+    id: "azure-security",
+    name: "Azure Security",
+    shortLabel: "AZ",
+    repository: "https://github.com/CoC-MS/ALSO-Microsoft-Security-Azure-Security",
+    description: "Azure Security guidance for identity, networks, governance, and threat protection.",
+    comingSoon: true,
+  },
+  {
     id: "purview",
     name: "Purview",
     shortLabel: "PV",

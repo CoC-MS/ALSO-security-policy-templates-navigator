@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRelatedSiteUrl, relatedSites } from "./relatedSites";
+import { getRelatedSiteUrl, relatedSiteCatalog, relatedSites } from "./relatedSites";
 
 describe("language-aware related sites", () => {
   it.each(["attackPrevention", "readiness"] as const)(
@@ -26,4 +26,11 @@ describe("language-aware related sites", () => {
         .toBe(`http://127.0.0.1:5183/${suffix}`);
     },
   );
+
+  it("includes the attack-prevention and combined fundamentals/readiness repositories", () => {
+    expect(relatedSiteCatalog.map(({ id, repositoryUrl }) => [id, repositoryUrl])).toEqual([
+      ["attackPrevention", relatedSites.attackPrevention.repositoryUrl],
+      ["readiness", relatedSites.readiness.repositoryUrl],
+    ]);
+  });
 });

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import relatedSiteMetadata from "../public/related-site-metadata.json";
 import { getPlatform, platforms } from "./catalog";
 import {
+  filterItemsByTopics,
   filterPlatformsByTopics,
   getRepositoryMetadata,
   getTotalTemplateCount,
@@ -112,9 +114,47 @@ describe("repository topic metadata", () => {
     );
   });
 
+  it("finds the locked Azure Security card from its repository topics", () => {
+    expect(
+      filterPlatformsByTopics(
+        platforms,
+        [...repositories, ...relatedSiteMetadata.repositories],
+        "azurefirewall",
+      ).map((platform) => platform.id),
+    ).toEqual(["azure-security"]);
+  });
+
   it("does not invent matches for repositories without matching topics", () => {
     expect(filterPlatformsByTopics(platforms, repositories, "android")).toEqual(
       [],
     );
+  });
+
+  it("filters related site entries using every term in the query", () => {
+    const items = [
+      { name: "Attack Prevention", repositoryUrl: "https://github.com/CoC-MS/attack-prevention" },
+      { name: "Readiness", repositoryUrl: "https://github.com/CoC-MS/readiness" },
+    ];
+    const relatedRepositories: RepositoryMetadata[] = [
+      {
+        name: "attack-prevention",
+        url: items[0].repositoryUrl,
+        description: null,
+        topics: ["phishing", "aitm"],
+      },
+      {
+        name: "readiness",
+        url: items[1].repositoryUrl,
+        description: null,
+        topics: ["copilot", "purview"],
+      },
+    ];
+
+    expect(
+      filterItemsByTopics(items, (item) => [item.repositoryUrl], relatedRepositories, "phishing aitm"),
+    ).toEqual([items[0]]);
+    expect(
+      filterItemsByTopics(items, (item) => [item.repositoryUrl], relatedRepositories, "phishing copilot"),
+    ).toEqual([]);
   });
 });

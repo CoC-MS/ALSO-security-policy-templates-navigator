@@ -76,17 +76,30 @@ export function filterPlatformsByTopics(
   repositories: readonly RepositoryMetadata[],
   query: string,
 ): Platform[] {
+  return filterItemsByTopics(
+    candidates,
+    (platform) => getPlatformRepositories(platform).map((repository) => repository.url),
+    repositories,
+    query,
+  );
+}
+
+export function filterItemsByTopics<T>(
+  candidates: readonly T[],
+  getRepositoryUrls: (candidate: T) => readonly string[],
+  repositories: readonly RepositoryMetadata[],
+  query: string,
+): T[] {
   const terms = normalize(query).split(" ").filter(Boolean);
 
   if (terms.length === 0) {
     return [...candidates];
   }
 
-  return candidates.filter((platform) =>
-    getPlatformRepositories(platform).some((repository) => {
-      const metadata = getRepositoryMetadata(repositories, repository.url);
+  return candidates.filter((candidate) =>
+    getRepositoryUrls(candidate).some((url) => {
+      const metadata = getRepositoryMetadata(repositories, url);
       const searchableTopics = normalize(metadata?.topics.join(" ") ?? "");
-
       return terms.every((term) => searchableTopics.includes(term));
     }),
   );

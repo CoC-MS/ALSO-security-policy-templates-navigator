@@ -36,6 +36,7 @@ export interface SecurityGoal {
   prompt: string;
   options: readonly SolutionOption[];
   isNew?: boolean;
+  comingSoon?: boolean;
 }
 
 type LicenseNote = {
@@ -404,6 +405,22 @@ export const securityGoals = [
         platformIds: ["windows-11", "windows-servers", "macos", "conditional-access"],
       },
     ],
+  },
+  {
+    id: "azure-security",
+    name: "Azure Security",
+    description: "Azure Security policy templates are being prepared.",
+    prompt: "Explore Azure Security policies.",
+    options: [],
+    comingSoon: true,
+  },
+  {
+    id: "automated-discovery-deployment",
+    name: "Automated Discovery and Deployment",
+    description: "Automated discovery and deployment of Microsoft security policies are being prepared.",
+    prompt: "Explore Automated Discovery and Deployment.",
+    options: [],
+    comingSoon: true,
   },
   {
     id: "security-fundamentals",
