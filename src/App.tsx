@@ -100,6 +100,17 @@ export function getIdentityStepCompanionGoals<T extends SecurityGoal>(goals: rea
   );
 }
 
+export function getIncludedGoalsWithoutChoices<T extends SecurityGoal>(
+  goals: readonly T[],
+  excludeIdentityGoals = false,
+): T[] {
+  const configurable = getConfigurableGoals(goals);
+  return goals.filter((goal) =>
+    !configurable.includes(goal) &&
+    !(excludeIdentityGoals && identityAndAccessGoalIds.includes(goal.id as SecurityGoalId)),
+  );
+}
+
 export function getEndpointPlatformsMissingCategories(
   selectedPlatforms: readonly SolutionOption[],
   selectedCategoryIds: readonly string[],
@@ -671,6 +682,18 @@ function App() {
     );
   }
 
+  function renderIncludedGoalSection(goal: (typeof securityGoals)[number]) {
+    return (
+      <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
+        <h2 id={`${goal.id}-heading`}>
+          {translate(locale, goal.name)}
+          {"isNew" in goal && goal.isNew && <>{" "}<span className="experience-badge new-badge">{translate(locale, "New")}</span></>}
+        </h2>
+        <p>{translate(locale, goal.description)}</p>
+      </section>
+    );
+  }
+
   function continueFromFocus() {
     if (unconfiguredGoalNames.length > 0) return;
     if (selectedGoalIds.includes("endpoint-protection")) {
@@ -1132,11 +1155,13 @@ function App() {
                   );
                 })}
               </div>
-              {getIdentityStepCompanionGoals(selectedGoals).length > 0 && (
+              {(getIdentityStepCompanionGoals(selectedGoals).length > 0 ||
+                getIncludedGoalsWithoutChoices(selectedGoals, true).length > 0) && (
                 <>
                   <div className="eyebrow">{translate(locale, "Your selected security goals")}</div>
                   <div className="goal-option-sections">
                     {getIdentityStepCompanionGoals(selectedGoals).map(renderGoalOptionSection)}
+                    {getIncludedGoalsWithoutChoices(selectedGoals, true).map(renderIncludedGoalSection)}
                   </div>
                 </>
               )}
@@ -1197,6 +1222,7 @@ function App() {
               </p>
               <div className="goal-option-sections">
                 {getConfigurableGoals(selectedGoals).map(renderGoalOptionSection)}
+                {getIncludedGoalsWithoutChoices(selectedGoals).map(renderIncludedGoalSection)}
               </div>
               <div className="actions platform-actions">
                 <div>
