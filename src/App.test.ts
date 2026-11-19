@@ -4,6 +4,7 @@ import {
   getAuxiliaryPageReturnStep,
   getEndpointPlatformsMissingCategories,
   getExcludedLicenses,
+  getIdentityStepCompanionGoals,
   getRepositoryRecommendations,
   getUnconfiguredGoalNames,
 } from "./App";
@@ -80,6 +81,28 @@ describe("navigator selection edge cases", () => {
         "data-protection:sensitive-information-types",
       ]),
     ).toEqual([]);
+  });
+
+  it("presents other selected goals' options on the Identity and Access step", () => {
+    const selectedGoals = securityGoals.filter((goal) =>
+      goal.id === "conditional-access" ||
+      goal.id === "administrator-protection" ||
+      goal.id === "ai-agent-security" ||
+      goal.id === "app-protection" ||
+      goal.id === "attack-protection",
+    );
+
+    expect(getIdentityStepCompanionGoals(selectedGoals).map((goal) => goal.id))
+      .toEqual(["ai-agent-security", "app-protection"]);
+    expect(getIdentityStepCompanionGoals(
+      securityGoals.filter((goal) => goal.id === "conditional-access"),
+    )).toEqual([]);
+
+    const identityStep = appSource.slice(
+      appSource.indexOf('{step === "identity-and-access" && ('),
+      appSource.indexOf('{step === "focus" &&'),
+    );
+    expect(identityStep).toContain("getIdentityStepCompanionGoals(selectedGoals).map(renderGoalOptionSection)");
   });
 
   it("keeps auxiliary-page Back navigation anchored to the last wizard step", () => {
