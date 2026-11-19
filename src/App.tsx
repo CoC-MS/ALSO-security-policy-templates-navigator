@@ -87,6 +87,19 @@ export function getUnconfiguredGoalNames(
     .map((goal) => goal.name);
 }
 
+export function getConfigurableGoals<T extends SecurityGoal>(goals: readonly T[]): T[] {
+  return goals.filter((goal) =>
+    goal.id !== "attack-protection" &&
+    goal.options.some((option) => !isAutoSelectedOption(option)),
+  );
+}
+
+export function getIdentityStepCompanionGoals<T extends SecurityGoal>(goals: readonly T[]): T[] {
+  return getConfigurableGoals(goals).filter((goal) =>
+    !identityAndAccessGoalIds.includes(goal.id as SecurityGoalId),
+  );
+}
+
 export function getEndpointPlatformsMissingCategories(
   selectedPlatforms: readonly SolutionOption[],
   selectedCategoryIds: readonly string[],
@@ -644,6 +657,20 @@ function App() {
     );
   }
 
+  function renderGoalOptionSection(goal: (typeof securityGoals)[number]) {
+    return (
+      <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
+        <h2 id={`${goal.id}-heading`}>{translate(locale, goal.name)}</h2>
+        <p>{translate(locale, goal.prompt)}</p>
+        <div className="card-grid goal-option-grid" aria-label={translateFormat(locale, "{name} options", { name: translate(locale, goal.name) })}>
+          {goal.options.filter((option) => !isAutoSelectedOption(option)).map((option, index) =>
+            renderOptionCard(goal.id, option, index),
+          )}
+        </div>
+      </section>
+    );
+  }
+
   function continueFromFocus() {
     if (unconfiguredGoalNames.length > 0) return;
     if (selectedGoalIds.includes("endpoint-protection")) {
@@ -1105,6 +1132,14 @@ function App() {
                   );
                 })}
               </div>
+              {getIdentityStepCompanionGoals(selectedGoals).length > 0 && (
+                <>
+                  <div className="eyebrow">{translate(locale, "Your selected security goals")}</div>
+                  <div className="goal-option-sections">
+                    {getIdentityStepCompanionGoals(selectedGoals).map(renderGoalOptionSection)}
+                  </div>
+                </>
+              )}
               <div className="actions platform-actions">
                 <div>
                   <button className="button secondary" type="button" onClick={() => setStep("goal")}>{translate(locale, "← Back")}</button>
@@ -1161,20 +1196,7 @@ function App() {
                       : "Select one or more options under each goal. Select an option again to remove it. Recommendations will be matched to the licenses selected above.")}
               </p>
               <div className="goal-option-sections">
-                {selectedGoals.filter((goal) =>
-                  goal.id !== "attack-protection" &&
-                  goal.options.some((option) => !isAutoSelectedOption(option)),
-                ).map((goal) => (
-                  <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
-                    <h2 id={`${goal.id}-heading`}>{translate(locale, goal.name)}</h2>
-                    <p>{translate(locale, goal.prompt)}</p>
-                    <div className="card-grid goal-option-grid" aria-label={translateFormat(locale, "{name} options", { name: translate(locale, goal.name) })}>
-                      {goal.options.filter((option) => !isAutoSelectedOption(option)).map((option, index) => {
-                        return renderOptionCard(goal.id, option, index);
-                      })}
-                    </div>
-                  </section>
-                ))}
+                {getConfigurableGoals(selectedGoals).map(renderGoalOptionSection)}
               </div>
               <div className="actions platform-actions">
                 <div>
