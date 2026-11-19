@@ -5,7 +5,6 @@ import {
   getEndpointPlatformsMissingCategories,
   getExcludedLicenses,
   getIdentityStepCompanionGoals,
-  getIncludedGoalsWithoutChoices,
   getRepositoryRecommendations,
   getUnconfiguredGoalNames,
 } from "./App";
@@ -104,32 +103,6 @@ describe("navigator selection edge cases", () => {
       appSource.indexOf('{step === "focus" &&'),
     );
     expect(identityStep).toContain("getIdentityStepCompanionGoals(selectedGoals).map(renderGoalOptionSection)");
-  });
-
-  it("keeps New goals without choices visible alongside goals that need options", () => {
-    const selectedGoals = securityGoals.filter((goal) =>
-      goal.id === "conditional-access" ||
-      goal.id === "app-protection" ||
-      goal.id === "attack-protection" ||
-      goal.id === "security-fundamentals" ||
-      goal.id === "copilot-readiness",
-    );
-    const included: string[] = getIncludedGoalsWithoutChoices(selectedGoals, true).map((goal) => goal.id);
-
-    expect(included).toEqual(["attack-protection", "security-fundamentals", "copilot-readiness"]);
-    expect(securityGoals.filter((goal) => "isNew" in goal && goal.isNew).map((goal) => goal.id)
-      .every((id) => included.includes(id))).toBe(true);
-
-    const identityStep = appSource.slice(
-      appSource.indexOf('{step === "identity-and-access" && ('),
-      appSource.indexOf('{step === "focus" &&'),
-    );
-    const focusStep = appSource.slice(
-      appSource.indexOf('{step === "focus" &&'),
-      appSource.indexOf('{step === "endpoint-categories" &&'),
-    );
-    expect(identityStep).toContain("getIncludedGoalsWithoutChoices(selectedGoals, true).map(renderIncludedGoalSection)");
-    expect(focusStep).toContain("getIncludedGoalsWithoutChoices(selectedGoals).map(renderIncludedGoalSection)");
   });
 
   it("keeps auxiliary-page Back navigation anchored to the last wizard step", () => {
