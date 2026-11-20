@@ -106,6 +106,26 @@ describe("localized routes", () => {
     expect(getLocaleFromPath(path, baseUrl)).toBe(expectedLocale);
   });
 
+  describe("conditional navigation localization", () => {
+    it.each(["de", "fr", "es", "ru", "it", "pl"] as const)(
+      "translates the new stage labels and category guidance in %s",
+      (locale) => {
+        for (const label of [
+          "Security challenges",
+          "Scenarios and platforms",
+          "Recommended templates",
+          "Choose categories next",
+          "← Back to scenarios",
+        ]) {
+          expect(translate(locale, label), label).not.toBe(label);
+        }
+        expect(translateFormat(locale, "Choose at least one {name} category.", {
+          name: translate(locale, "Data Security"),
+        })).not.toContain("{name}");
+      },
+    );
+  });
+
   describe("translated feature parity", () => {
     it.each(["de", "fr", "es", "ru", "it", "pl"] as const)("translates every goal and nested option description in %s", locale => {
       for (const goal of securityGoalNavigation) {

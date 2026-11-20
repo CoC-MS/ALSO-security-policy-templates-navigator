@@ -64,6 +64,14 @@ const rows: readonly TranslatedRow[] = [
   ["Select at least one endpoint platform", "Wählen Sie mindestens eine Endgeräteplattform aus", "Sélectionnez au moins une plateforme de terminaux", "Seleccione al menos una plataforma de puntos de conexión"],
   ["Choose endpoint policy categories", "Endpunktrichtlinienkategorien auswählen", "Choisir les catégories de stratégies de terminaux", "Elegir categorías de directivas de puntos de conexión"],
   ["Choose policy categories", "Richtlinienkategorien auswählen", "Choisir les catégories de stratégies", "Elegir categorías de directivas"],
+  ["Security challenges", "Sicherheitsherausforderungen", "Défis de sécurité", "Desafíos de seguridad"],
+  ["Scenarios and platforms", "Szenarien und Plattformen", "Scénarios et plateformes", "Escenarios y plataformas"],
+  ["Choose categories next", "Kategorien im nächsten Schritt auswählen", "Choisir les catégories à l’étape suivante", "Elegir categorías en el siguiente paso"],
+  ["Choose these categories on the next step.", "Wählen Sie diese Kategorien im nächsten Schritt aus.", "Choisissez ces catégories à l’étape suivante.", "Elija estas categorías en el siguiente paso."],
+  ["Choose the policy categories to include. Your scenario and platform choices are shown for reference.", "Wählen Sie die einzubeziehenden Richtlinienkategorien aus. Ihre Szenario- und Plattformauswahl dient als Referenz.", "Choisissez les catégories de stratégies à inclure. Vos choix de scénarios et de plateformes sont affichés comme référence.", "Elija las categorías de directivas que desea incluir. Sus escenarios y plataformas se muestran como referencia."],
+  ["← Back to scenarios", "← Zurück zu den Szenarien", "← Retour aux scénarios", "← Volver a los escenarios"],
+  ["Choose at least one {name} category.", "Wählen Sie mindestens eine Kategorie für {name} aus.", "Choisissez au moins une catégorie {name}.", "Elija al menos una categoría de {name}."],
+  ["Select at least one Identity and Access goal", "Wählen Sie mindestens ein Ziel für Identität und Zugriff aus", "Sélectionnez au moins un objectif Identité et accès", "Seleccione al menos un objetivo de identidad y acceso"],
   ["Select categories for the endpoint platforms you chose. Each selection will lead to its matching ALSO repository.", "Wählen Sie Kategorien für die ausgewählten Endgeräteplattformen aus. Jede Auswahl führt zum passenden ALSO-Repository.", "Sélectionnez les catégories des plateformes de terminaux choisies. Chaque sélection mène au dépôt ALSO correspondant.", "Seleccione categorías para las plataformas elegidas. Cada selección conduce al repositorio de ALSO correspondiente."],
   ["Choose a category for each platform", "Wählen Sie für jede Plattform eine Kategorie aus", "Choisissez une catégorie pour chaque plateforme", "Elija una categoría para cada plataforma"],
   ["Choose at least one category for each selected endpoint platform:", "Wählen Sie für jede ausgewählte Endgeräteplattform mindestens eine Kategorie aus:", "Choisissez au moins une catégorie pour chaque plateforme de terminaux sélectionnée :", "Elija al menos una categoría para cada plataforma seleccionada:"],
@@ -245,12 +253,12 @@ const rows: readonly TranslatedRow[] = [
 const indexes = { de: 1, fr: 2, es: 3 } as const;
 const exactRows = new Map(rows.map(row => [row[0], row]));
 export const additionalTranslationKeys = rows.map(row => row[0]);
-const templateRows = rows.filter(row => row[0].includes("{value}"))
+const templateRows = rows.filter(row => /\{(?:value|detail|name)\}/.test(row[0]))
   .sort((a, b) => b[0].replace(/\{[^}]+\}/g, "").length - a[0].replace(/\{[^}]+\}/g, "").length)
   .map(row => {
   const keys: string[] = [];
-  const escaped = row[0].split(/(\{(?:value|detail)\})/).map(part => {
-    if (/^\{(?:value|detail)\}$/.test(part)) {
+  const escaped = row[0].split(/(\{(?:value|detail|name)\})/).map(part => {
+    if (/^\{(?:value|detail|name)\}$/.test(part)) {
       keys.push(part);
       return "(.+?)";
     }
@@ -274,7 +282,7 @@ export function translateAdditional(
   for (const { row, keys, pattern } of templateRows) {
     const match = text.match(pattern);
     if (match) {
-      return row[indexes[locale]].replace(/\{(?:value|detail)\}/g, key =>
+      return row[indexes[locale]].replace(/\{(?:value|detail|name)\}/g, key =>
         translatePart(match[keys.indexOf(key) + 1]),
       );
     }

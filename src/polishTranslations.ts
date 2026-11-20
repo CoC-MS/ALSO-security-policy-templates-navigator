@@ -7,6 +7,8 @@ const translations: Record<string, string> = {
   "English": "Angielski",
   "Progress": "Postęp",
   "Licenses": "Licencje",
+  "Security challenges": "Wyzwania związane z bezpieczeństwem",
+  "Scenarios and platforms": "Scenariusze i platformy",
   "Security goals": "Cele związane z bezpieczeństwem",
   "Recommended templates": "Zalecane szablony",
   "Number of licenses": "Liczba licencji",
@@ -22,6 +24,12 @@ const translations: Record<string, string> = {
   "Skip license selection →": "Pomiń wybór licencji →",
   "Licensing not evaluated": "Licencjonowanie nie zostało ocenione",
   "Included automatically": "Uwzględniane automatycznie",
+  "Choose categories next": "Wybierz kategorie w następnym kroku",
+  "Choose these categories on the next step.": "Wybierz te kategorie w następnym kroku.",
+  "Choose the policy categories to include. Your scenario and platform choices are shown for reference.": "Wybierz kategorie zasad do uwzględnienia. Wybrane scenariusze i platformy są widoczne jako odniesienie.",
+  "← Back to scenarios": "← Wróć do scenariuszy",
+  "Choose at least one {name} category.": "Wybierz co najmniej jedną kategorię: {name}.",
+  "Select at least one Identity and Access goal": "Wybierz co najmniej jeden cel dotyczący tożsamości i dostępu",
   "Intune Remediations is not included with Microsoft 365 Business Premium. Users need Windows Enterprise E3 or E5, Windows Education A3 or A5, or Windows VDA per user.": "Intune Remediations nie jest zawarte w Microsoft 365 Business Premium. Użytkownicy potrzebują Windows Enterprise E3 lub E5, Windows Education A3 lub A5 albo Windows VDA na użytkownika.",
   "Browse without license filtering. Verify Microsoft licensing requirements before deployment.": "Przeglądaj bez filtrowania według licencji. Przed wdrożeniem sprawdź wymagania licencyjne Microsoft.",
   "Select options where needed. Goals without options are included automatically.": "Wybierz opcje tam, gdzie są potrzebne. Cele bez opcji są uwzględniane automatycznie.",
@@ -481,6 +489,7 @@ function translateMixedPlanDetails(text: string): string {
 }
 
 const templates: Array<[RegExp, (...matches: string[]) => string]> = [
+  [/^Choose at least one (.+) category\.$/, value => `Wybierz co najmniej jedną kategorię: ${value}.`],
   [/^(\d+) (Microsoft 365 .+?) licenses?: add Microsoft Defender Suite for (.+?) and Microsoft Purview Suite for (.+?) for full Security fundamentals coverage\.$/, (count, plan, defender, purview) => `${count} ${polishPlural(Number(count), "licencja", "licencje", "licencji")} ${plan}: dodaj Microsoft Defender Suite dla ${defender} i Microsoft Purview Suite dla ${purview}, aby uzyskać pełny zakres funkcji dotyczących podstaw bezpieczeństwa.`],
   [/^(\d+) (Microsoft 365 .+?) licenses?: add Microsoft Defender Suite for (.+?) and Microsoft Purview Suite for (.+?) for full Copilot Readiness experience\.$/, (count, plan, defender, purview) => `${count} ${polishPlural(Number(count), "licencja", "licencje", "licencji")} ${plan}: dodaj Microsoft Defender Suite dla ${defender} i Microsoft Purview Suite dla ${purview}, aby uzyskać pełny zakres funkcji związanych z gotowością do wdrożenia rozwiązania Copilot.`],
   [/^Microsoft Entra ID Plan 2 is also included with the Microsoft Defender Suite(.+) add-on\.$/, value => `Microsoft Entra ID Plan 2 jest również uwzględniony w dodatku Microsoft Defender Suite${value}.`],

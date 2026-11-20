@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { getPlatform, getPlatformRepositories } from "./catalog";
 import { getRelatedSiteUrl, secureByDefaultUrl } from "./relatedSites";
+import { securityGoalNavigation } from "./solutionCatalog";
 
 let container: HTMLDivElement;
 let root: Root;
@@ -21,6 +22,12 @@ async function click(button: HTMLButtonElement) {
   await act(async () => button.click());
 }
 
+async function clickChoices(names: string[]) {
+  const buttons = names.map(choice);
+  for (const button of buttons) expect(button.disabled).toBe(false);
+  await act(async () => buttons.forEach((button) => button.click()));
+}
+
 async function action(text: string) {
   const button = [...container.querySelectorAll<HTMLButtonElement>("button")]
     .find((item) => item.textContent?.trim().startsWith(text));
@@ -35,18 +42,9 @@ function expectSelectedGoals(names: string[]) {
     .map((pill) => pill.textContent?.replace("✓", "").trim())).toEqual(names);
 }
 
-function expectGoalSection(name: string, hasOptions: boolean) {
-  const section = [...container.querySelectorAll(".goal-option-section")]
-    .find((item) => item.querySelector("h2, h3")?.textContent === name);
-  expect(section, `visible section ${name}`).toBeDefined();
-  expect(section!.querySelector(".goal-option-grid") !== null).toBe(hasOptions);
-  if (!hasOptions) expect(section!.querySelector("button")).toBeNull();
-}
-
-async function selectGoals(names: string[]) {
-  await click(choice("Microsoft 365 E7"));
-  await click(choice("Microsoft 365 E5"));
-  await action("Continue with 2 license plans");
+async function selectLicensedGoals(names: string[], license = "Microsoft 365 E7") {
+  await click(choice(license));
+  await action("Continue with 1 license plan");
   for (const name of names) await click(choice(name));
   await action(`Continue with ${names.length} security goal`);
 }
@@ -57,6 +55,21 @@ async function browseGoals(names: string[]) {
   await action(`Continue with ${names.length} security goal`);
 }
 
+async function openCategories() {
+  const categoryButton = [...container.querySelectorAll<HTMLButtonElement>("button")]
+    .find((button) => button.textContent?.trim().startsWith("Choose policy categories"));
+  if (!categoryButton) return false;
+  await click(categoryButton);
+  expect(container.querySelector("h1")?.textContent).toBe("Choose policy categories");
+  return true;
+}
+
+async function openResults() {
+  await action("View recommendations");
+  expect(container.querySelector("h1")?.textContent)
+    .toBe("Recommended security policy templates");
+}
+
 function expectLicensingNotEvaluated() {
   expect(container.textContent).toContain("Licensing not evaluated");
   expect(container.querySelector('[aria-label="Selected eligible licenses"]')).toBeNull();
@@ -64,45 +77,6 @@ function expectLicensingNotEvaluated() {
   expect(container.querySelector(".license-requirement-note:not(.licensing-disclaimer)")).toBeNull();
   expect(container.textContent).not.toContain("Recommendations will be matched to the selected licenses");
 }
-
-describe("Windows Remediation Scripts licensing", () => {
-  it.each([
-    "Microsoft 365 Business Premium",
-    "Microsoft 365 Business Premium + Defender and Purview Suite",
-  ])("shows a limited Remediation Scripts category and recommendation for %s", async (licenseName) => {
-    await click(choice(licenseName));
-    await action("Continue with 1 license plan");
-    await click(choice("Endpoint protection"));
-    await action("Continue with 1 security goal");
-    await click(choice("Windows"));
-    await action("Choose endpoint policy categories");
-    expect(choice("Remediation Scripts").disabled).toBe(false);
-    expect(choice("Remediation Scripts").querySelector(".experience-badge")?.textContent)
-      .toBe("Limited experience");
-    expect(choice("Encryption").querySelector(".experience-badge")?.textContent).toBe("Full experience");
-    await click(choice("Remediation Scripts"));
-    await action("View recommendations");
-    expect(container.querySelector(".recommendation-card .experience-badge")?.textContent)
-      .toBe("Limited experience");
-    const note = container.querySelector(".license-requirement-note:not(.licensing-disclaimer)");
-    expect(note?.textContent).toContain("Remediation Scripts with limited experience");
-    expect(note?.textContent).toContain("Windows Enterprise E3 or E5");
-    expect(note?.textContent).not.toContain("Defender Suite");
-    await action("← Back");
-    expect(choice("Remediation Scripts").getAttribute("aria-pressed")).toBe("true");
-  });
-
-  it("keeps Remediation Scripts licensing unevaluated when license selection is skipped", async () => {
-    await browseGoals(["Endpoint protection"]);
-    await click(choice("Windows"));
-    await action("Choose endpoint policy categories");
-    expect(choice("Remediation Scripts").querySelector(".experience-badge")?.textContent)
-      .toBe("Licensing not evaluated");
-    await click(choice("Remediation Scripts"));
-    await action("View recommendations");
-    expectLicensingNotEvaluated();
-  });
-});
 
 beforeEach(async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -123,367 +97,373 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-describe("compact automatically included goal cards", () => {
-  it.each([false, true])("uses option-style cards without extra choices or recommendation panels (skip licensing: %s)", async (skipLicensing) => {
-    const goals = ["Attack prevention", "Identity and Access", "App protection", "Copilot Readiness"];
-    if (skipLicensing) await browseGoals(goals);
-    else await selectGoals(goals);
-
-    function expectIncludedCards() {
-      for (const id of ["attack-protection", "copilot-readiness"]) {
-        const section = container.querySelector(`#${id}-heading`)!.parentElement!;
-        expect(section.querySelector(".choice-card.selected.included-goal-card")).not.toBeNull();
-        expect(section.querySelector(".experience-badge")?.textContent).toBe("Included automatically");
-        expect(section.querySelector("button, a, .recommendation-card, .license-requirement-note, .goal-option-grid"))
-          .toBeNull();
-      }
-      expectSelectedGoals(goals);
-    }
-
-    expectIncludedCards();
-    await click(choice("Administrator protection"));
-    await click(choice("Desktop apps"));
-    await action("Continue with selected policies");
-    expectIncludedCards();
-    expect(container.querySelector("#administrator-protection-heading")!.parentElement!
-      .querySelector(".included-goal-card .choice-name")?.textContent).toBe("Administrator protection policies");
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
-    await action("View recommendations");
-    expect(container.querySelector("h1")?.textContent).toBe("Recommended security policy templates");
-    const links = [...container.querySelectorAll<HTMLAnchorElement>(".repository-link")].map(link => link.href);
-    expect(links).toContain(getRelatedSiteUrl("attackPrevention", "en"));
-    expect(links).toContain(getRelatedSiteUrl("readiness", "en"));
-    await action("← Back");
-    expectIncludedCards();
-    if (skipLicensing) expectLicensingNotEvaluated();
-  });
-});
-
-describe("browse without license selection", () => {
-  it("places Skip below the introduction and opens the goal page without assuming a license", async () => {
-    const intro = container.querySelector("#main-title")!.nextElementSibling!;
-    expect(intro.nextElementSibling?.querySelector("button")?.textContent)
-      .toContain("Skip license selection");
-    expect(intro.nextElementSibling?.nextElementSibling?.querySelector("h2")?.id)
-      .toBe("enterprise-heading");
-    await click(choice("Microsoft 365 E7"));
-    await action("Skip license selection");
+describe("scenario and category navigation", () => {
+  it.each([
+    ["Automated Discovery and Deployment", secureByDefaultUrl],
+    ["Security fundamentals", getRelatedSiteUrl("readiness", "en")],
+    ["Copilot Readiness", getRelatedSiteUrl("readiness", "en")],
+  ])("takes direct-resource goal %s from scenarios directly to recommendations", async (goal, resultUrl) => {
+    await selectLicensedGoals([goal]);
     expect(container.querySelector("h1")?.textContent)
-      .toBe("What security challenges are you trying to solve?");
-    expectLicensingNotEvaluated();
-    expect(choice("Azure security deployment best practices").disabled).toBe(true);
-
-    await action("← Back");
-    expect(choice("Microsoft 365 E7").getAttribute("aria-pressed")).toBe("false");
-    expect(container.querySelector('input[type="number"]')).toBeNull();
+      .toBe("Choose the scenarios and platforms to include");
+    expect([...container.querySelectorAll(".steps .step-item strong")].map((step) => step.textContent))
+      .toEqual(["Licenses", "Security challenges", "Recommended templates"]);
+    const scenarioSection = container.querySelector(".goal-option-section")!;
+    expect(scenarioSection.querySelector(".included-goal-card")).not.toBeNull();
+    expect(scenarioSection.querySelector("button, a")).toBeNull();
+    expect(await openCategories()).toBe(false);
+    await openResults();
+    expect([...container.querySelectorAll<HTMLAnchorElement>(".repository-link")]
+      .map((link) => link.href)).toContain(resultUrl);
   });
 
-  it("retains all pictured goals through recommendations with zero licenses and unevaluated badges", async () => {
-    const goals = ["Attack prevention", "App protection", "Copilot Readiness"];
-    await browseGoals(goals);
-    expectSelectedGoals(goals);
-    expectGoalSection("Attack prevention", false);
-    expectGoalSection("App protection", true);
-    expectGoalSection("Copilot Readiness", false);
-    expectLicensingNotEvaluated();
-    expect(choice("On-premises app protection").disabled).toBe(true);
-    await click(choice("OAuth apps"));
-    await action("View recommendations");
-    expectSelectedGoals(goals);
-    expectLicensingNotEvaluated();
-    const cards = [...container.querySelectorAll(".recommendation-card")];
-    expect(cards.length).toBeGreaterThan(2);
-    for (const card of cards) {
-      expect(card.querySelector(".experience-badge")?.textContent).toBe("Licensing not evaluated");
-    }
-    const links = [...container.querySelectorAll<HTMLAnchorElement>(".repository-link")].map(link => link.href);
-    expect(links).toContain(getRelatedSiteUrl("attackPrevention", "en"));
-    expect(links).toContain(getRelatedSiteUrl("readiness", "en"));
-    expect(links).toContain(getPlatformRepositories(getPlatform("conditional-access"))[0].url);
-    await action("← Back");
-    expect(choice("OAuth apps").getAttribute("aria-pressed")).toBe("true");
-    expectLicensingNotEvaluated();
+  it("shows selected AI and app scenarios as compact summaries only when another goal needs categories", async () => {
+    await selectLicensedGoals(["Endpoint protection", "AI and Agent Security", "App protection"]);
+    await clickChoices(["Windows", "AI Security", "Agent Security", "OAuth apps", "Desktop apps"]);
+    expect(await openCategories()).toBe(true);
+
+    expect([...container.querySelectorAll(".category-option-summary .selection-pill")]
+      .map((summary) => summary.textContent?.replace("✓", "").trim()))
+      .toEqual(["AI Security", "Agent Security", "OAuth apps", "Desktop apps"]);
+    expect(container.querySelector(".category-option-summary .choice-card, .category-option-summary button"))
+      .toBeNull();
+    expect([...container.querySelectorAll<HTMLButtonElement>(".goal-option-sections button .choice-name")]
+      .map((item) => item.textContent))
+      .not.toEqual(expect.arrayContaining(["AI Security", "Agent Security", "OAuth apps", "Desktop apps"]));
   });
 
-  it("allows all available Identity, endpoint, AI and data categories while keeping Coming restrictions", async () => {
-    const goals = ["Identity and Access", "Endpoint protection", "AI and Agent Security", "Data Security", "Copilot Readiness"];
-    await browseGoals(goals);
-    expectSelectedGoals(goals);
-    expectLicensingNotEvaluated();
-    for (const button of container.querySelectorAll<HTMLButtonElement>(".goal-option-grid button")) {
-      expect(button.disabled).toBe(false);
-    }
-    await click(choice("Conditional Access"));
+  it("keeps all selected goal sections in numbered order without a duplicate Identity scenario page", async () => {
+    const selected = [
+      "AI and Agent Security", "Endpoint protection", "Identity and Access",
+      "Attack prevention", "App protection", "Data Security",
+    ];
+    await selectLicensedGoals(selected);
+    const ordered = [
+      "Attack prevention", "Identity and Access", "Endpoint protection",
+      "AI and Agent Security", "Data Security", "App protection",
+    ];
+    expectSelectedGoals(ordered);
+    expect([...container.querySelectorAll(".goal-option-sections > .goal-option-section > h2")]
+      .map((heading) => heading.textContent)).toEqual(ordered);
+
+    await clickChoices([
+      "Device code phishing attacks", "Administrator protection", "Windows",
+      "AI Security", "Desktop apps", "Retention",
+    ]);
+    expect(await openCategories()).toBe(true);
+    expectSelectedGoals(ordered);
+    expect([...container.querySelectorAll(".goal-option-sections > .goal-option-section > h2")]
+      .map((heading) => heading.textContent)).toEqual(ordered);
+    expect([...container.querySelectorAll(".category-option-summary .selection-pill")]
+      .some((summary) => summary.textContent?.includes("Retention"))).toBe(true);
+    expect([...container.querySelectorAll<HTMLButtonElement>(".goal-option-sections button .choice-name")]
+      .map((item) => item.textContent)).not.toContain("Retention");
+    await click(choice("Antivirus (AV)"));
+    await openResults();
+    expectSelectedGoals(ordered);
+  });
+
+  it("requires an Identity choice and takes Administrator protection directly to recommendations", async () => {
+    await selectLicensedGoals(["Identity and Access"]);
+    expect(container.querySelectorAll("#identity-and-access-heading")).toHaveLength(1);
+    expect(choice("Conditional Access").getAttribute("aria-pressed")).toBe("false");
+    expect(choice("Administrator protection").getAttribute("aria-pressed")).toBe("false");
+    expect([...container.querySelectorAll<HTMLButtonElement>(".actions button.primary")]
+      .some((button) => button.disabled)).toBe(true);
+
     await click(choice("Administrator protection"));
-    await click(choice("Windows Server"));
-    await click(choice("Linux Server"));
-    await click(choice("AI Security"));
-    await click(choice("Agent Security"));
+    expect(await openCategories()).toBe(false);
+    expect(choice("Administrator protection").getAttribute("aria-pressed")).toBe("true");
+    await openResults();
+    expectSelectedGoals(["Identity and Access"]);
+  });
+
+  it("selects Data Security categories on scenarios and Conditional Access categories on the category stage", async () => {
+    await selectLicensedGoals(["Identity and Access", "Data Security"]);
+    await click(choice("Conditional Access"));
     await click(choice("Retention"));
-    await action("Continue with selected policies");
-    expectSelectedGoals(goals);
-    expectLicensingNotEvaluated();
-    expect(choice("Global Secure Access Policies").disabled).toBe(true);
-    expect(choice("Service principal policies").disabled).toBe(true);
-    await click(choice("Internal user policies"));
-    await action("Choose endpoint policy categories");
-    expectSelectedGoals(goals);
-    expectLicensingNotEvaluated();
-    for (const id of ["endpoint-windows-server", "endpoint-linux-server"]) {
-      const section = container.querySelector(`#${id}-categories-heading`)!.parentElement!;
-      for (const button of section.querySelectorAll<HTMLButtonElement>("button")) {
-        expect(button.disabled).toBe(false);
-      }
-      await click(section.querySelector<HTMLButtonElement>("button")!);
-    }
-    await action("View recommendations");
-    expectSelectedGoals(goals);
-    expectLicensingNotEvaluated();
-    const links = [...container.querySelectorAll<HTMLAnchorElement>(".repository-link")].map(link => link.href);
-    for (const id of ["windows-servers", "linux-server", "ai-security", "agent-security", "purview"] as const) {
-      expect(links).toContain(getPlatformRepositories(getPlatform(id))[0].url);
-    }
-    for (const badge of container.querySelectorAll(".recommendation-card .experience-badge")) {
-      expect(["Licensing not evaluated", "Coming"]).toContain(badge.textContent);
-    }
+    const scenarioChoices = [...container.querySelectorAll<HTMLButtonElement>("button .choice-name")]
+      .map((item) => item.textContent);
+    expect(scenarioChoices).not.toContain("Administrator policies");
+    expect(scenarioChoices).toContain("Retention");
+    expect(container.querySelector("#retention-heading")).toBeNull();
+    expect(await openCategories()).toBe(true);
+    expect(choice("Administrator policies").disabled).toBe(false);
+    expect(container.querySelector(".category-option-summary .selection-pill")?.textContent)
+      .toContain("Retention");
+    expect([...container.querySelectorAll<HTMLButtonElement>(".goal-option-sections button .choice-name")]
+      .map((item) => item.textContent)).not.toContain("Retention");
+    expect([...container.querySelectorAll<HTMLButtonElement>(".actions button.primary")]
+      .some((button) => button.disabled)).toBe(true);
+    await click(choice("Administrator policies"));
+    await openResults();
+    expectSelectedGoals(["Identity and Access", "Data Security"]);
   });
 
-  it("keeps the coming-soon AI macOS resource disabled when browsing AI policies", async () => {
-    await browseGoals(["AI and Agent Security"]);
-    await click(choice("AI Security"));
-    await action("View recommendations");
-    expectLicensingNotEvaluated();
-    const comingCard = [...container.querySelectorAll(".recommendation-card")]
-      .find(card => card.querySelector(".coming-soon-badge"));
-    expect(comingCard).toBeDefined();
-    expect(comingCard!.querySelector<HTMLButtonElement>("button.repository-link")?.disabled).toBe(true);
-    expect(comingCard!.querySelector("a.repository-link")).toBeNull();
+  it("requires Data Security categories on the scenarios page without adding a separate category step", async () => {
+    await selectLicensedGoals(["Data Security"]);
+    const continueButton = [...container.querySelectorAll<HTMLButtonElement>("button.primary")]
+      .find((button) => button.textContent?.includes("Data Security category"));
+    expect(continueButton?.disabled).toBe(true);
+    await click(choice("Retention"));
+    expect(await openCategories()).toBe(false);
+    await openResults();
+    expectSelectedGoals(["Data Security"]);
   });
 
-  it("renders every direct resource without licenses instead of silently dropping readiness resources", async () => {
-    await browseGoals(["Attack prevention", "Security fundamentals", "Copilot Readiness", "Automated Discovery and Deployment"]);
-    expect(container.querySelector("h1")?.textContent).toBe("Recommended security policy templates");
-    expectSelectedGoals(["Attack prevention", "Automated Discovery and Deployment", "Security fundamentals", "Copilot Readiness"]);
-    expectLicensingNotEvaluated();
-    expect(container.querySelectorAll(".recommendation-card")).toHaveLength(4);
-    const links = [...container.querySelectorAll<HTMLAnchorElement>(".repository-link")].map(link => link.href);
-    expect(links).toContain(secureByDefaultUrl);
-    expect(links.filter(link => link === getRelatedSiteUrl("readiness", "en"))).toHaveLength(2);
+  it("requires a scenario, endpoint platform, and categories where those goals need them", async () => {
+    await selectLicensedGoals(["Attack prevention", "Endpoint protection", "App protection"]);
+    const continueButton = [...container.querySelectorAll<HTMLButtonElement>("button.primary")]
+      .find((button) => button.textContent?.includes("Select at least one endpoint platform"));
+    expect(continueButton?.disabled).toBe(true);
+    await clickChoices(["ClickFix attacks", "Windows", "Desktop apps"]);
+    expect(await openCategories()).toBe(true);
+    expect(choice("Antivirus (AV)").disabled).toBe(false);
+    expect([...container.querySelectorAll<HTMLButtonElement>("button.primary")]
+      .find((button) => button.textContent?.includes("Choose a category"))?.disabled).toBe(true);
+    await click(choice("Antivirus (AV)"));
+    await openResults();
   });
 
-  it("preserves browsing selections on Back and re-entry, then restores normal license filtering when licenses are chosen", async () => {
+  it("shows endpoint child categories and preserves them through Back and deselection", async () => {
+    await selectLicensedGoals(["Endpoint protection", "App protection"]);
+    await clickChoices(["Windows", "Desktop apps"]);
+    expect(await openCategories()).toBe(true);
+    expect([...container.querySelectorAll(".steps .step-item strong")].map((step) => step.textContent))
+      .toEqual(["Licenses", "Security challenges", "Recommended templates"]);
+    await click(choice("Remediation Scripts"));
+    await action("← Back to scenarios");
+    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
+    await action("Choose policy categories");
+    expect(choice("Remediation Scripts").getAttribute("aria-pressed")).toBe("true");
+    await action("← Back to scenarios");
+    await action("← Back");
+    await click(choice("Endpoint protection"));
+    await action("Continue with 1 security goal");
+    expectSelectedGoals(["App protection"]);
+    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("preserves Skip-mode re-entry and clears all choices on Start over", async () => {
     await browseGoals(["App protection", "Copilot Readiness"]);
     await click(choice("Desktop apps"));
+    expect(await openCategories()).toBe(false);
+    await openResults();
+    await action("← Back to scenarios");
     await action("← Back");
     await action("← Back");
     await action("Skip license selection");
     expect(choice("App protection").getAttribute("aria-pressed")).toBe("true");
     await action("Continue with 2 security goals");
     expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
+    expect(await openCategories()).toBe(false);
+    await openResults();
+    expectLicensingNotEvaluated();
+    await action("Start over");
+    expect(container.querySelector("h1")?.textContent)
+      .toBe("Which Microsoft 365 licenses does your customer have?");
+    expect(container.textContent).not.toContain("Licensing not evaluated");
+  });
+
+  it("preserves scenario and category selections after returning to an unchanged license context", async () => {
+    await selectLicensedGoals(["Endpoint protection", "Data Security", "App protection"]);
+    await clickChoices(["Windows", "Desktop apps", "Retention"]);
+    expect(await openCategories()).toBe(true);
+    await click(choice("Antivirus (AV)"));
+    await action("← Back to scenarios");
     await action("← Back");
     await action("← Back");
-    await click(choice("Microsoft 365 F1"));
+    await action("Continue with 1 license plan");
+
+    expect(choice("Endpoint protection").getAttribute("aria-pressed")).toBe("true");
+    expect(choice("Data Security").getAttribute("aria-pressed")).toBe("true");
+    expect(choice("App protection").getAttribute("aria-pressed")).toBe("true");
+    await action("Continue with 3 security goals");
+    expect(choice("Windows").getAttribute("aria-pressed")).toBe("true");
+    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
+    expect(choice("Retention").getAttribute("aria-pressed")).toBe("true");
+    expect(await openCategories()).toBe(true);
+    expect(choice("Antivirus (AV)").getAttribute("aria-pressed")).toBe("true");
+    expect(container.querySelector(".category-option-summary .selection-pill")?.textContent)
+      .toContain("Retention");
+  });
+
+  it("restores normal license evaluation after Skip mode without retaining Skip-mode selections", async () => {
+    await browseGoals(["App protection"]);
+    await click(choice("Desktop apps"));
+    await action("← Back");
+    await action("← Back");
+    await click(choice("Microsoft 365 E7"));
     await action("Continue with 1 license plan");
     expect(container.textContent).not.toContain("Licensing not evaluated");
     expect(choice("App protection").getAttribute("aria-pressed")).toBe("false");
-    await click(choice("Data Security"));
+    await click(choice("App protection"));
     await action("Continue with 1 security goal");
-    expect(choice("Sensitive Information Types (SITs)").disabled).toBe(true);
-    expect(container.querySelector(".experience-badge.limited")).not.toBeNull();
-    await action("← Back");
-    await action("← Back");
-    await action("Skip license selection");
-    await click(choice("Data Security"));
-    await action("Continue with 1 security goal");
-    expect(choice("Sensitive Information Types (SITs)").disabled).toBe(false);
-    expectLicensingNotEvaluated();
-  });
-
-  it("clears browse mode on Start over and retains ordinary licensed recommendation guidance", async () => {
-    await browseGoals(["Copilot Readiness"]);
-    await action("Start over");
-    expect(container.textContent).not.toContain("Licensing not evaluated");
-    expect(container.querySelector("h1")?.textContent).toBe("Which Microsoft 365 licenses does your customer have?");
-    await click(choice("Microsoft 365 E7"));
-    await action("Continue with 1 license plan");
-    await click(choice("Copilot Readiness"));
-    await action("Continue with 1 security goal");
-    expect(container.querySelector(".experience-badge.limited")?.textContent).toBe("Limited experience");
-    expect(container.textContent).toContain("SharePoint Advanced Management");
-    expect(container.textContent).not.toContain("Licensing not evaluated");
+    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("false");
   });
 });
 
-describe("rendered selected-goal visibility and transitions", () => {
-  it("shows all three pictured goals on the scenario page without inventing direct-resource options", async () => {
-    const goals = ["Attack prevention", "App protection", "Copilot Readiness"];
-    await selectGoals(goals);
-
-    expect(container.querySelector("h1")?.textContent)
-      .toBe("Choose the scenarios and platforms to include");
-    expectSelectedGoals(goals);
-    expectGoalSection("Attack prevention", false);
-    expectGoalSection("App protection", true);
-    expectGoalSection("Copilot Readiness", false);
-    expect(choice("On-premises app protection").disabled).toBe(true);
-
-    await click(choice("Desktop apps"));
-    await action("View recommendations");
-    expectSelectedGoals(goals);
-    expect(container.querySelector("h1")?.textContent)
-      .toBe("Recommended security policy templates");
-    await action("← Back");
-    expectSelectedGoals(goals);
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
+describe("existing license-specific category behavior", () => {
+  it("retains Business Premium Remediation Scripts guidance in final recommendations", async () => {
+    await selectLicensedGoals(["Endpoint protection"], "Microsoft 365 Business Premium");
+    await click(choice("Windows"));
+    await openCategories();
+    expect(choice("Remediation Scripts").querySelector(".experience-badge")?.textContent)
+      .toBe("Limited experience");
+    await click(choice("Remediation Scripts"));
+    await openResults();
+    const note = container.querySelector(".license-requirement-note:not(.licensing-disclaimer)");
+    expect(note?.textContent).toContain("Remediation Scripts with limited experience");
+    expect(note?.textContent).toContain("Windows Enterprise E3 or E5");
   });
 
-  it("shows every direct-resource companion alongside Identity and Access and retains options on the following page", async () => {
-    const goals = [
-      "Attack prevention", "Identity and Access", "App protection",
-      "Automated Discovery and Deployment", "Security fundamentals", "Copilot Readiness",
-    ];
-    await selectGoals(goals);
+  it("keeps F1 Sensitive Information Types gated on the Data Security scenario page", async () => {
+    await selectLicensedGoals(["Data Security"], "Microsoft 365 F1");
+    expect(choice("Sensitive Information Types (SITs)").disabled).toBe(true);
+    expect(choice("Retention").disabled).toBe(false);
+    await click(choice("Retention"));
+    expect(await openCategories()).toBe(false);
+    await openResults();
+    expectSelectedGoals(["Data Security"]);
+  });
+});
 
-    expect(container.querySelector("h1")?.textContent).toBe("Choose the scenarios and platforms to include");
-    expect([...container.querySelectorAll('[aria-label="Selected eligible licenses"] .selection-pill')]
-      .map((pill) => pill.textContent?.replace("✓", "").trim())).toEqual(["Microsoft 365 E7", "Microsoft 365 E5"]);
-    expectSelectedGoals(goals);
-    expect([...container.querySelectorAll(".goal-option-sections > .goal-option-section > h2")]
-      .map((heading) => heading.textContent)).toEqual(goals);
-    for (const name of goals.filter((name) => name !== "Identity and Access")) {
-      expectGoalSection(name, name === "App protection");
+describe("Attack prevention scenarios", () => {
+  it.each([
+    ["Device code phishing attacks", ["conditional-access"]],
+    ["ClickFix attacks", ["windows-11", "macos"]],
+    ["Ransomware attacks", ["windows-11", "macos", "windows-servers"]],
+    ["Token theft attacks", ["conditional-access", "macos", "windows-11"]],
+    ["AiTM (Adversary-in-the-middle) phishing attacks", ["conditional-access"]],
+    ["Password spray attacks", ["conditional-access"]],
+    ["Brute force attacks", ["conditional-access", "windows-servers"]],
+  ] as const)("recommends existing resources for %s", async (attack, platformIds) => {
+    await browseGoals(["Attack prevention"]);
+    expect(choice(attack).disabled).toBe(false);
+    await click(choice(attack));
+    await openCategories();
+    await openResults();
+    expect(container.querySelector(".goal-option-grid")).toBeNull();
+    const links = [...container.querySelectorAll<HTMLAnchorElement>(".repository-link")]
+      .map((link) => link.href);
+    expect(links).toContain(getRelatedSiteUrl("attackPrevention", "en"));
+    for (const platformId of platformIds) {
+      expect(links).toContain(getPlatformRepositories(getPlatform(platformId))[0].url);
     }
-    await click(choice("Desktop apps"));
-    await click(choice("Conditional Access"));
-    await click(choice("Administrator protection"));
-    await action("Continue with selected policies");
+  });
+});
 
-    expectSelectedGoals(goals);
-    expect([...container.querySelectorAll(".goal-option-sections > .goal-option-section > h2")]
-      .map((heading) => heading.textContent)).toEqual(goals);
-    expectGoalSection("Administrator protection", false);
-    expectGoalSection("Conditional Access", true);
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
-    await click(choice("Internal user policies"));
-    await action("View recommendations");
-    expectSelectedGoals(goals);
-    await action("← Back");
-    expect(choice("Internal user policies").getAttribute("aria-pressed")).toBe("true");
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
+describe("shared repository availability and license guidance", () => {
+  it("retains the Workload ID Premium warning when Agent Security shares Conditional Access with OAuth apps", async () => {
+    await selectLicensedGoals(["AI and Agent Security", "App protection"], "Microsoft 365 Business Premium");
+    await clickChoices(["Agent Security", "OAuth apps"]);
+    await openCategories();
+    await openResults();
+    expect(container.textContent).toContain("Microsoft Entra Workload ID Premium is required");
+    expect(container.textContent).toContain("Microsoft 365 Business Premium");
   });
 
-  it("uses numbered goal order rather than click order or pinning Identity first", async () => {
-    await selectGoals(["AI and Agent Security", "Endpoint protection", "Identity and Access", "Attack prevention"]);
-    const goals = ["Attack prevention", "Identity and Access", "Endpoint protection", "AI and Agent Security"];
-    expectSelectedGoals(goals);
-    expect([...container.querySelectorAll(".goal-option-sections > .goal-option-section > h2")]
-      .map((heading) => heading.textContent)).toEqual(goals);
-    expect(container.querySelector("h1")?.textContent).toBe("Choose the scenarios and platforms to include");
-    await click(choice("Conditional Access"));
-    await action("Continue with selected policies");
-    expectSelectedGoals(goals);
-    expect([...container.querySelectorAll(".goal-option-sections > .goal-option-section > h2")]
-      .map((heading) => heading.textContent)).toEqual(goals);
+  it("keeps E7 exempt and does not evaluate Workload ID warnings in Skip mode", async () => {
+    await selectLicensedGoals(["App protection"]);
+    await click(choice("OAuth apps"));
+    await openCategories();
+    await openResults();
+    expect(container.textContent).not.toContain("Workload ID Premium is required");
+
+    await action("Start over");
+    await browseGoals(["App protection"]);
+    await click(choice("OAuth apps"));
+    await openCategories();
+    await openResults();
+    expectLicensingNotEvaluated();
   });
 
-  it("retains the Identity-specific title for an Identity-only selection", async () => {
-    await selectGoals(["Identity and Access"]);
-    expect(container.querySelector("h1")?.textContent).toBe("Choose Identity and Access policies");
-    expect(container.querySelector("#identity-and-access-heading")?.textContent).toBe("Identity and Access");
-    await click(choice("Administrator protection"));
-    await action("Continue with selected policies");
-    expect(container.querySelector("h1")?.textContent).toBe("Recommended security policy templates");
-    expectSelectedGoals(["Identity and Access"]);
-    await action("← Back");
-    expect(choice("Administrator protection").getAttribute("aria-pressed")).toBe("true");
+  it("keeps the AI Security macOS scope Coming while allowing the shared macOS repository for Desktop apps", async () => {
+    await selectLicensedGoals(["AI and Agent Security", "App protection"]);
+    await clickChoices(["AI Security", "Desktop apps"]);
+    await openCategories();
+    await openResults();
+    const macosUrl = getPlatformRepositories(getPlatform("macos"))[0].url;
+    const macosCard = [...container.querySelectorAll<HTMLElement>(".recommendation-card")]
+      .find((card) => card.querySelector<HTMLAnchorElement>(".repository-link")?.href === macosUrl);
+    expect(macosCard).toBeDefined();
+    expect(macosCard!.querySelector(".coming-soon-badge")?.textContent).toBe("Coming");
+    expect(macosCard!.textContent).toContain("AI Security macOS");
+    expect(macosCard!.querySelector(".recommendation-reasons")?.textContent)
+      .toBe("Recommended for: Desktop apps");
+    expect(macosCard!.querySelector<HTMLAnchorElement>(".repository-link")?.href).toBe(macosUrl);
   });
 
-  it("keeps all goals visible through endpoint category selection and preserves only retained platform categories", async () => {
-    const goals = ["Attack prevention", "Endpoint protection", "App protection", "Copilot Readiness"];
-    await selectGoals(goals);
-    await click(choice("Windows"));
-    await click(choice("macOS"));
-    await click(choice("Desktop apps"));
-    await action("Choose endpoint policy categories");
-    expectSelectedGoals(goals);
-
-    const windows = container.querySelector("#endpoint-windows-categories-heading")!.parentElement!;
-    const macos = container.querySelector("#endpoint-macos-categories-heading")!.parentElement!;
-    await click(windows.querySelector<HTMLButtonElement>("button")!);
-    await click(macos.querySelector<HTMLButtonElement>("button")!);
-    await action("View recommendations");
-    expectSelectedGoals(goals);
-    await action("← Back");
-    expectSelectedGoals(goals);
-    await action("← Back to platforms");
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
-    await click(choice("Windows"));
-    await click(choice("Windows"));
-    await action("Choose endpoint policy categories");
-
-    const retainedMacos = container.querySelector("#endpoint-macos-categories-heading")!.parentElement!;
-    const resetWindows = container.querySelector("#endpoint-windows-categories-heading")!.parentElement!;
-    expect(retainedMacos.querySelector('button[aria-pressed="true"]')).not.toBeNull();
-    expect(resetWindows.querySelector('button[aria-pressed="true"]')).toBeNull();
-    expectSelectedGoals(goals);
+  it("keeps AI Security macOS unavailable when it is the only macOS source", async () => {
+    await selectLicensedGoals(["AI and Agent Security"]);
+    await click(choice("AI Security"));
+    await openCategories();
+    await openResults();
+    const comingCard = [...container.querySelectorAll<HTMLElement>(".recommendation-card")]
+      .find((card) => card.querySelector(".coming-soon-badge"));
+    expect(comingCard).toBeDefined();
+    expect(comingCard!.querySelector<HTMLButtonElement>("button.repository-link")?.disabled).toBe(true);
+    expect(comingCard!.querySelector("a.repository-link")).toBeNull();
   });
+});
 
-  it("removes deselected goals and their options without clearing other goals' selections", async () => {
-    await selectGoals(["Attack prevention", "App protection", "Copilot Readiness"]);
-    await click(choice("Desktop apps"));
+describe("license context and re-entry", () => {
+  it("preserves scenario selections when returning to licenses without changing the plan", async () => {
+    await selectLicensedGoals(["AI and Agent Security"]);
+    await click(choice("Agent Security"));
+    expect(await openCategories()).toBe(false);
+    await openResults();
+    await action("← Back to scenarios");
     await action("← Back");
-    await click(choice("Attack prevention"));
-    await click(choice("Copilot Readiness"));
+    await action("← Back");
+    expect(choice("Microsoft 365 E7").getAttribute("aria-pressed")).toBe("true");
+    await action("Continue with 1 license plan");
+    expect(choice("AI and Agent Security").getAttribute("aria-pressed")).toBe("true");
     await action("Continue with 1 security goal");
-    expectSelectedGoals(["App protection"]);
-    expect(container.querySelector("#attack-protection-heading")).toBeNull();
-    expect(container.querySelector("#copilot-readiness-heading")).toBeNull();
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
-
-    await action("← Back");
-    await click(choice("App protection"));
-    await click(choice("App protection"));
-    await click(choice("Copilot Readiness"));
-    await action("Continue with 2 security goals");
-    expectSelectedGoals(["App protection", "Copilot Readiness"]);
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("false");
-    await click(choice("Desktop apps"));
-    await click(choice("Desktop apps"));
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("false");
+    expect(choice("Agent Security").getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("clears deselected Identity policies but preserves configurable companions", async () => {
-    await selectGoals(["Identity and Access", "App protection", "Copilot Readiness"]);
-    await click(choice("Conditional Access"));
-    await click(choice("Desktop apps"));
-    await action("Continue with selected policies");
-    await click(choice("Internal user policies"));
+  it("clears selections when the selected license plan changes", async () => {
+    await selectLicensedGoals(["AI and Agent Security"]);
+    await click(choice("Agent Security"));
     await action("← Back");
     await action("← Back");
-    await click(choice("Identity and Access"));
-    await action("Continue with 2 security goals");
-    expectSelectedGoals(["App protection", "Copilot Readiness"]);
-    expect(container.querySelector("#conditional-access-heading")).toBeNull();
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
-
-    await action("← Back");
-    await click(choice("Identity and Access"));
-    await action("Continue with 3 security goals");
-    expect(choice("Conditional Access").getAttribute("aria-pressed")).toBe("false");
-    await click(choice("Conditional Access"));
-    await action("Continue with selected policies");
-    expect(choice("Internal user policies").getAttribute("aria-pressed")).toBe("false");
-    expect(choice("Desktop apps").getAttribute("aria-pressed")).toBe("true");
+    await click(choice("Microsoft 365 E7"));
+    await click(choice("Microsoft 365 E5"));
+    await action("Continue with 1 license plan");
+    expect(choice("AI and Agent Security").getAttribute("aria-pressed")).toBe("false");
   });
+});
 
-  it("continues directly to recommendations when no selected goal needs options", async () => {
-    const goals = ["Attack prevention", "Security fundamentals", "Copilot Readiness"];
-    await selectGoals(goals);
-    expect(container.querySelector("h1")?.textContent).toBe("Recommended security policy templates");
-    expectSelectedGoals(goals);
-    await action("← Back");
-    expect(choice("Attack prevention").getAttribute("aria-pressed")).toBe("true");
-    expect(choice("Copilot Readiness").getAttribute("aria-pressed")).toBe("true");
-    expect(choice("Azure security deployment best practices").disabled).toBe(true);
-  });
+describe("top-level combination sweep", () => {
+  it("takes all 511 supported goal combinations through their applicable selection flow", async () => {
+    const supportedNames = securityGoalNavigation
+      .filter((goal) => !("comingSoon" in goal && goal.comingSoon))
+      .map((goal) => goal.name);
+    expect(supportedNames).toHaveLength(9);
+
+    for (let mask = 1; mask < 1 << supportedNames.length; mask += 1) {
+      if (mask > 1) await action("Start over");
+      await action("Skip license selection");
+      const selectedNames = supportedNames.filter((_, index) => (mask & (1 << index)) !== 0);
+      await clickChoices(selectedNames);
+      await action(`Continue with ${selectedNames.length} security goal`);
+      const scenarios = [
+        ...(selectedNames.includes("Attack prevention") ? ["Device code phishing attacks"] : []),
+        ...(selectedNames.includes("Identity and Access") ? ["Administrator protection"] : []),
+        ...(selectedNames.includes("Endpoint protection") ? ["Windows"] : []),
+        ...(selectedNames.includes("AI and Agent Security") ? ["AI Security"] : []),
+          ...(selectedNames.includes("Data Security") ? ["Retention"] : []),
+        ...(selectedNames.includes("App protection") ? ["Desktop apps"] : []),
+      ];
+      if (scenarios.length) await clickChoices(scenarios);
+        if (selectedNames.includes("Endpoint protection")) {
+          await action("Choose policy categories");
+          await click(choice("Antivirus (AV)"));
+        }
+      await action("View recommendations");
+      expect(container.querySelector("h1")?.textContent)
+        .toBe("Recommended security policy templates");
+    }
+  }, 120_000);
 });
