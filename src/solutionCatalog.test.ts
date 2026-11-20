@@ -20,6 +20,41 @@ import {
 } from "./solutionCatalog";
 
 describe("security goal recommendations", () => {
+  it.each([
+    "business-premium",
+    "business-premium-defender",
+    "business-premium-purview",
+    "business-premium-defender-purview",
+  ] as const)("keeps Windows Remediation Scripts limited for %s without limiting ordinary Intune settings", (licenseId) => {
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", [licenseId], ["windows-11"], "windows-remediation-scripts",
+    )).toBe("limited");
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", [licenseId], ["windows-11"], "windows-encryption",
+    )).toBe("full");
+    const note = getEndpointFeatureLicenseNote(
+      "intune", [licenseId], "windows-11", {}, "windows-remediation-scripts",
+    );
+    expect(note).toContain("Intune Remediations");
+    expect(note).toContain("Windows Enterprise E3 or E5");
+    expect(note).not.toContain("Defender Suite");
+  });
+
+  it.each(["e3", "e5"] as const)("evaluates Remediation Scripts per plan without pooling Business Premium and %s entitlements", (enterpriseId) => {
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", [enterpriseId, "business-premium"], ["windows-11"], "windows-remediation-scripts",
+    )).toBe("limited");
+    expect(getSecurityGoalOptionExperience(
+      "endpoint-protection", [enterpriseId], ["windows-11"], "windows-remediation-scripts",
+    )).toBe("full");
+    const note = getEndpointFeatureLicenseNote(
+      "intune", [enterpriseId, "business-premium"], "windows-11",
+      { [enterpriseId]: 2, "business-premium": 10 }, "windows-remediation-scripts",
+    );
+    expect(note).toContain(`2 Microsoft 365 ${enterpriseId.toUpperCase()} licenses: Full coverage`);
+    expect(note).toContain("10 Microsoft 365 Business Premium licenses: Intune Remediations");
+  });
+
   it.each(licenses.filter((license) => license.eligible))(
     "keeps every server platform, subcategory and final selection limited for $name",
     ({ id }) => {
@@ -982,7 +1017,7 @@ describe("security goal recommendations", () => {
     "f3-defender-purview",
     "f1-defender",
     "f1-defender-purview",
-  ] as const)("shows full client features but limited server features for %s", (licenseId) => {
+  ] as const)("respects server and Remediations limitations for otherwise full client features with %s", (licenseId) => {
     const features = getSecurityGoalOptions("endpoint-protection")
       .filter((option) => option.endpointFeature);
     for (const option of features) {
@@ -993,7 +1028,8 @@ describe("security goal recommendations", () => {
         option.id,
       )).toBe(option.platformIds.some((id) =>
         id === "windows-servers" || id === "linux-server",
-      ) ? "limited" : "full");
+      ) || (option.id === "windows-remediation-scripts" && licenseId.startsWith("business-premium"))
+        ? "limited" : "full");
       expect(getEndpointFeatureLicenseNote(option.endpointFeature, [licenseId]))
         .toBeUndefined();
     }
@@ -1127,7 +1163,7 @@ describe("security goal recommendations", () => {
           if (platform === "windows-servers" || platform === "linux-server") {
             expect(getWindowsServerLicenseNotes([license.id], platform).length).toBeGreaterThan(0);
           } else {
-            expect(getEndpointFeatureLicenseNote(option.endpointFeature, [license.id], platform))
+            expect(getEndpointFeatureLicenseNote(option.endpointFeature, [license.id], platform, {}, option.id))
               .toBeTruthy();
           }
         }
@@ -1136,7 +1172,7 @@ describe("security goal recommendations", () => {
   );
 
   it.each(licenses.filter((license) => license.eligible))(
-    "limits only AV on client endpoint platforms for $name",
+    "respects AV, frontline and Remediations limitations on client endpoint platforms for $name",
     (license) => {
       const options = getSecurityGoalOptions("endpoint-protection").filter((option) =>
         option.endpointFeature &&
@@ -1151,7 +1187,9 @@ describe("security goal recommendations", () => {
         if (!option.id.endsWith("-antivirus")) {
           expect(experience).toBe(
             (license.id.startsWith("f1") || license.id.startsWith("f3")) &&
-              !license.id.includes("defender") ? "limited" : "full",
+              !license.id.includes("defender") ||
+              (option.id === "windows-remediation-scripts" && license.id.startsWith("business-premium"))
+                ? "limited" : "full",
           );
           expect(isSecurityGoalOptionAvailable("endpoint-protection", option.id, [license.id]))
             .toBe(true);

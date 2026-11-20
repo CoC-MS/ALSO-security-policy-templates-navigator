@@ -654,9 +654,11 @@ export function isSecurityGoalOptionAvailable(
   goalId: SecurityGoalId,
   optionId: string,
   licenseIds: readonly License["id"][],
+  licensingEvaluated = true,
 ): boolean {
   const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
   if (option?.comingSoon && !option.allowRepositoryPreview) return false;
+  if (!licensingEvaluated) return true;
   if (goalId === "endpoint-protection") {
     return licenseIds.some(isLicenseEligible);
   }
@@ -687,11 +689,18 @@ export function isSecurityGoalOptionAvailable(
   return true;
 }
 
+function getWindowsRemediationLicenseNote(licenseIds: readonly License["id"][]): string | undefined {
+  return licenseIds.some((id) => id.startsWith("business-premium"))
+    ? "Intune Remediations is not included with Microsoft 365 Business Premium. Users need Windows Enterprise E3 or E5, Windows Education A3 or A5, or Windows VDA per user."
+    : undefined;
+}
+
 export function getEndpointFeatureLicenseNote(
   feature: SolutionOption["endpointFeature"],
   licenseIds: readonly License["id"][],
   platformId?: Platform["id"],
   licenseQuantities: LicenseQuantities = {},
+  optionId?: string,
 ): string | undefined {
   if (!feature) return undefined;
 
@@ -700,7 +709,7 @@ export function getEndpointFeatureLicenseNote(
   if (eligibleLicenseIds.length > 1) {
     const notes = eligibleLicenseIds.map((licenseId) => ({
       licenseId,
-      note: getEndpointFeatureLicenseNote(feature, [licenseId], platformId),
+      note: getEndpointFeatureLicenseNote(feature, [licenseId], platformId, {}, optionId),
     }));
     if (notes.every(({ note }) => note === undefined)) return undefined;
     const details = notes.map(({ licenseId, note }) => {
@@ -709,6 +718,10 @@ export function getEndpointFeatureLicenseNote(
       return `${quantity} ${name} ${quantity === 1 ? "license" : "licenses"}: ${note ?? "Full coverage is included with this plan."}`;
     }).join(" ");
     return `Selected plan mix: ${formatSelectedLicenseMix(eligibleLicenseIds, licenseQuantities)}. Entitlements apply only to users assigned each matching plan; the counts do not indicate whether the same users hold multiple plans. ${details}`;
+  }
+  if (optionId === "windows-remediation-scripts" &&
+    eligibleLicenseIds.some((id) => endpointIntuneFullLicenseIds.has(id))) {
+    return getWindowsRemediationLicenseNote(eligibleLicenseIds);
   }
   if (eligibleLicenseIds.some((licenseId) =>
     endpointFullExperienceLicenseIds.has(licenseId),
@@ -890,6 +903,9 @@ export function getSecurityGoalOptionExperience(
   }
   if (goalId === "endpoint-protection" && optionId) {
     const option = getSecurityGoalOptions(goalId).find((item) => item.id === optionId);
+    if (optionId === "windows-remediation-scripts" && getWindowsRemediationLicenseNote(licenseIds)) {
+      return "limited";
+    }
     if (licenseIds.some(isLicenseEligible) &&
       licenseIds.filter(isLicenseEligible).every((id) => id.startsWith("f1") || id.startsWith("f3")) &&
       !licenseIds.some((id) => endpointFullExperienceLicenseIds.has(id))) {
