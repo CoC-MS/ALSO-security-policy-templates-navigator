@@ -10,6 +10,7 @@ import {
 } from "./catalog";
 import { LicensingDisclaimer } from "./LicensingDisclaimer";
 import { getRelatedSiteUrl, relatedSites, secureByDefaultUrl } from "./relatedSites";
+import { getSecurityGoal } from "./solutionCatalog";
 
 export type ReadinessGoalId = "security-fundamentals" | "copilot-readiness" | "automated-discovery-deployment";
 
@@ -109,29 +110,33 @@ export function getReadinessGuidance(
 export function ReadinessRecommendation({
   goalId, licenseIds,
   licenseQuantities = {},
+  licensingEvaluated = true,
 }: {
   goalId: ReadinessGoalId;
   licenseIds: readonly License["id"][];
   licenseQuantities?: LicenseQuantities;
+  licensingEvaluated?: boolean;
 }) {
   const locale = useLocale();
 
-  const guidance = getReadinessGuidance(goalId, licenseIds, licenseQuantities);
-  if (!guidance) return null;
+  const name = getSecurityGoal(goalId).name;
+  const guidance = licensingEvaluated ? getReadinessGuidance(goalId, licenseIds, licenseQuantities) : undefined;
+  if (licensingEvaluated && !guidance) return null;
   return (
     <article className="recommendation-card">
       <div className="recommendation-card-main">
         <span className="choice-icon" aria-hidden="true">{translate(locale, goalId === "automated-discovery-deployment" ? "ADD" : goalId === "copilot-readiness" ? "COP" : "SEC")}</span>
         <div className="platform-title">
-          <h2>{translate(locale, guidance.name)}</h2>
-          <span className={`experience-badge ${guidance.experience}`}>
-            {translate(locale, guidance.experience === "full" ? "Full experience" : "Limited experience")}
+          <h2>{translate(locale, name)}</h2>
+          <span className={`experience-badge ${guidance?.experience ?? ""}`}>
+            {translate(locale, !licensingEvaluated ? "Licensing not evaluated"
+              : guidance?.experience === "full" ? "Full experience" : "Limited experience")}
           </span>
         </div>
         <p>{translate(locale, goalId === "automated-discovery-deployment"
           ? "Automated discovery and deployment of tenant wide settings, break glass accounts and ALSO's security baseline policies"
           : "Explore ALSO Microsoft Security Fundamentals and Copilot Readiness guidance.")}</p>
-        {guidance.message && (
+        {guidance?.message && (
           <aside className="license-requirement-note">
             <strong>{translate(locale, `${guidance.name} with limited experience`)}</strong>
             <p>{translate(locale, guidance.message)}</p>
@@ -141,7 +146,7 @@ export function ReadinessRecommendation({
         <div className="repository-links">
           <a className="button primary repository-link" href={goalId === "automated-discovery-deployment" ? secureByDefaultUrl : getRelatedSiteUrl("readiness", locale)}
             target="_blank" rel="noopener noreferrer">
-            {translateFormat(locale, "Open {name} →", { name: translate(locale, guidance.name) })}
+            {translateFormat(locale, "Open {name} →", { name: translate(locale, name) })}
           </a>
         </div>
       </div>

@@ -18,6 +18,33 @@ by `de`, `fr`, `es`, `ru`, `it`, and `pl`.
 The language selector preserves the current selections. All languages share the
 same security goals, nested policy categories, and licensing logic.
 
+Every selected security goal remains visible on the next wizard page, including
+direct-resource goals such as Attack prevention and Copilot Readiness that need
+no scenario choices. Identity and Access shows all selected companion goals.
+Attack prevention, Copilot Readiness, and the other no-option goals show
+compact cards matching the selectable options, marked **Included automatically**.
+No extra selection is required; resource links and detailed licensing guidance
+remain on the final recommendations page.
+The full goal selection also remains visible when choosing endpoint categories
+and viewing recommendations. Back navigation preserves options; deselecting a
+goal removes only that goal's options.
+Selected goals follow the original numbered goal order, including Identity and
+Access as its own section. Mixed selections use a combined-selection heading.
+
+Use **Skip license selection** below the license-page introduction to browse
+security goals, categories, and matching resources without selecting a license.
+This mode does not filter by licensing or assume a license plan; it shows
+**Licensing not evaluated** instead of experience badges or upgrade guidance.
+Coming-soon restrictions still apply. Back preserves browsing selections when
+skipping again; continuing with licenses starts the normal license-evaluated
+flow. Start over clears both the selections and the browsing mode.
+
+Windows **Remediation Scripts** has Limited experience for Business Premium,
+including its Defender/Purview bundles. These plans do not supply the separate
+[Intune Remediations user licensing](https://learn.microsoft.com/intune/device-management/tools/deploy-remediations#licensing).
+Other Windows category ratings are unchanged; mixed plans are evaluated per
+plan, and skipped licensing remains not evaluated.
+
 Home returns to license selection in the current language; View all policies
 opens the repository catalog. Report problem opens GitHub's issue chooser in
 the current tab and requires a GitHub sign-in.

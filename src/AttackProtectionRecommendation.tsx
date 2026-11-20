@@ -10,17 +10,19 @@ export const attackMapperUrl = relatedSites.attackPrevention.url;
 export function AttackProtectionRecommendation({
   licenseIds,
   licenseQuantities = {},
+  licensingEvaluated = true,
 }: {
   licenseIds: readonly License["id"][];
   licenseQuantities?: LicenseQuantities;
+  licensingEvaluated?: boolean;
 }) {
   const locale = useLocale();
 
-  const licenseNote = getConditionalAccessCategoryLicenseNote(
+  const licenseNote = licensingEvaluated ? getConditionalAccessCategoryLicenseNote(
     ["administrator-policies"],
     licenseIds,
     licenseQuantities,
-  );
+  ) : undefined;
 
   return (
     <article className="recommendation-card">
@@ -28,8 +30,9 @@ export function AttackProtectionRecommendation({
         <span className="choice-icon" aria-hidden="true">{translate(locale, "ATT")}</span>
         <div className="platform-title">
           <h2>{translate(locale, "MITRE ATT&CK to ALSO Microsoft Security Policy Template Mapper")}</h2>
-          <span className={`experience-badge ${licenseNote ? "limited" : "full"}`}>
-            {translate(locale, licenseNote ? "Limited experience" : "Full experience")}
+          <span className={`experience-badge ${!licensingEvaluated ? "" : licenseNote ? "limited" : "full"}`}>
+            {translate(locale, !licensingEvaluated ? "Licensing not evaluated"
+              : licenseNote ? "Limited experience" : "Full experience")}
           </span>
         </div>
         <p>{translate(locale, "Explore attack scenarios and their mapped ALSO Microsoft Security policy templates.")}</p>
