@@ -58,9 +58,8 @@ import { BusinessLicensePrerequisites } from "./BusinessLicensePrerequisites";
 type Step =
   | "license"
   | "goal"
-  | "identity-and-access"
   | "focus"
-  | "endpoint-categories"
+  | "categories"
   | "blocked"
   | "result"
   | "overview"
@@ -76,8 +75,9 @@ export function getUnconfiguredGoalNames(
 ): string[] {
   return goals
     .filter((goal) =>
-      goal.id !== "attack-protection" &&
       goal.id !== "endpoint-protection" &&
+      goal.id !== "conditional-access" &&
+      goal.id !== "data-protection" &&
       goal.options.some((option) => !isAutoSelectedOption(option)) &&
       !goal.options.some((option) =>
         !isAutoSelectedOption(option) &&
@@ -89,7 +89,8 @@ export function getUnconfiguredGoalNames(
 
 export function getConfigurableGoals<T extends SecurityGoal>(goals: readonly T[]): T[] {
   return goals.filter((goal) =>
-    goal.id !== "attack-protection" &&
+    goal.id !== "conditional-access" &&
+    goal.id !== "data-protection" &&
     goal.options.some((option) => !isAutoSelectedOption(option)),
   );
 }
@@ -240,29 +241,24 @@ function LicenseGrid({
 
 function StepIndicator({ step }: { step: Step }) {
   const locale = useLocale();
-
-  const goalActive =
-    step === "goal" ||
-    step === "identity-and-access" ||
-    step === "focus" ||
-    step === "endpoint-categories" ||
-    step === "result";
+  const steps = [
+    { key: "license", label: "Licenses" },
+    { key: "goal", label: "Security challenges" },
+    { key: "result", label: "Recommended templates" },
+  ] as const;
+  const progressStep = step === "focus" || step === "categories" ? "goal" : step;
+  const activeIndex = steps.findIndex(({ key }) => key === progressStep);
   return (
     <div className="steps" aria-label={translate(locale, "Progress")}>
-      <div className="step-item active">
-        <span aria-hidden="true">1</span>
-        <strong>{translate(locale, "Licenses")}</strong>
-      </div>
-      <div className="step-line" aria-hidden="true" />
-      <div className={`step-item ${goalActive ? "active" : ""}`}>
-        <span aria-hidden="true">2</span>
-        <strong>{translate(locale, "Security goals")}</strong>
-      </div>
-      <div className="step-line" aria-hidden="true" />
-      <div className={`step-item ${step === "result" ? "active" : ""}`}>
-        <span aria-hidden="true">3</span>
-        <strong>{translate(locale, "Recommended templates")}</strong>
-      </div>
+      {steps.map(({ key, label }, index) => (
+        <Fragment key={key}>
+          {index > 0 && <div className="step-line" aria-hidden="true" />}
+          <div className={`step-item ${index <= activeIndex ? "active" : ""}`}>
+            <span aria-hidden="true">{index + 1}</span>
+            <strong>{translate(locale, label)}</strong>
+          </div>
+        </Fragment>
+      ))}
     </div>
   );
 }
@@ -325,6 +321,9 @@ interface RepositoryRecommendation {
   sourcePlatform: Platform;
   sourcePlatformIds: Platform["id"][];
   solutionNames: string[];
+  availableSolutionNames: string[];
+  comingSoonSolutionNames: string[];
+  comingSoonSourcePlatformNames: string[];
   policyIds: string[];
   policyNotes: string[];
 }
@@ -370,6 +369,18 @@ export function getRepositoryRecommendations(
       if (existing) {
         existing.sourcePlatformIds = [...new Set([...existing.sourcePlatformIds, platform.id])];
         existing.solutionNames = [...new Set([...existing.solutionNames, ...solutionNames])];
+        if ("comingSoon" in platform && platform.comingSoon) {
+          existing.comingSoonSolutionNames = [
+            ...new Set([...existing.comingSoonSolutionNames, ...solutionNames]),
+          ];
+          existing.comingSoonSourcePlatformNames = [
+            ...new Set([...existing.comingSoonSourcePlatformNames, platform.name]),
+          ];
+        } else {
+          existing.availableSolutionNames = [
+            ...new Set([...existing.availableSolutionNames, ...solutionNames]),
+          ];
+        }
         existing.policyIds = [...new Set([...existing.policyIds, ...policyIds])];
         existing.policyNotes = [...new Set([...existing.policyNotes, ...policyNotes])];
         if (
@@ -388,6 +399,15 @@ export function getRepositoryRecommendations(
         sourcePlatform: platform,
         sourcePlatformIds: [platform.id],
         solutionNames,
+        availableSolutionNames: "comingSoon" in platform && platform.comingSoon
+          ? []
+          : solutionNames,
+        comingSoonSolutionNames: "comingSoon" in platform && platform.comingSoon
+          ? solutionNames
+          : [],
+        comingSoonSourcePlatformNames: "comingSoon" in platform && platform.comingSoon
+          ? [platform.name]
+          : [],
         policyIds,
         policyNotes,
       });
@@ -409,6 +429,7 @@ function App() {
   const [selectedLicenses, setSelectedLicenses] = useState<License[]>([]);
   const [browseWithoutLicenses, setBrowseWithoutLicenses] = useState(false);
   const [licenseQuantities, setLicenseQuantities] = useState<LicenseQuantities>({});
+  const [lastLicenseContext, setLastLicenseContext] = useState<string>();
   const [selectedGoalIds, setSelectedGoalIds] = useState<SecurityGoalId[]>([]);
   const [identityAndAccessSelected, setIdentityAndAccessSelected] = useState(false);
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
@@ -456,6 +477,16 @@ function App() {
     selectedEndpointPlatforms,
     selectedEndpointCategoryIds,
   );
+  const missingDataSecurityCategories = selectedGoalIds.includes("data-protection") &&
+    !selectedOptionIds.some((id) => id.startsWith("data-protection:"));
+  const missingRequiredCategories = [
+    ...(selectedGoalIds.includes("conditional-access") &&
+      !selectedOptionIds.some((id) => id.startsWith("conditional-access:"))
+      ? ["Conditional Access"]
+      : []),
+  ];
+  const hasCategoryStep = selectedGoalIds.includes("endpoint-protection") ||
+    selectedGoalIds.includes("conditional-access");
   const unconfiguredGoalNames = getUnconfiguredGoalNames(
     selectedGoals,
     selectedOptionIds,
@@ -566,13 +597,25 @@ function App() {
   function continueFromLicenses() {
     setBrowseWithoutLicenses(false);
     if (eligibleLicenses.length === 0) {
+      setSelectedGoalIds([]);
+      setIdentityAndAccessSelected(false);
+      setSelectedOptionIds([]);
+      setLastLicenseContext(undefined);
       setStep("blocked");
       return;
     }
 
-    setSelectedGoalIds([]);
-    setIdentityAndAccessSelected(false);
-    setSelectedOptionIds([]);
+    const licenseContext = JSON.stringify(
+      selectedLicenses
+        .map((license) => [license.id, licenseQuantities[license.id] ?? 1])
+        .sort(([left], [right]) => String(left).localeCompare(String(right))),
+    );
+    if (browseWithoutLicenses || licenseContext !== lastLicenseContext) {
+      setSelectedGoalIds([]);
+      setIdentityAndAccessSelected(false);
+      setSelectedOptionIds([]);
+    }
+    setLastLicenseContext(licenseContext);
     setStep("goal");
   }
 
@@ -584,6 +627,7 @@ function App() {
       setSelectedGoalIds([]);
       setIdentityAndAccessSelected(false);
       setSelectedOptionIds([]);
+      setLastLicenseContext(undefined);
     }
     setStep("goal");
   }
@@ -668,8 +712,9 @@ function App() {
   }
 
   function renderGoalOptionSection(goal: (typeof securityGoals)[number], Heading: "h2" | "h3" = "h2") {
-    const needsOptions = getConfigurableGoals([goal]).length > 0;
+    const needsOptions = goal.id === "data-protection" || getConfigurableGoals([goal]).length > 0;
     const includedOption = goal.options.find(isAutoSelectedOption);
+    const categoryGoal = goal.id === "conditional-access";
     return (
       <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
         <Heading id={`${goal.id}-heading`}>{translate(locale, goal.name)}</Heading>
@@ -682,6 +727,18 @@ function App() {
               )}
             </div>
           </>
+        ) : categoryGoal ? (
+          <div className="card-grid goal-resource-grid">
+            <div className="choice-card goal-card selected included-goal-card">
+              <span className="choice-icon" aria-hidden="true">01</span>
+              <span className="choice-details">
+                <span className="choice-name">{translate(locale, goal.name === "Conditional Access" ? "Conditional Access policy categories" : "Data Security policy categories")}</span>
+                <span className="goal-description">{translate(locale, "Choose these categories on the next step.")}</span>
+                <span className="experience-badge">{translate(locale, "Choose categories next")}</span>
+              </span>
+              <span className="choice-check" aria-hidden="true">&#10003;</span>
+            </div>
+          </div>
         ) : (
           <div className="card-grid goal-resource-grid">
             <div className="choice-card goal-card selected included-goal-card">
@@ -699,11 +756,41 @@ function App() {
     );
   }
 
+  function renderCategorySummary(goal: SecurityGoal, options: SolutionOption[], Heading: "h2" | "h3" = "h2") {
+    const scenarioOptions = options.filter((option) => !isAutoSelectedOption(option));
+    const summaryOptions = scenarioOptions.length > 0
+      ? scenarioOptions
+      : options.filter(isAutoSelectedOption);
+    return (
+      <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-summary-heading`}>
+        <Heading id={`${goal.id}-summary-heading`}>{translate(locale, goal.name)}</Heading>
+        <div className="category-option-summary">
+          {summaryOptions.length > 0 ? summaryOptions.map((option) => (
+            <span className="selection-pill" key={`${goal.id}:${option.id}`}>
+              <span aria-hidden="true">&#10003;</span>
+              {translate(locale, option.name)}
+              {isAutoSelectedOption(option) && (
+                <span className="summary-inclusion">{translate(locale, "Included automatically")}</span>
+              )}
+            </span>
+          )) : (
+            <span className="selection-pill">
+              <span aria-hidden="true">&#10003;</span>
+              {translate(locale, goal.name)}
+              <span className="summary-inclusion">{translate(locale, "Included automatically")}</span>
+            </span>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   function renderSelectedGoalSections(identitySelection = false) {
     return selectedNavigationGoals.map((navigationGoal) => {
       if (navigationGoal.id !== "identity-and-access") {
         return renderGoalOptionSection(securityGoals.find((goal) => goal.id === navigationGoal.id)!);
       }
+
       return (
         <section className="goal-option-section" key={navigationGoal.id} aria-labelledby="identity-and-access-heading">
           <h2 id="identity-and-access-heading">{translate(locale, navigationGoal.name)}</h2>
@@ -745,6 +832,72 @@ function App() {
     });
   }
 
+  function renderCategorySections() {
+    return selectedNavigationGoals.map((navigationGoal) => {
+      if (navigationGoal.id === "identity-and-access") {
+        const selectedIdentityGoals = selectedGoals.filter((goal) =>
+          identityAndAccessGoalIds.includes(goal.id),
+        );
+        return (
+          <section className="goal-option-section" key={navigationGoal.id} aria-labelledby="identity-and-access-heading">
+            <h2 id="identity-and-access-heading">{translate(locale, navigationGoal.name)}</h2>
+            {selectedIdentityGoals.map((goal) => goal.id === "conditional-access" ? (
+              <section className="goal-option-section" key={goal.id} aria-labelledby="conditional-access-heading">
+                <h3 id="conditional-access-heading">{translate(locale, goal.name)}</h3>
+                <p>{translate(locale, goal.prompt)}</p>
+                <div className="card-grid goal-option-grid" aria-label={translateFormat(locale, "{name} options", { name: translate(locale, goal.name) })}>
+                  {goal.options.map((option, index) => renderOptionCard(goal.id, option, index))}
+                </div>
+              </section>
+            ) : (
+              renderCategorySummary(
+                goal,
+                goal.options.filter(isAutoSelectedOption),
+                "h3",
+              )
+            ))}
+          </section>
+        );
+      }
+
+      const goal = securityGoals.find((item) => item.id === navigationGoal.id)!;
+      if (goal.id === "endpoint-protection") {
+        return (
+          <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
+            <h2 id={`${goal.id}-heading`}>{translate(locale, goal.name)}</h2>
+            {selectedEndpointPlatforms.map((platformOption) => (
+              <section className="goal-option-section" key={platformOption.id} aria-labelledby={`${platformOption.id}-categories-heading`}>
+                <h3 id={`${platformOption.id}-categories-heading`}>{translate(locale, platformOption.name)}</h3>
+                <div className="card-grid endpoint-subcategory-grid">
+                  {getSecurityGoalOptionChildren(platformOption).map((child, index) =>
+                    renderOptionCard("endpoint-protection", child, index, true),
+                  )}
+                </div>
+              </section>
+            ))}
+          </section>
+        );
+      }
+
+      if (goal.id === "conditional-access") {
+        return (
+          <section className="goal-option-section" key={goal.id} aria-labelledby={`${goal.id}-heading`}>
+            <h2 id={`${goal.id}-heading`}>{translate(locale, goal.name)}</h2>
+            <p>{translate(locale, goal.prompt)}</p>
+            <div className="card-grid goal-option-grid" aria-label={translateFormat(locale, "{name} options", { name: translate(locale, goal.name) })}>
+              {goal.options.map((option, index) => renderOptionCard(goal.id, option, index))}
+            </div>
+          </section>
+        );
+      }
+
+      const selectedOptionsForGoal = goal.options.filter((option) =>
+        isAutoSelectedOption(option) || selectedOptionIds.includes(`${goal.id}:${option.id}`),
+      );
+      return renderCategorySummary(goal, selectedOptionsForGoal);
+    });
+  }
+
   function renderSelectedGoals() {
     return (
       <div className="selection-pills" aria-label={translate(locale, "Your selected security goals")}>
@@ -779,17 +932,20 @@ function App() {
 
   function continueFromFocus() {
     if (unconfiguredGoalNames.length > 0) return;
-    if (selectedGoalIds.includes("endpoint-protection")) {
-      if (selectedEndpointPlatforms.length > 0) setStep("endpoint-categories");
-      return;
-    }
-    if (selectedOptions.length > 0) setStep("result");
+    if (identityAndAccessSelected &&
+      !selectedGoalIds.some((id) => identityAndAccessGoalIds.includes(id))) return;
+    if (selectedGoalIds.includes("endpoint-protection") &&
+      selectedEndpointPlatforms.length === 0) return;
+    if (missingDataSecurityCategories) return;
+    setStep(hasCategoryStep ? "categories" : "result");
   }
 
-  function continueFromEndpointCategories() {
+  function continueFromCategories() {
     if (
       missingEndpointCategories.length === 0 &&
-      unconfiguredGoalNames.length === 0
+      unconfiguredGoalNames.length === 0 &&
+      (!selectedGoalIds.includes("conditional-access") ||
+        selectedOptions.some((option) => option.selectionId.startsWith("conditional-access:")))
     ) {
       setStep("result");
     }
@@ -799,6 +955,7 @@ function App() {
     setBrowseWithoutLicenses(false);
     setSelectedLicenses([]);
     setLicenseQuantities({});
+    setLastLicenseContext(undefined);
     setSelectedGoalIds([]);
     setIdentityAndAccessSelected(false);
     setSelectedOptionIds([]);
@@ -1187,16 +1344,7 @@ function App() {
                   type="button"
                   disabled={selectedGoals.length === 0 && !identityAndAccessSelected}
                   onClick={() => {
-                    if (identityAndAccessSelected) {
-                      setStep("identity-and-access");
-                      return;
-                    }
-                    if (selectedGoals.length === 0) return;
-                    setStep(
-                      getConfigurableGoals(selectedGoals).length === 0
-                        ? "result"
-                        : "focus",
-                    );
+                    if (selectedGoals.length > 0 || identityAndAccessSelected) setStep("focus");
                   }}
                 >
                   {translate(locale, selectedGoals.length > 0 || identityAndAccessSelected
@@ -1207,34 +1355,7 @@ function App() {
             </section>
           )}
 
-          {step === "identity-and-access" && (
-            <section aria-labelledby="main-title">
-              {renderSelectedLicenses()}
-              <div className="eyebrow">{translate(locale, "Your selected security goals")}</div>
-              <h1 id="main-title" tabIndex={-1}>{translate(locale, selectedNavigationCount === 1
-                ? "Choose Identity and Access policies"
-                : "Choose the scenarios and platforms to include")}</h1>
-              {renderSelectedGoals()}
-              <p className="intro">{translate(locale, browseWithoutLicenses
-                ? "Select options where needed. Goals without options are included automatically."
-                : "Select options where needed. Goals without options are included automatically. Recommendations will be matched to the selected licenses.")}</p>
-              <div className="goal-option-sections">
-                {renderSelectedGoalSections(true)}
-              </div>
-              <div className="actions platform-actions">
-                <div>
-                  <button className="button secondary" type="button" onClick={() => setStep("goal")}>{translate(locale, "← Back")}</button>
-                  <button className="button text-button" type="button" onClick={startOver}>{translate(locale, "Start over")}</button>
-                </div>
-                <button className="button primary" type="button"
-                  disabled={!selectedGoalIds.some((id) => identityAndAccessGoalIds.includes(id))}
-                  onClick={() => setStep(getConfigurableGoals(selectedGoals).length === 0 ? "result" : "focus")}>
-                  {translate(locale, "Continue with selected policies →")}</button>
-              </div>
-            </section>
-          )}
-
-          {step === "focus" && selectedGoals.length > 0 && canBrowse && (
+          {step === "focus" && (selectedGoals.length > 0 || identityAndAccessSelected) && canBrowse && (
             <section aria-labelledby="main-title">
               {renderSelectedLicenses()}
               <div className="eyebrow">{translate(locale, "Your selected security goals")}</div>
@@ -1245,13 +1366,7 @@ function App() {
                   : selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "endpoint-protection"
                   ? "Choose endpoint platforms"
-                  : selectedGoalIds.length === 1 &&
-                    selectedGoalIds[0] === "data-protection"
-                    ? "Choose Data Security categories"
-                    : selectedGoalIds.length === 1 &&
-                      selectedGoalIds[0] === "conditional-access"
-                      ? "Choose Conditional Access policy categories"
-                      : "Choose the scenarios and platforms to include")}
+                  : "Choose the scenarios and platforms to include")}
               </h1>
               {renderSelectedGoals()}
               <p className="intro">
@@ -1261,79 +1376,65 @@ function App() {
                   : selectedGoalIds.length === 1 &&
                 selectedGoalIds[0] === "endpoint-protection"
                   ? "Select the operating systems you want to protect, then choose policy categories for each."
-                  : selectedGoalIds.length === 1 &&
-                    selectedGoalIds[0] === "data-protection"
-                    ? "Select the Purview policy categories to include in your recommendations."
-                    : selectedGoalIds.length === 1 &&
-                      selectedGoalIds[0] === "conditional-access"
-                      ? "Select the policy categories to explore in the Conditional Access repository."
-                      : browseWithoutLicenses
+                  : browseWithoutLicenses
                         ? "Select options where needed. Goals without options are included automatically."
                         : "Select options where needed. Goals without options are included automatically. Recommendations will be matched to the selected licenses.")}
               </p>
               <div className="goal-option-sections">
-                {renderSelectedGoalSections()}
+                {renderSelectedGoalSections(true)}
               </div>
               <div className="actions platform-actions">
                 <div>
-                  <button className="button secondary" type="button" onClick={() => setStep(identityAndAccessSelected ? "identity-and-access" : "goal")}>{translate(locale, "← Back")}</button>
+                  <button className="button secondary" type="button" onClick={() => setStep("goal")}>{translate(locale, "← Back")}</button>
                   <button className="button text-button" type="button" onClick={startOver}>{translate(locale, "Start over")}</button>
                 </div>
-                {selectedGoals.some((goal) => goal.id !== "attack-protection") && <button
+                <button
                   className="button primary"
                   type="button"
                   disabled={
+                    (identityAndAccessSelected &&
+                      !selectedGoalIds.some((id) => identityAndAccessGoalIds.includes(id))) ||
                     (selectedGoalIds.includes("endpoint-protection") &&
                       selectedEndpointPlatforms.length === 0) ||
-                    unconfiguredGoalNames.length > 0 ||
-                    (!selectedGoalIds.includes("endpoint-protection") &&
-                      selectedOptions.length === 0)
+                    missingDataSecurityCategories ||
+                    unconfiguredGoalNames.length > 0
                   }
                   onClick={continueFromFocus}
                 >
-                  {translate(locale, selectedGoalIds.includes("endpoint-protection")
-                    ? selectedEndpointPlatforms.length === 0
-                      ? "Select at least one endpoint platform"
-                      : unconfiguredGoalNames.length > 0
-                        ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
-                        : "Choose endpoint policy categories"
-                    : unconfiguredGoalNames.length > 0
-                      ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
-                      : "View recommendations")} &rarr;
-                </button>}
+                  {translate(locale,
+                    identityAndAccessSelected &&
+                      !selectedGoalIds.some((id) => identityAndAccessGoalIds.includes(id))
+                      ? "Select at least one Identity and Access goal"
+                      : selectedGoalIds.includes("endpoint-protection") &&
+                        selectedEndpointPlatforms.length === 0
+                        ? "Select at least one endpoint platform"
+                        : missingDataSecurityCategories
+                          ? translateFormat(locale, "Choose at least one {name} category.", {
+                            name: translate(locale, "Data Security"),
+                          })
+                        : unconfiguredGoalNames.length > 0
+                          ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
+                          : hasCategoryStep
+                            ? "Choose policy categories"
+                            : "View recommendations")} &rarr;
+                </button>
               </div>
             </section>
           )}
 
-          {step === "endpoint-categories" &&
-            selectedEndpointPlatforms.length > 0 &&
-            canBrowse && (
+          {step === "categories" && selectedGoals.length > 0 && canBrowse && (
               <section aria-labelledby="main-title">
                 {renderSelectedLicenses()}
-                <div className="eyebrow">{translate(locale, "Endpoint protection")}</div>
+                <div className="eyebrow">{translate(locale, "Your selected security goals")}</div>
                 <h1 id="main-title" tabIndex={-1}>{translate(locale, "Choose policy categories")}</h1>
                 {renderSelectedGoals()}
                 <p className="intro">
-                  {translate(locale, "Select categories for the endpoint platforms you chose. Each selection will lead to its matching ALSO repository.")}</p>
+                  {translate(locale, "Choose the policy categories to include. Your scenario and platform choices are shown for reference.")}</p>
                 <div className="goal-option-sections">
-                  {selectedEndpointPlatforms.map((platformOption) => (
-                    <section
-                      className="goal-option-section"
-                      key={platformOption.id}
-                      aria-labelledby={`${platformOption.id}-categories-heading`}
-                    >
-                      <h2 id={`${platformOption.id}-categories-heading`}>
-                        {translate(locale, platformOption.name)}
-                      </h2>
-                      <div className="card-grid endpoint-subcategory-grid">
-                        {getSecurityGoalOptionChildren(platformOption).map((child, index) =>
-                          renderOptionCard("endpoint-protection", child, index, true),
-                        )}
-                      </div>
-                    </section>
-                  ))}
+                  {renderCategorySections()}
                 </div>
-                {(missingEndpointCategories.length > 0 || unconfiguredGoalNames.length > 0) && (
+                {(missingEndpointCategories.length > 0 || unconfiguredGoalNames.length > 0 ||
+                  missingRequiredCategories.length > 0) && (
                   <p className="selection-validation" role="status">
                     {missingEndpointCategories.length > 0 && (
                       <>{translate(locale, "Choose at least one category for each selected endpoint platform:")}{" "}{translate(locale, missingEndpointCategories.join(", "))}. </>
@@ -1341,6 +1442,9 @@ function App() {
                     {unconfiguredGoalNames.length > 0 && (
                       <>{translate(locale, "Choose at least one option for each selected goal:")}{" "}{translate(locale, unconfiguredGoalNames.join(", "))}.</>
                     )}
+                    {missingRequiredCategories.map((name) => (
+                      <span key={name}>{translateFormat(locale, "Choose at least one {name} category.", { name: translate(locale, name) })} </span>
+                    ))}
                   </p>
                 )}
                 <div className="actions platform-actions">
@@ -1350,7 +1454,7 @@ function App() {
                       type="button"
                       onClick={() => setStep("focus")}
                     >
-                      {translate(locale, "← Back to platforms")}</button>
+                      {translate(locale, "← Back to scenarios")}</button>
                     <button className="button text-button" type="button" onClick={startOver}>
                       {translate(locale, "Start over")}</button>
                   </div>
@@ -1359,19 +1463,24 @@ function App() {
                     type="button"
                     disabled={
                       missingEndpointCategories.length > 0 ||
-                      unconfiguredGoalNames.length > 0
+                      unconfiguredGoalNames.length > 0 ||
+                      missingRequiredCategories.length > 0
                     }
-                    onClick={continueFromEndpointCategories}
+                    onClick={continueFromCategories}
                   >
-                    {translate(locale, missingEndpointCategories.length > 0
-                      ? "Choose a category for each platform"
-                      : unconfiguredGoalNames.length > 0
-                        ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
-                        : "View recommendations")} &rarr;
+                      {missingRequiredCategories.length > 0
+                        ? translateFormat(locale, "Choose at least one {name} category.", {
+                          name: translate(locale, missingRequiredCategories.join(", ")),
+                        })
+                        : translate(locale, missingEndpointCategories.length > 0
+                          ? "Choose a category for each platform"
+                          : unconfiguredGoalNames.length > 0
+                            ? `Choose options for ${unconfiguredGoalNames.join(", ")}`
+                            : "View recommendations")} &rarr;
                   </button>
                 </div>
               </section>
-            )}
+          )}
 
           {step === "blocked" && selectedLicenses.length > 0 && (
             <section className="result-wrap" aria-labelledby="main-title">
@@ -1432,8 +1541,9 @@ function App() {
                   {selectedGoalIds.includes("automated-discovery-deployment") && (
                     <ReadinessRecommendation goalId="automated-discovery-deployment" licenseIds={eligibleLicenseIds} licenseQuantities={licenseQuantities} licensingEvaluated={!browseWithoutLicenses} />
                   )}
-                  {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, solutionNames }) => {
+                  {recommendedRepositories.map(({ repository, sourcePlatform, sourcePlatformIds, availableSolutionNames, comingSoonSolutionNames, comingSoonSourcePlatformNames }) => {
                   const comingSoon = "comingSoon" in sourcePlatform && sourcePlatform.comingSoon;
+                  const hasConditionalAccessSource = sourcePlatformIds.includes("conditional-access");
                   const platformSelections = selectedOptions.filter((option) =>
                     option.platformIds.some((platformId) =>
                       sourcePlatformIds.includes(platformId),
@@ -1458,19 +1568,19 @@ function App() {
                     platformSelections.every((option) =>
                       option.selectionId.startsWith("attack-protection:"),
                     );
-                  const suppressAgent365Guidance = sourcePlatform.id === "conditional-access" &&
+                  const suppressAgent365Guidance = hasConditionalAccessSource &&
                     !platformSelections.some((option) =>
                       option.selectionId === "conditional-access:agent-policies",
                     );
                   const oauthAppsOnly =
-                    sourcePlatform.id === "conditional-access" &&
+                    hasConditionalAccessSource &&
                     platformSelections.length === 1 &&
                     platformSelections[0].selectionId === "app-protection:oauth-apps";
                   const cloudAppsOnly =
-                    sourcePlatform.id === "conditional-access" &&
+                    hasConditionalAccessSource &&
                     platformSelections.length === 1 &&
                     platformSelections[0].selectionId === "app-protection:cloud-apps";
-                  const hasOnPremisesAppSelection = sourcePlatform.id === "conditional-access" &&
+                  const hasOnPremisesAppSelection = hasConditionalAccessSource &&
                     platformSelections.some((option) =>
                       option.selectionId === "app-protection:on-premises-apps",
                     );
@@ -1594,7 +1704,7 @@ function App() {
                     requiresWorkloadIdPremiumForOAuthApps([licenseId]),
                   );
                   const needsOAuthAppsWorkloadIdLicense =
-                    sourcePlatform.id === "conditional-access" &&
+                    hasConditionalAccessSource &&
                     limitedSelections.some((option) =>
                       option.selectionId === "app-protection:oauth-apps",
                     ) &&
@@ -1614,7 +1724,7 @@ function App() {
                     limitedSelections.length > 0 &&
                     endpointFeatureNotes.length === 0 &&
                     (!cloudAppLicenseNote ||
-                      (sourcePlatform.id === "conditional-access" &&
+                      (hasConditionalAccessSource &&
                         platformSelections.some((option) =>
                           option.selectionId.startsWith("administrator-protection:"),
                         ))) &&
@@ -1648,9 +1758,15 @@ function App() {
                           metadata={repositoryMetadata.repositories}
                           comingSoon={comingSoon}
                         />
-                        {sourcePlatform.id !== "conditional-access" && (
+                        {availableSolutionNames.length > 0 && (
                           <p className="recommendation-reasons">
-                            {translate(locale, "Recommended for:")}{" "}{translate(locale, solutionNames.join(", "))}
+                            {translate(locale, "Recommended for:")}{" "}{translate(locale, availableSolutionNames.join(", "))}
+                          </p>
+                        )}
+                        {comingSoonSolutionNames.length > 0 && (
+                          <p className="recommendation-reasons">
+                            <span className="experience-badge coming-soon-badge">{translate(locale, "Coming")}</span>
+                            {" "}{translate(locale, comingSoonSourcePlatformNames.join(", "))}
                           </p>
                         )}
                         {hasOnPremisesAppSelection && (
@@ -1821,17 +1937,9 @@ function App() {
                 <button
                   className="button secondary"
                   type="button"
-                  onClick={() =>
-                    setStep(
-                      selectedGoalIds.includes("endpoint-protection")
-                        ? "endpoint-categories"
-                        : getConfigurableGoals(selectedGoals).length > 0
-                        ? "focus"
-                        : identityAndAccessSelected ? "identity-and-access" : "goal",
-                    )
-                  }
+                  onClick={() => setStep(hasCategoryStep ? "categories" : "focus")}
                 >
-                  {translate(locale, "← Back")}</button>
+                  {translate(locale, hasCategoryStep ? "← Back" : "← Back to scenarios")}</button>
                 <button className="button text-button" type="button" onClick={startOver}>{translate(locale, "Start over")}</button>
               </div>
             </section>

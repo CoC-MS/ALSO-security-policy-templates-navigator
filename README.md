@@ -18,18 +18,23 @@ by `de`, `fr`, `es`, `ru`, `it`, and `pl`.
 The language selector preserves the current selections. All languages share the
 same security goals, nested policy categories, and licensing logic.
 
-Every selected security goal remains visible on the next wizard page, including
-direct-resource goals such as Attack prevention and Copilot Readiness that need
-no scenario choices. Identity and Access shows all selected companion goals.
-Attack prevention, Copilot Readiness, and the other no-option goals show
-compact cards matching the selectable options, marked **Included automatically**.
-No extra selection is required; resource links and detailed licensing guidance
-remain on the final recommendations page.
-The full goal selection also remains visible when choosing endpoint categories
-and viewing recommendations. Back navigation preserves options; deselecting a
-goal removes only that goal's options.
-Selected goals follow the original numbered goal order, including Identity and
-Access as its own section. Mixed selections use a combined-selection heading.
+The progress flow is licenses, security challenges, then recommendations.
+Scenario selection is an intermediate step; a policy-categories screen appears
+only when the selection includes Conditional Access or Endpoint protection.
+Data Security categories are selected on the scenarios page; AI and Agent
+Security, App protection, and goals with no additional choices proceed directly
+to recommendations after scenarios. Identity and Access choices share the
+scenarios page with other goals. The seven existing Attack prevention
+scenarios reuse their current repository and attack-mapper recommendations.
+Goals without choices show compact, noninteractive **Included automatically**
+summaries on the scenarios page; Data Security categories are never selected
+automatically. Selected goals remain visible in their numbered order through
+recommendations.
+
+Back navigation preserves selections when the license plans and quantities
+remain unchanged. Changing the licensing context clears prior choices so
+unavailable selections cannot carry over. Deselecting a goal removes only that
+goal's options.
 
 Use **Skip license selection** below the license-page introduction to browse
 security goals, categories, and matching resources without selecting a license.

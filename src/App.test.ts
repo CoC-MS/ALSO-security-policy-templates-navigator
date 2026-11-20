@@ -7,7 +7,7 @@ import {
   getRepositoryRecommendations,
   getUnconfiguredGoalNames,
 } from "./App";
-import { getPlatform, licenses } from "./catalog";
+import { getPlatform, getPlatformRepositories, licenses } from "./catalog";
 import { getSecurityGoalOptions, securityGoals } from "./solutionCatalog";
 
 describe("repository recommendation licensing scopes", () => {
@@ -20,7 +20,7 @@ describe("repository recommendation licensing scopes", () => {
     const source = appSource;
     expect(source).not.toContain('className="recommended-policy-list"');
     expect(source).not.toContain('className="recommended-policy-id"');
-    expect(source).toMatch(/sourcePlatform\.id !== "conditional-access" && \(\s*<p className="recommendation-reasons">/);
+    expect(source).toMatch(/availableSolutionNames\.length > 0 && \(\s*<p className="recommendation-reasons">/);
     expect(source).toContain("visibleLimitedExperienceNote");
   });
 
@@ -73,13 +73,27 @@ describe("navigator selection edge cases", () => {
 
     expect(
       getUnconfiguredGoalNames(selectedGoals, ["ai-agent-security:agent-security"]),
-    ).toEqual(["Data Security"]);
+    ).toEqual([]);
     expect(
       getUnconfiguredGoalNames(selectedGoals, [
         "ai-agent-security:agent-security",
         "data-protection:sensitive-information-types",
       ]),
     ).toEqual([]);
+  });
+
+  it("preserves separate availability for scenarios sharing a repository", () => {
+    const aiOption = getSecurityGoalOptions("ai-agent-security").find((option) => option.id === "ai-security")!;
+    const desktopOption = getSecurityGoalOptions("app-protection").find((option) => option.id === "desktop-apps")!;
+    const recommendation = getRepositoryRecommendations(
+      [getPlatform("ai-security-macos"), getPlatform("macos")],
+      [aiOption, desktopOption],
+    ).find((item) => item.repository.url === getPlatformRepositories(getPlatform("macos"))[0].url);
+
+    expect(recommendation?.sourcePlatform.id).toBe("macos");
+    expect(recommendation?.comingSoonSolutionNames).toEqual(["AI Security"]);
+    expect(recommendation?.availableSolutionNames).toEqual(["Desktop apps"]);
+    expect(recommendation?.comingSoonSourcePlatformNames).toEqual(["AI Security macOS"]);
   });
 
   it("keeps auxiliary-page Back navigation anchored to the last wizard step", () => {
